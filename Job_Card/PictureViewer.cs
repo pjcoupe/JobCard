@@ -361,31 +361,45 @@
             if (sender is PictureBox)
             {
                 PictureBox box = (PictureBox) sender;
-                this.originalImageWidth = box.Image.Width;
-                this.originalImageHeight = box.Image.Height;
                 int num = int.Parse(box.Name.Substring(10)) - 1;
+                string filename = "";
                 if (num <= this.allPictures.Count)
                 {
-                    string filename = this.allPictures[num];
-                    this.zoomBitMap = new Bitmap(filename);
+                    filename = this.allPictures[num];           
                 }
-                if (box == this.pictureBox10)
+                if (box.Image == JobCard.MovieImage)
                 {
-                    box.Image = null;
+                    Form1.useMediaPlayer = true;
+                    Form1.url = filename;
+                    Form1 form1 = new Form1();
+                    form1.ShowDialog();
                 }
                 else
                 {
-                    this.deleteIndex = num;
-                    this.pictureBox10.Image = box.Image;
+                    this.originalImageWidth = box.Image.Width;
+                    this.originalImageHeight = box.Image.Height;
+                    if (num <= this.allPictures.Count)
+                    {
+                        this.zoomBitMap = new Bitmap(filename);
+                    }
+                    if (box == this.pictureBox10)
+                    {
+                        box.Image = null;
+                    }
+                    else
+                    {
+                        this.deleteIndex = num;
+                        this.pictureBox10.Image = box.Image;
+                    }
+                    this.pictureBox10.Visible = box != this.pictureBox10;
+                    this.pictureBoxZoom.Visible = box != this.pictureBox10;
+                    this.pictureBoxZoom.Width = this.pictureBox10.Width / 3;
+                    this.pictureBoxZoom.Height = this.pictureBox10.Height / 3;
+                    this.pictureBoxZoom.Left = 0;
+                    this.pictureBoxZoom.Top = 0;
+                    this.pictureBoxZoom.SizeMode = PictureBoxSizeMode.Zoom;
+                    this.btnDeletePicture.Visible = this.pictureBox10.Visible;
                 }
-                this.pictureBox10.Visible = box != this.pictureBox10;
-                this.pictureBoxZoom.Visible = box != this.pictureBox10;
-                this.pictureBoxZoom.Width = this.pictureBox10.Width / 3;
-                this.pictureBoxZoom.Height = this.pictureBox10.Height / 3;
-                this.pictureBoxZoom.Left = 0;
-                this.pictureBoxZoom.Top = 0;
-                this.pictureBoxZoom.SizeMode = PictureBoxSizeMode.Zoom;
-                this.btnDeletePicture.Visible = this.pictureBox10.Visible;
             }
         }
 
@@ -399,7 +413,10 @@
                     PictureBox box = (PictureBox) controlArray[0];
                     if ((box != null) && (box.Image != null))
                     {
-                        box.Image.Dispose();
+                        if (box.Image != JobCard.MovieImage)
+                        {
+                            box.Image.Dispose();
+                        }
                     }
                 }
             }

@@ -17,7 +17,7 @@ using System.Windows.Forms;
 using DirectShowLib;
 
 
-namespace SnapShot
+namespace Job_Card
 {
     /// <summary> Summary description for MainForm. </summary>
     internal class Capture : ISampleGrabberCB, IDisposable
