@@ -80,6 +80,8 @@
         private Button btnTodayForDateCompleted;
         private Button btnUndo;
         private Button btnUnpaidCustomers;
+        private Button btnCam1;
+        private Button btnCam2;
         private ComboBox cboReportEndMonth;
         private ComboBox cboReportProduct;
         private ComboBox cboReportStartMonth;
@@ -1013,6 +1015,20 @@
             });
         }
 
+        private void btnCam1_Click(object sender, EventArgs e)
+        {
+            SnapShot.Form1.VIDEODEVICE = 0;
+            SnapShot.Form1 form = new SnapShot.Form1();
+            form.ShowDialog();
+            SaveWebCamPhoto();
+        }
+        private void btnCam2_Click(object sender, EventArgs e)
+        {
+            SnapShot.Form1.VIDEODEVICE = 2;
+            SnapShot.Form1 form = new SnapShot.Form1();
+            form.ShowDialog();
+            SaveWebCamPhoto();
+        }
         private void btnSave_Click(object sender, EventArgs e)
         {
             if (this.NeedSave(false, true))
@@ -1897,6 +1913,9 @@
             this.btnExit = new Button();
             this.btnSave = new Button();
             this.btnEmail = new Button();
+            this.btnCam1 = new Button();
+            this.btnCam2 = new Button();
+
             this.btnPrintCustomerCopy = new Button();
             this.btnPrintBusiness = new Button();
             this.jobCompleted = new CheckBox();
@@ -2350,11 +2369,29 @@
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new EventHandler(this.btnExit_Click);
+
+            this.btnCam1.Font = new Font("Arial", 13f, FontStyle.Regular);
+            this.btnCam1.Location = new Point(0x343+ 80, 0xc2);
+            this.btnCam1.Name = "btnCam1";
+            this.btnCam1.Size = new Size(0xb1 - 40, 50);
+            this.btnCam1.TabIndex = 0x38;
+            this.btnCam1.Text = "Snap Cam1";
+            this.btnCam1.UseVisualStyleBackColor = true;
+            this.btnCam1.Click += new EventHandler(this.btnCam1_Click);
+
+            this.btnCam2.Font = new Font("Arial", 13f, FontStyle.Regular);
+            this.btnCam2.Location = new Point(0x343+ 80, 0xc2 + 50);
+            this.btnCam2.Name = "btnCam2";
+            this.btnCam2.Size = new Size(0xb1 - 40, 50);
+            this.btnCam2.TabIndex = 0x38;
+            this.btnCam2.Text = "Snap Cam2";
+            this.btnCam2.UseVisualStyleBackColor = true;
+            this.btnCam2.Click += new EventHandler(this.btnCam2_Click);
+
             this.btnSave.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnSave.Location = new Point(0x343, 0xc2);
-            //this.btnSave.Location = new Point(12, 0x314);
+            this.btnSave.Location = new Point(0x259, 0xc2 + 30);//new Point(0x343, 0xc2);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new Size(0xb1, 100);
+            this.btnSave.Size = new Size(0xb1, 75); //new Size(0xb1, 100);
             this.btnSave.TabIndex = 0x38;
             this.btnSave.Text = "Save Job";
             this.btnSave.UseVisualStyleBackColor = true;
@@ -2659,6 +2696,8 @@
             base.Controls.Add(this.btnPrintCustomerCopy);
             base.Controls.Add(this.btnEmail);
             base.Controls.Add(this.btnSave);
+            base.Controls.Add(this.btnCam1);
+            base.Controls.Add(this.btnCam2);
             base.Controls.Add(this.btnExit);
             base.Controls.Add(this.datagrid);
             base.Controls.Add(this.picPaid);
@@ -3142,11 +3181,44 @@
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            if ((currentPhotoPaths != null) && (currentPhotoPaths.Count > 0))
+            MouseEventArgs me = (MouseEventArgs)e;
+            if (me.Button == MouseButtons.Left)
             {
-                PictureViewer viewer = new PictureViewer();
-                viewer.SetPictureList(this.pictureBox1);
-                viewer.ShowDialog();
+                if ((currentPhotoPaths != null) && (currentPhotoPaths.Count > 0))
+                {
+                    PictureViewer viewer = new PictureViewer();
+                    viewer.SetPictureList(this.pictureBox1);
+                    viewer.ShowDialog();
+                }
+            }
+            else
+            {
+                if (currentPictureIndex > -1 && currentPictureIndex < JobCard.currentPhotoPaths.Count)
+                {
+                    if (MessageBox.Show("Are you sure you wish to delete this picture?" + Environment.NewLine + "This cannot be undone", "Confirm Deletion", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK)
+                    {
+                        string path = JobCard.currentPhotoPaths[currentPictureIndex];
+                        try
+                        {
+                            File.Delete(path);
+                        }
+                        catch (Exception err)
+                        { }
+                        JobCard.currentPhotoPaths.RemoveAt(currentPictureIndex);
+                        if (currentPictureIndex >= JobCard.currentPhotoPaths.Count)
+                        {
+                            currentPictureIndex = JobCard.currentPhotoPaths.Count-1;
+                        }
+                        if (currentPictureIndex >= 0)
+                        {
+                            UpdatePictureBox(this.pictureBox1, FromFile(currentPhotoPaths[currentPictureIndex]));
+                        }
+                        else
+                        {
+                            UpdatePictureBox(this.pictureBox1, null);
+                        }
+                    }
+                }
             }
         }
 
@@ -3380,6 +3452,72 @@
             graphics.DrawImage(imgToResize, 0, 0, num6, num7);
             graphics.Dispose();
             return b;
+        }
+
+        private void SaveWebCamPhoto()
+        {
+            List<System.Drawing.Image> images = SnapShot.Form1.selectedImages;
+            if (images.Count > 0)
+            {
+                string path = "";
+                string str2 = ".jpg";
+                ImageCodecInfo myImageCodecInfo;
+                Encoder myEncoder;
+                EncoderParameter myEncoderParameter;
+                EncoderParameters myEncoderParameters;
+                myImageCodecInfo = GetEncoderInfo("image/jpeg");
+                myEncoder = Encoder.Quality;
+                myEncoderParameters = new EncoderParameters(1);
+                myEncoderParameter = new EncoderParameter(myEncoder, 100);
+                myEncoderParameters.Param[0] = myEncoderParameter;
+
+
+                DateTime now = DateTime.Now;
+                if (!JobQueryForm.ParsedDateOK(this.jobDate.Text, out now))
+                {
+                    now = DateTime.Now;
+                }
+              
+                this.jobPhotos = this.GetJobPictureFiles(now.Year, now.Month, int.Parse(this.jobID.Text), out path, false);
+                for (int i = 0; i < images.Count; i++)
+                {
+                    int num = this.jobPhotos.Count + i + 1;
+                    string str5 = (num == 0) ? "" : (" " + num.ToString("D3"));
+                    string str6 = this.CombinedDetailText(false);
+                    if (str6.Length > 60)
+                    {
+                        str6 = str6.Substring(0, 60);
+                    }
+                    string businessName = "";
+                    if (this.jobBusinessName.Text.Length > 0)
+                    {
+                        businessName = this.jobBusinessName.Text + "-";
+                    }
+                    string str7 = (this.jobID.Text + " " + businessName + this.jobCustomer.Text + " " + (string.IsNullOrWhiteSpace(this.jobPhone.Text) ? "" : (this.jobPhone.Text + " ")) + str6 + str5 + str2).Replace('<', '-').Replace('>', '-').Replace(':', '-').Replace('"', '-').Replace('/', '-').Replace('\\', '-').Replace('|', '-').Replace('?', '-').Replace('*', '-');
+                    string destFileName = path + @"\" + str7;
+                    images[i].Save(destFileName, ImageFormat.Jpeg);
+                }
+                currentPictureIndex = 0;
+                this.jobPhotos = this.GetJobPictureFiles(now.Year, now.Month, int.Parse(this.jobID.Text), out path, false);
+                currentPhotoPaths = this.jobPhotos;
+
+                this.UpdatePhotos();
+                UpdatePictureBox(this.pictureBox1, images[0]);
+            }
+            images.Clear();
+        }
+
+        private static ImageCodecInfo GetEncoderInfo(string mimeType)
+        {
+            int j;
+            ImageCodecInfo[] encoders;
+            encoders = ImageCodecInfo.GetImageEncoders();
+            for (j = 0; j < encoders.Length; ++j)
+            {
+                if (encoders[j].MimeType == mimeType)
+                    return encoders[j];
+            }
+            return null;
         }
 
         private void SaveUniquePhoto(string path, Image image, List<string> jobPhotos, string sourcePath)

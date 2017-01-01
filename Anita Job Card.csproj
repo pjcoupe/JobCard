@@ -31,6 +31,10 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <EmbeddedResource Include="Job_Card\Form1.resx" />
+    <Reference Include="DirectShowLib-2005">
+      <HintPath>.\DirectShowLib-2005.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Office.Interop.Word, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Office.Interop.Word.15.0.4797.1003\lib\net20\Microsoft.Office.Interop.Word.dll</HintPath>
       <Private>True</Private>
@@ -48,6 +52,10 @@
     <Reference Include="System.Core" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Global.cs" />
+    <Compile Include="Job_Card\Capture.cs" />
+    <Compile Include="Job_Card\Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Job_Card\JobTypePopup.cs">
       <SubType>Form</SubType>
     </Compile>
