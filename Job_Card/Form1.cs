@@ -59,7 +59,15 @@ namespace Job_Card
                 const int VIDEOWIDTH = 640; // Depends on video device caps
                 const int VIDEOHEIGHT = 480; // Depends on video device caps
                 const int VIDEOBITSPERPIXEL = 24; // BitsPerPixel values determined by device         
-                cam = new Capture(VIDEODEVICE, VIDEOWIDTH, VIDEOHEIGHT, VIDEOBITSPERPIXEL, pictureBox2);
+                try
+                {
+                    cam = new Capture(VIDEODEVICE, VIDEOWIDTH, VIDEOHEIGHT, VIDEOBITSPERPIXEL, pictureBox2);
+                }
+                catch (Exception err)
+                {
+                    MessageBox.Show("Failed to get Web Cam error: " + err.Message);
+                    this.Close();
+                }
             }
         }
 
@@ -368,7 +376,8 @@ namespace Job_Card
                 axWindowsMediaPlayer1.close();
             else
             {
-                cam.Dispose();
+                if (cam != null)
+                    cam.Dispose();
 
                 if (m_ip != IntPtr.Zero)
                 {

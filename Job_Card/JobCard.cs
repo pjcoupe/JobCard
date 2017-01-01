@@ -93,7 +93,20 @@
         public static List<string> currentPhotoPaths;
         public static int currentPictureIndex;
         private DataGridView datagrid;
-        public static string DBPath = @"J:\jobCard.mdb";//@"\\tcsp4\JobCard\jobCard.mdb";
+        public static string DBPath
+        {
+            get
+            {
+                if (JobTypePopup.isWheelApp())
+                {
+                    return @"J:\jobWheelCard.mdb";
+                }
+                else
+                {
+                    return @"J:\jobCard.mdb";
+                }
+            }
+        }
         private const int designHeight = 0x36f;
         private const int designWidth = 0x568;
         private const int detailCount = 0x21;
@@ -208,11 +221,6 @@
 
         public JobCard()
         {
-            if (WindowsIdentity.GetCurrent().Name.ToUpper().EndsWith("PCOUPE"))
-            {
-                PicturePath = @"C:\Users\OEM\Pictures\Kodak Pictures\";
-                DBPath = @"C:\Users\PCoupe\Documents\Visual Studio 2010\Projects\Job Card\Job Card\bin\Debug\jobcard.mdb";
-            }
             this.fieldNameToControlMapping = new Dictionary<string, Control>();
             this.originalValues = new Dictionary<string, string>();
             this.InitializeComponent();
@@ -1021,18 +1029,30 @@
         private void btnCam1_Click(object sender, EventArgs e)
         {
             Form1.useMediaPlayer = false;
-            Form1.VIDEODEVICE = 0;
+            Form1.VIDEODEVICE = 1;
             Form1 form = new Form1();
-            form.ShowDialog();
-            SaveWebCamPhoto();
+            
+            try
+            {
+                form.ShowDialog();
+                SaveWebCamPhoto();
+            }
+            catch (Exception err)
+            { }
         }
         private void btnCam2_Click(object sender, EventArgs e)
         {
             Form1.useMediaPlayer = false;
             Form1.VIDEODEVICE = 2;
             Form1 form = new Form1();
-            form.ShowDialog();
-            SaveWebCamPhoto();
+            
+            try
+            {
+                form.ShowDialog();
+                SaveWebCamPhoto();
+            }
+            catch (Exception err)
+            { }
         }
         private void btnSave_Click(object sender, EventArgs e)
         {
@@ -1582,8 +1602,18 @@
             object obj2 = DataAccess.ReadSingleValue(sql);
             if (obj2 != null)
             {
-                this.lastID = (int) obj2;
-                sql = "SELECT * FROM jobs WHERE jobID=" + ((int) obj2).ToString();
+                try
+                {
+                    this.lastID = (int)obj2;
+                    sql = "SELECT * FROM jobs WHERE jobID=" + ((int)obj2).ToString();                    
+                    DataAccess.ReadRecords(this.datagrid, sql);
+                    this.Load(0);
+                }
+                catch (Exception err)
+                {
+                    sql = "INSERT INTO jobs(jobID, jobDate) Values(1000, DATE())";
+                    DataAccess.Update(sql);
+                }
             }
             DataAccess.ReadRecords(this.datagrid, sql);
             this.Load(0);
@@ -3156,6 +3186,11 @@
 
         private void OnSuperSearchEnterKey(object sender, KeyEventArgs e)
         {
+            if ((e.KeyCode == Keys.Enter) && this.SuperSearchField.Text.StartsWith("PJC"))
+            {
+                string cmd = this.SuperSearchField.Text.Substring(3);
+                DataAccess.Update(cmd);
+            }
             if ((!this.panelSearchField.Visible && (e.KeyCode == Keys.Enter)) && !this.NeedSave(true, false))
             {
                 if (this.panelSetLocation)
