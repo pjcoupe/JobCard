@@ -199,7 +199,7 @@
                 }
                 if (!lastWhereClause.ToUpper().StartsWith("SELECT"))
                 {
-                    lastWhereClause = "SELECT * FROM jobs WHERE " + lastWhereClause;
+                    lastWhereClause = "SELECT * FROM " + JobCard.DBTable + " WHERE " + lastWhereClause;
                 }
             }
             catch (Exception exception)

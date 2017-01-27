@@ -93,6 +93,21 @@
         public static List<string> currentPhotoPaths;
         public static int currentPictureIndex;
         private DataGridView datagrid;
+
+        public static string DBTable
+        {
+            get
+            {
+                if (JobTypePopup.isWheelApp())
+                {
+                    return @"jobsWheel";
+                }
+                else
+                {
+                    return @"jobs";
+                }
+            }
+        }
         public static string DBPath
         {
             get
@@ -235,7 +250,7 @@
             this.datagrid.AllowUserToAddRows = false;
             this.jobReceivedFrom.SelectedIndex = 0;
             this.jobPaymentBy.SelectedIndex = 0;
-            this.types = DataAccess.GetFieldDataTypes("jobs");
+            this.types = DataAccess.GetFieldDataTypes(JobCard.DBTable);
             this.photoTypes = DataAccess.GetFieldDataTypes("jobPictures");
             SizeF factor = new SizeF(((float) base.Width) / 1384f, ((float) base.Height) / 879f);
             foreach (object obj2 in base.Controls)
@@ -523,11 +538,11 @@
             if (!this.NeedSave(true, false))
             {
                 JobQueryForm form = new JobQueryForm();
-                form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPhone, jobDateCompleted," + this.AllDetails + " FROM jobs WHERE NOT ISNULL(jobDateCompleted) ORDER BY jobDateCompleted desc");
+                form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPhone, jobDateCompleted," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE NOT ISNULL(jobDateCompleted) ORDER BY jobDateCompleted desc");
                 form.ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
-                    string sql = "SELECT * FROM jobs WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
+                    string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -540,7 +555,7 @@
             {
                 this.lastID = Math.Max(0xea60, this.lastID + 1);
                 if (DataAccess.Update(string.Concat(new object[] { 
-                    "INSERT INTO jobs(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text, "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
+                    "INSERT INTO "+JobCard.DBTable+"(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text, "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
                     "')"
                 })))
                 {
@@ -677,11 +692,11 @@
             if (!this.NeedSave(true, false))
             {
                 JobQueryForm form = new JobQueryForm();
-                form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPhone, jobDate," + this.AllDetails + " FROM jobs WHERE ISNULL(jobDateCompleted) ORDER BY jobDate");
+                form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPaymentBy, jobPhone, jobDate," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE ISNULL(jobDateCompleted) ORDER BY jobDate");
                 form.ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
-                    string sql = "SELECT * FROM jobs WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
+                    string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -697,7 +712,7 @@
         {
             if (!this.NeedSave(true, false))
             {
-                string sql = "Select Top 1 * from jobs ORDER BY jobID desc";
+                string sql = "Select Top 1 * from " + JobCard.DBTable + " ORDER BY jobID desc";
                 DataAccess.ReadRecords(this.datagrid, sql);
                 this.Load(0);
             }
@@ -741,7 +756,7 @@
             if (!this.NeedSave(true, false))
             {
                 this.lastID = Math.Max(0xea60, this.lastID + 1);
-                if (DataAccess.Update("INSERT INTO jobs(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
+                if (DataAccess.Update("INSERT INTO "+JobCard.DBTable+"(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
                 {
                     this.DisclaimerNote();
                     this.GetLatestJob();
@@ -875,7 +890,7 @@
                     str4 = str4 + ",SUM(jobPrice" + num37.ToString("D2") + ")";
                     num37++;
                 }
-                string sql = "SELECT COUNT(*) as jobsCount" + str4 + " from jobs WHERE " + str3;
+                string sql = "SELECT COUNT(*) as jobsCount" + str4 + " from " + JobCard.DBTable + " WHERE " + str3;
                 switch (i)
                 {
                     case 1:
@@ -1075,7 +1090,7 @@
                 }
                 else
                 {
-                    string sql = "SELECT * FROM jobs WHERE jobID = " + this.jobID.Text;
+                    string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + this.jobID.Text;
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -1098,7 +1113,7 @@
                 new JobQueryForm().ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
-                    string sql = "SELECT * FROM jobs WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
+                    string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -1609,20 +1624,20 @@
 
         private void GetLatestJob()
         {
-            string sql = "SELECT MAX(jobID) FROM jobs";
+            string sql = "SELECT MAX(jobID) FROM " + JobCard.DBTable;
             object obj2 = DataAccess.ReadSingleValue(sql);
             if (obj2 != null)
             {
                 try
                 {
                     this.lastID = (int)obj2;
-                    sql = "SELECT * FROM jobs WHERE jobID=" + ((int)obj2).ToString();                    
+                    sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID=" + ((int)obj2).ToString();                    
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
                 catch (Exception err)
                 {
-                    sql = "INSERT INTO jobs(jobID, jobDate) Values(1000, DATE())";
+                    sql = "INSERT INTO " + JobCard.DBTable + "(jobID, jobDate) Values(1000, DATE())";
                     DataAccess.Update(sql);
                 }
             }
@@ -1636,7 +1651,7 @@
             {
                 if (int.Parse(this.jobID.Text) < this.lastID)
                 {
-                    string sql = "SELECT TOP 1 * FROM jobs WHERE jobID > " + this.jobID.Text + " ORDER BY jobID";
+                    string sql = "SELECT TOP 1 * FROM " + JobCard.DBTable + " WHERE jobID > " + this.jobID.Text + " ORDER BY jobID";
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -1653,7 +1668,7 @@
             {
                 if (int.Parse(this.jobID.Text) > 0)
                 {
-                    string sql = "SELECT TOP 1 * FROM jobs WHERE jobID < " + this.jobID.Text + " ORDER BY jobID desc";
+                    string sql = "SELECT TOP 1 * FROM " + JobCard.DBTable + " WHERE jobID < " + this.jobID.Text + " ORDER BY jobID desc";
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -2862,7 +2877,7 @@
                 {
                     if (MessageBox.Show("Are you REALLY REALLY REALLY sure you wish to delete this JOB?" + Environment.NewLine + "This cannot be undone", "Confirm Deletion", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK)
                     {
-                        if (DataAccess.Update("DELETE FROM jobs WHERE jobID=" + this.jobID.Text))
+                        if (DataAccess.Update("DELETE FROM " + JobCard.DBTable + " WHERE jobID=" + this.jobID.Text))
                         {
                             GetPreviousJob();
                         }
@@ -3159,7 +3174,7 @@
             {
                 //return true;
             }
-            this.updateSql = "UPDATE jobs SET ";
+            this.updateSql = "UPDATE " + JobCard.DBTable + " SET ";
             this.UpdateAllTotals();
             foreach (Control control in this.fieldNameToControlMapping.Values)
             {
@@ -3373,12 +3388,12 @@
 
         private void PrintPressed()
         {
-            DataAccess.Update("UPDATE jobs SET jobCompleted=true WHERE jobID=" + this.jobID.Text);
+            DataAccess.Update("UPDATE " + JobCard.DBTable + " SET jobCompleted=true WHERE jobID=" + this.jobID.Text);
         }
 
         private void PromptDatabasePath()
         {
-            DialogResult result = MessageBox.Show("Initial Setup requires you to point to the jobCard database (jobCard.mdb)" + Environment.NewLine + " Would you like to auto search for it (will take time to search your entire computer), or would you rather search manually?)" + Environment.NewLine + "Yes - to auto search" + Environment.NewLine + "No - to manual search (via dialog)", "Find JobCard.mdb", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult result = MessageBox.Show("Initial Setup requires you to point to the "+JobCard.DBPath+" database" + Environment.NewLine + " Would you like to auto search for it (will take time to search your entire computer), or would you rather search manually?)" + Environment.NewLine + "Yes - to auto search" + Environment.NewLine + "No - to manual search (via dialog)", "Find JobCard.mdb", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             string path = "";
             if (result == DialogResult.Yes)
             {
@@ -3728,7 +3743,7 @@
                 }
                 if (sql != "")
                 {
-                    sql = "Select * from jobs WHERE " + sql + " order by jobDate desc";
+                    sql = "Select * from " + JobCard.DBTable + " WHERE " + sql + " order by jobDate desc";
                     this.SearchSQL(sql);
                 }
             }
