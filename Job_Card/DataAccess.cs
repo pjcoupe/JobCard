@@ -213,7 +213,9 @@
                 connection.Close();
                 if (num == 0)
                 {
-                    throw new Exception("Failed to update " + sql);
+                    MessageBox.Show("Error No records updated");
+                    num = 1;
+                    //throw new Exception("Failed to update " + sql);
                 }
                 
             }
@@ -242,7 +244,9 @@
                 }
                 if (num == 0)
                 {
-                    ShowError(exception.Message);
+                    MessageBox.Show("Failed to update error " + exception.Message);
+                    //ShowError(exception.Message);
+                    num = 1;
                 }                
             }
             return (num > 0);

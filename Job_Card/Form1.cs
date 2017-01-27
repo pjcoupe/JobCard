@@ -22,10 +22,7 @@ namespace Job_Card
     {
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.PictureBox pictureBox1;
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.Container components = null;
+        private IContainer components;
         private System.Windows.Forms.PictureBox pictureBox2;
         private PictureBox pictureBox3;
         private PictureBox pictureBox4;
@@ -42,6 +39,8 @@ namespace Job_Card
         public static int VIDEODEVICE = 0;
         public static List<Image> selectedImages = new List<Image>();
         private AxWMPLib.AxWindowsMediaPlayer axWindowsMediaPlayer1;
+        private Button button2;
+        private Timer timer1;
         private int picNumber = 0;
 
         public Form1()
@@ -99,6 +98,7 @@ namespace Job_Card
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.button1 = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
@@ -113,6 +113,8 @@ namespace Job_Card
             this.pictureBox10 = new System.Windows.Forms.PictureBox();
             this.pictureBox11 = new System.Windows.Forms.PictureBox();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
+            this.button2 = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -131,7 +133,7 @@ namespace Job_Card
             // 
             this.button1.Location = new System.Drawing.Point(85, 446);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(656, 40);
+            this.button1.Size = new System.Drawing.Size(341, 40);
             this.button1.TabIndex = 0;
             this.button1.Text = "Click";
             this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -254,10 +256,24 @@ namespace Job_Card
             this.axWindowsMediaPlayer1.Size = new System.Drawing.Size(827, 782);
             this.axWindowsMediaPlayer1.TabIndex = 12;
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(432, 446);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(309, 40);
+            this.button2.TabIndex = 13;
+            this.button2.Text = "Auto Snap in 5 seconds";
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // timer1
+            // 
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(828, 781);
+            this.ClientSize = new System.Drawing.Size(828, 741);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.axWindowsMediaPlayer1);
             this.Controls.Add(this.pictureBox11);
             this.Controls.Add(this.pictureBox10);
@@ -385,6 +401,31 @@ namespace Job_Card
                     m_ip = IntPtr.Zero;
                 }
             }
+        }
+
+        private int autoSnapCount = 0;
+        private void button2_Click(object sender, EventArgs e)
+        {
+            timer1.Interval = 5000;
+            timer1.Enabled = true;
+            timer1.Start();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            autoSnapCount++;
+            if (autoSnapCount >= 10)
+            {
+                timer1.Stop();
+                timer1.Enabled = false;
+            }
+            else
+            {
+                timer1.Interval = 1000;
+                timer1.Enabled = true;
+                timer1.Start();
+            }
+            button1_Click(sender, e);
         }
     }
 }

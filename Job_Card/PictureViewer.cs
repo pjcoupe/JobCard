@@ -88,7 +88,8 @@
 
         private void btnPrint_Click(object sender, EventArgs e)
         {
-            CustomerCopy copy = new CustomerCopy();
+            CustomerCopy.autoPrint = true;
+            CustomerCopy copy = new CustomerCopy(false);
             copy.Height = (int) (copy.Width * Math.Sqrt(2.0));
             RichTextBox box = copy.richTextBox1;
             int count = this.allPictures.Count;

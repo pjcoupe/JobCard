@@ -122,6 +122,7 @@
         private bool isLocked = true;
         private TextBox jobAddress;
         private CheckBox jobCompleted;
+        private CheckBox fastPrint;
         private TextBox jobCustomer;
         private TextBox jobBusinessName;
         private TextBox jobDate;
@@ -1028,13 +1029,19 @@
 
         private void btnCam1_Click(object sender, EventArgs e)
         {
+
             Form1.useMediaPlayer = false;
             Form1.VIDEODEVICE = 1;
+            if (JobCard.popup != null && !(JobCard.popup.IsDisposed))
+            {
+                JobCard.popup.Close();
+            }
             Form1 form = new Form1();
             
             try
             {
                 form.ShowDialog();
+                form.TopMost = true;
                 SaveWebCamPhoto();
             }
             catch (Exception err)
@@ -1045,10 +1052,14 @@
             Form1.useMediaPlayer = false;
             Form1.VIDEODEVICE = 2;
             Form1 form = new Form1();
-            
+            if (JobCard.popup != null && !(JobCard.popup.IsDisposed))
+            {
+                JobCard.popup.Close();
+            }
             try
             {
                 form.ShowDialog();
+                form.TopMost = true;
                 SaveWebCamPhoto();
             }
             catch (Exception err)
@@ -1965,6 +1976,7 @@
             this.btnPrintCustomerCopy = new Button();
             this.btnPrintBusiness = new Button();
             this.jobCompleted = new CheckBox();
+            this.fastPrint = new CheckBox();
             this.panelSearchField = new Panel();
             this.lblResults = new Label();
             this.slider = new TrackBar();
@@ -2477,6 +2489,19 @@
             this.jobCompleted.Text = "Duplicate Receipt";
             this.jobCompleted.UseVisualStyleBackColor = true;
             this.jobCompleted.CheckedChanged += new EventHandler(this.jobCompleted_CheckedChanged);
+
+            this.fastPrint.AutoSize = true;
+            this.fastPrint.Font = new Font("Arial", 12f);
+            this.fastPrint.Location = new Point(12, 0x2cd + 0x2a + 10);
+            this.fastPrint.Name = "fastPrint";
+            this.fastPrint.RightToLeft = RightToLeft.Yes;
+            this.fastPrint.Size = new Size(0x97, 0x16);
+            this.fastPrint.TabIndex = 60;
+            this.fastPrint.Text = "Fast Print";
+            this.fastPrint.UseVisualStyleBackColor = true;
+            this.fastPrint.Checked = true;
+
+
             this.panelSearchField.BackColor = Color.FromArgb(0xc0, 0xc0, 0xff);
             this.panelSearchField.Controls.Add(this.lblResults);
             this.panelSearchField.Controls.Add(this.slider);
@@ -2748,6 +2773,7 @@
             base.Controls.Add(this.btnExit);
             base.Controls.Add(this.datagrid);
             base.Controls.Add(this.picPaid);
+            base.Controls.Add(this.fastPrint);
             base.Controls.Add(this.btnToday);
             base.Controls.Add(this.jobDatePaid);
             base.Controls.Add(this.label14);
@@ -3314,6 +3340,7 @@
             lastFontName = null;
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
+            CustomerCopy.autoPrint = fastPrint.Checked;
             CustomerCopy copy = new CustomerCopy {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
             };
@@ -3804,6 +3831,7 @@
             lastFontName = null;
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
+            CustomerCopy.autoPrint = fastPrint.Checked;
             CustomerCopy copy = new CustomerCopy {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
             };

@@ -10,6 +10,7 @@
 
     public class CustomerCopy : Form
     {
+        public static bool autoPrint = false;
         private Button btnPageSetup;
         private Button btnPrint;
         private Button btnPrintPreview;
@@ -22,9 +23,24 @@
         private PrintPreviewDialog printPreviewDialog1;
         internal RichTextBoxPrintCtrlNS.RichTextBoxPrintCtrl richTextBox1;
 
-        public CustomerCopy()
+        private void AutoPrintEvent(object sender, EventArgs e)
+        {
+            this.printDocument1.Print();
+            Timer timer = (Timer)sender;
+            timer.Stop();
+        }
+        public CustomerCopy(bool allowAutoPrint = true)
         {
             this.InitializeComponent();
+            if (allowAutoPrint && CustomerCopy.autoPrint)
+            {
+                Timer autoPrintTimer = new Timer();
+                autoPrintTimer.Interval = 500;
+                autoPrintTimer.Tick += new EventHandler(AutoPrintEvent);
+                
+                autoPrintTimer.Start();
+                
+            }
         }
 
         private void btnPageSetup_Click(object sender, EventArgs e)
