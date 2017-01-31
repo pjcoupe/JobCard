@@ -178,7 +178,7 @@
         private static string lastFontName;
         private static int lastFontSize;
         private static FontStyle lastFontStyle;
-        private int lastID = 0xea60;
+        private int lastID = 0;
         private Label lblResults;
         private Label lblSearchOnField;
         private bool Loading = false;
@@ -553,7 +553,7 @@
         {
             if (!this.NeedSave(true, false))
             {
-                this.lastID = Math.Max(0xea60, this.lastID + 1);
+                this.lastID = this.lastID + 1;
                 if (DataAccess.Update(string.Concat(new object[] { 
                     "INSERT INTO "+JobCard.DBTable+"(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text, "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
                     "')"
@@ -755,7 +755,7 @@
         {
             if (!this.NeedSave(true, false))
             {
-                this.lastID = Math.Max(0xea60, this.lastID + 1);
+                this.lastID = this.lastID + 1;
                 if (DataAccess.Update("INSERT INTO "+JobCard.DBTable+"(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
                 {
                     this.DisclaimerNote();
