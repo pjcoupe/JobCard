@@ -224,7 +224,12 @@
                 ".MP4"
             };
             ImageExtensions = list;
-            PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
+            if (System.Environment.MachineName == "TCSP4")
+            {
+                PicturePath = @"C:\Kodak Pictures\";
+            } else {
+                PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
+            }
             currentPictureIndex = 0;
             lastFontName = null;
             lastFontSize = -1;
@@ -1513,38 +1518,19 @@
         {
             if (System.IO.File.Exists(path))
             {
-                int num = 0;
-                string str = null;
-                while (num < 0x3e8)
+                try
                 {
-                    string str2 = "deleteMe" + num + ".jpg";
-                    try
+                    if (path.ToUpper().EndsWith("MOV") || path.ToUpper().EndsWith("MP4"))
                     {
-                        if (System.IO.File.Exists(str2))
-                        {
-                            System.IO.File.Delete(str2);
-                        }
-                        if (!System.IO.File.Exists(str2))
-                        {
-                            str = str2;
-                            System.IO.File.Copy(path, str2);
-                            if (System.IO.File.Exists(str2))
-                            {
-                                if (path.ToUpper().EndsWith("MOV") || path.ToUpper().EndsWith("MP4"))
-                                {
-                                    return MovieImage;
-                                }
-                                else
-                                    return Image.FromFile(str2);
-                            }
-                        }
+                        return MovieImage;
                     }
-                    catch (Exception err)
-                    {
-                        System.Console.Out.WriteLine(err.Message);
-                    }
-                    num++;
+                    Image myImage = (Image)Image.FromFile(path).Clone();
+                    return myImage;
                 }
+                catch (Exception e)
+                {
+
+                } 
             }
             return null;
         }
@@ -3370,7 +3356,7 @@
             this.AddLine(r, this.jobID.Text, "Arial", 100, FontStyle.Bold, 0);
             this.AddLine(r, "Job Date: " + this.jobDate.Text.PadLeft(10) + "Order Number: ".PadLeft(40) + this.jobOrderNumber.Text, "Courier New", 0x10, FontStyle.Regular, 0);
             this.AddLine(r, "Business/Customer:", FontStyle.Bold);
-            this.AddLine(r, "Business/Customer:" + this.jobBusinessName+"/"+this.jobCustomer.Text.PadRight(0x23) + " Ph:" + this.jobPhone.Text, FontStyle.Regular);
+            this.AddLine(r, "Business/Customer:" + this.jobBusinessName.Text+"/"+this.jobCustomer.Text.PadRight(0x23) + " Ph:" + this.jobPhone.Text, FontStyle.Regular);
             this.AddLine(r, "Date Required: " + this.jobDateRequired.Text.PadLeft(10) + (this.IsPaid() ? ("  Payment By: " + this.jobPaymentBy.Text) : ""));
             this.AddLine(r, "Details:", FontStyle.Bold);
             this.AddLine(r, this.CombinedDetailText(true), FontStyle.Regular);
