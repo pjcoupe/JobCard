@@ -29,7 +29,9 @@
         private PictureBox pictureBox8;
         private PictureBox pictureBox9;
         private PictureBox pictureBoxZoom;
+        private Button btnNext;
         private Bitmap zoomBitMap;
+        private int nextOffset = 0;
 
         public PictureViewer()
         {
@@ -171,137 +173,193 @@
 
         private void InitializeComponent()
         {
-            this.pictureBox1 = new PictureBox();
-            this.pictureBox2 = new PictureBox();
-            this.pictureBox3 = new PictureBox();
-            this.pictureBox4 = new PictureBox();
-            this.pictureBox5 = new PictureBox();
-            this.pictureBox6 = new PictureBox();
-            this.pictureBox7 = new PictureBox();
-            this.pictureBox8 = new PictureBox();
-            this.pictureBox9 = new PictureBox();
-            this.pictureBox10 = new PictureBox();
-            this.btnPrint = new Button();
-            this.pictureBoxZoom = new PictureBox();
-            this.btnDeletePicture = new Button();
-            ((ISupportInitialize) this.pictureBox1).BeginInit();
-            ((ISupportInitialize) this.pictureBox2).BeginInit();
-            ((ISupportInitialize) this.pictureBox3).BeginInit();
-            ((ISupportInitialize) this.pictureBox4).BeginInit();
-            ((ISupportInitialize) this.pictureBox5).BeginInit();
-            ((ISupportInitialize) this.pictureBox6).BeginInit();
-            ((ISupportInitialize) this.pictureBox7).BeginInit();
-            ((ISupportInitialize) this.pictureBox8).BeginInit();
-            ((ISupportInitialize) this.pictureBox9).BeginInit();
-            ((ISupportInitialize) this.pictureBox10).BeginInit();
-            ((ISupportInitialize) this.pictureBoxZoom).BeginInit();
-            base.SuspendLayout();
-            this.pictureBox1.Location = new Point(7, 7);
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.pictureBox3 = new System.Windows.Forms.PictureBox();
+            this.pictureBox4 = new System.Windows.Forms.PictureBox();
+            this.pictureBox5 = new System.Windows.Forms.PictureBox();
+            this.pictureBox6 = new System.Windows.Forms.PictureBox();
+            this.pictureBox7 = new System.Windows.Forms.PictureBox();
+            this.pictureBox8 = new System.Windows.Forms.PictureBox();
+            this.pictureBox9 = new System.Windows.Forms.PictureBox();
+            this.pictureBox10 = new System.Windows.Forms.PictureBox();
+            this.btnPrint = new System.Windows.Forms.Button();
+            this.pictureBoxZoom = new System.Windows.Forms.PictureBox();
+            this.btnDeletePicture = new System.Windows.Forms.Button();
+            this.btnNext = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox6)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox7)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox8)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox9)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox10)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxZoom)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(7, 7);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new Size(0x15b, 0x10c);
+            this.pictureBox1.Size = new System.Drawing.Size(347, 268);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
-            this.pictureBox2.Location = new Point(360, 7);
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Location = new System.Drawing.Point(360, 7);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new Size(0x15b, 0x10c);
+            this.pictureBox2.Size = new System.Drawing.Size(347, 268);
             this.pictureBox2.TabIndex = 1;
             this.pictureBox2.TabStop = false;
-            this.pictureBox3.Location = new Point(0x2c9, 7);
+            // 
+            // pictureBox3
+            // 
+            this.pictureBox3.Location = new System.Drawing.Point(713, 7);
             this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new Size(0x15b, 0x10c);
+            this.pictureBox3.Size = new System.Drawing.Size(347, 268);
             this.pictureBox3.TabIndex = 2;
             this.pictureBox3.TabStop = false;
-            this.pictureBox4.Location = new Point(0x2c9, 0x119);
+            // 
+            // pictureBox4
+            // 
+            this.pictureBox4.Location = new System.Drawing.Point(713, 281);
             this.pictureBox4.Name = "pictureBox4";
-            this.pictureBox4.Size = new Size(0x15b, 0x10c);
+            this.pictureBox4.Size = new System.Drawing.Size(347, 268);
             this.pictureBox4.TabIndex = 5;
             this.pictureBox4.TabStop = false;
-            this.pictureBox5.Location = new Point(360, 0x119);
+            // 
+            // pictureBox5
+            // 
+            this.pictureBox5.Location = new System.Drawing.Point(360, 281);
             this.pictureBox5.Name = "pictureBox5";
-            this.pictureBox5.Size = new Size(0x15b, 0x10c);
+            this.pictureBox5.Size = new System.Drawing.Size(347, 268);
             this.pictureBox5.TabIndex = 4;
             this.pictureBox5.TabStop = false;
-            this.pictureBox6.Location = new Point(7, 0x119);
+            // 
+            // pictureBox6
+            // 
+            this.pictureBox6.Location = new System.Drawing.Point(7, 281);
             this.pictureBox6.Name = "pictureBox6";
-            this.pictureBox6.Size = new Size(0x15b, 0x10c);
+            this.pictureBox6.Size = new System.Drawing.Size(347, 268);
             this.pictureBox6.TabIndex = 3;
             this.pictureBox6.TabStop = false;
-            this.pictureBox7.Location = new Point(0x2c9, 0x22a);
+            // 
+            // pictureBox7
+            // 
+            this.pictureBox7.Location = new System.Drawing.Point(713, 554);
             this.pictureBox7.Name = "pictureBox7";
-            this.pictureBox7.Size = new Size(0x15b, 0x10c);
+            this.pictureBox7.Size = new System.Drawing.Size(347, 268);
             this.pictureBox7.TabIndex = 8;
             this.pictureBox7.TabStop = false;
-            this.pictureBox8.Location = new Point(360, 0x22a);
+            // 
+            // pictureBox8
+            // 
+            this.pictureBox8.Location = new System.Drawing.Point(360, 554);
             this.pictureBox8.Name = "pictureBox8";
-            this.pictureBox8.Size = new Size(0x15b, 0x10c);
+            this.pictureBox8.Size = new System.Drawing.Size(347, 268);
             this.pictureBox8.TabIndex = 7;
             this.pictureBox8.TabStop = false;
-            this.pictureBox9.Location = new Point(7, 0x22a);
+            // 
+            // pictureBox9
+            // 
+            this.pictureBox9.Location = new System.Drawing.Point(7, 554);
             this.pictureBox9.Name = "pictureBox9";
-            this.pictureBox9.Size = new Size(0x15b, 0x10c);
+            this.pictureBox9.Size = new System.Drawing.Size(347, 268);
             this.pictureBox9.TabIndex = 6;
             this.pictureBox9.TabStop = false;
-            this.pictureBox10.Location = new Point(6, 6);
+            // 
+            // pictureBox10
+            // 
+            this.pictureBox10.Location = new System.Drawing.Point(6, 6);
             this.pictureBox10.Name = "pictureBox10";
-            this.pictureBox10.Size = new Size(0x41c, 0x330);
+            this.pictureBox10.Size = new System.Drawing.Size(1052, 816);
             this.pictureBox10.TabIndex = 9;
             this.pictureBox10.TabStop = false;
             this.pictureBox10.Visible = false;
-            this.pictureBox10.MouseMove += new MouseEventHandler(this.MouseOver);
-            this.btnPrint.Font = new Font("Arial", 9f);
-            this.btnPrint.Location = new Point(7, 7);
+            this.pictureBox10.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MouseOver);
+            // 
+            // btnPrint
+            // 
+            this.btnPrint.Font = new System.Drawing.Font("Arial", 9F);
+            this.btnPrint.Location = new System.Drawing.Point(7, 7);
             this.btnPrint.Name = "btnPrint";
-            this.btnPrint.Size = new Size(0x2a, 0x1d);
+            this.btnPrint.Size = new System.Drawing.Size(42, 29);
             this.btnPrint.TabIndex = 10;
             this.btnPrint.Text = "Print";
             this.btnPrint.UseVisualStyleBackColor = true;
-            this.btnPrint.Click += new EventHandler(this.btnPrint_Click);
-            this.pictureBoxZoom.Location = new Point(0x175, 6);
+            this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
+            // 
+            // pictureBoxZoom
+            // 
+            this.pictureBoxZoom.Location = new System.Drawing.Point(373, 6);
             this.pictureBoxZoom.Name = "pictureBoxZoom";
-            this.pictureBoxZoom.Size = new Size(100, 50);
+            this.pictureBoxZoom.Size = new System.Drawing.Size(100, 50);
             this.pictureBoxZoom.TabIndex = 11;
             this.pictureBoxZoom.TabStop = false;
             this.pictureBoxZoom.Visible = false;
-            this.btnDeletePicture.Font = new Font("Arial", 9f);
-            this.btnDeletePicture.Location = new Point(0x52, 7);
+            // 
+            // btnDeletePicture
+            // 
+            this.btnDeletePicture.Font = new System.Drawing.Font("Arial", 9F);
+            this.btnDeletePicture.Location = new System.Drawing.Point(82, 7);
             this.btnDeletePicture.Name = "btnDeletePicture";
-            this.btnDeletePicture.Size = new Size(0x37, 0x1d);
+            this.btnDeletePicture.Size = new System.Drawing.Size(55, 29);
             this.btnDeletePicture.TabIndex = 12;
             this.btnDeletePicture.Text = "Delete";
             this.btnDeletePicture.UseVisualStyleBackColor = true;
-            this.btnDeletePicture.Click += new EventHandler(this.btnDeletePicture_Click);
-            base.AutoScaleDimensions = new SizeF(6f, 13f);
-            base.AutoScaleMode = AutoScaleMode.Font;
-            base.ClientSize = new Size(0x42e, 0x342);
-            base.Controls.Add(this.btnDeletePicture);
-            base.Controls.Add(this.pictureBoxZoom);
-            base.Controls.Add(this.btnPrint);
-            base.Controls.Add(this.pictureBox10);
-            base.Controls.Add(this.pictureBox7);
-            base.Controls.Add(this.pictureBox8);
-            base.Controls.Add(this.pictureBox9);
-            base.Controls.Add(this.pictureBox4);
-            base.Controls.Add(this.pictureBox5);
-            base.Controls.Add(this.pictureBox6);
-            base.Controls.Add(this.pictureBox3);
-            base.Controls.Add(this.pictureBox2);
-            base.Controls.Add(this.pictureBox1);
-            base.Name = "PictureViewer";
+            this.btnDeletePicture.Click += new System.EventHandler(this.btnDeletePicture_Click);
+            // 
+            // btnNext
+            // 
+            this.btnNext.Font = new System.Drawing.Font("Arial", 9F);
+            this.btnNext.Location = new System.Drawing.Point(1016, 6);
+            this.btnNext.Name = "btnNext";
+            this.btnNext.Size = new System.Drawing.Size(42, 29);
+            this.btnNext.TabIndex = 13;
+            this.btnNext.Text = "Next";
+            this.btnNext.UseVisualStyleBackColor = true;
+            this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
+            // 
+            // PictureViewer
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1070, 741);
+            this.Controls.Add(this.btnNext);
+            this.Controls.Add(this.btnDeletePicture);
+            this.Controls.Add(this.pictureBoxZoom);
+            this.Controls.Add(this.btnPrint);
+            this.Controls.Add(this.pictureBox10);
+            this.Controls.Add(this.pictureBox7);
+            this.Controls.Add(this.pictureBox8);
+            this.Controls.Add(this.pictureBox9);
+            this.Controls.Add(this.pictureBox4);
+            this.Controls.Add(this.pictureBox5);
+            this.Controls.Add(this.pictureBox6);
+            this.Controls.Add(this.pictureBox3);
+            this.Controls.Add(this.pictureBox2);
+            this.Controls.Add(this.pictureBox1);
+            this.Name = "PictureViewer";
             this.Text = "PictureViewer";
-            base.FormClosing += new FormClosingEventHandler(this.PictureViewer_FormClosing);
-            base.Load += new EventHandler(this.PictureViewer_Load);
-            ((ISupportInitialize) this.pictureBox1).EndInit();
-            ((ISupportInitialize) this.pictureBox2).EndInit();
-            ((ISupportInitialize) this.pictureBox3).EndInit();
-            ((ISupportInitialize) this.pictureBox4).EndInit();
-            ((ISupportInitialize) this.pictureBox5).EndInit();
-            ((ISupportInitialize) this.pictureBox6).EndInit();
-            ((ISupportInitialize) this.pictureBox7).EndInit();
-            ((ISupportInitialize) this.pictureBox8).EndInit();
-            ((ISupportInitialize) this.pictureBox9).EndInit();
-            ((ISupportInitialize) this.pictureBox10).EndInit();
-            ((ISupportInitialize) this.pictureBoxZoom).EndInit();
-            base.ResumeLayout(false);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PictureViewer_FormClosing);
+            this.Load += new System.EventHandler(this.PictureViewer_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox6)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox7)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox8)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox9)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox10)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxZoom)).EndInit();
+            this.ResumeLayout(false);
+
         }
 
         private void MouseOver(object sender, MouseEventArgs e)
@@ -427,7 +485,7 @@
         {
         }
 
-        public void SetPictureList(PictureBox mainPictureBox)
+        public void SetPictureList(PictureBox mainPictureBox, int theNextOffset = 0)
         {
             int num;
             Control[] controlArray;
@@ -440,19 +498,30 @@
                     ((PictureBox) controlArray[0]).Visible = false;
                 }
             }
-            for (num = 0; num < Math.Min(9, this.allPictures.Count); num++)
+            nextOffset += theNextOffset;
+            if (nextOffset >= this.allPictures.Count)
+            {
+                nextOffset = 0;
+            }
+            int maxCount = Math.Min(9, this.allPictures.Count - nextOffset);
+            for (num = 0; num < maxCount; num++)
             {
                 controlArray = base.Controls.Find("pictureBox" + (num + 1), true);
                 if (controlArray.Length > 0)
                 {
                     ((PictureBox) controlArray[0]).Visible = true;
-                    JobCard.UpdatePictureBox((PictureBox) controlArray[0], JobCard.FromFile(this.allPictures[num]));
+                    JobCard.UpdatePictureBox((PictureBox) controlArray[0], JobCard.FromFile(this.allPictures[nextOffset + num]));
                 }
             }
         }
 
         private List<string> allPictures =>
             JobCard.currentPhotoPaths;
+
+        private void btnNext_Click(object sender, EventArgs e)
+        {
+            this.SetPictureList(this.mainPic, 9);
+        }
     }
 }
 

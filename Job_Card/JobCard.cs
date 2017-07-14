@@ -122,15 +122,15 @@
                 }
             }
         }
-        private const int designHeight = 0x36f;
-        private const int designWidth = 0x568;
-        private const int detailCount = 0x21;
+        private const int designHeight = 879;
+        private const int designWidth = 1384;
+        private const int detailCount = 33;
         private static string Disclaimer;
         private Dictionary<string, Control> fieldNameToControlMapping;
-        private int freightIndex = 0x1d;
+        private int freightIndex = 29;
         private GroupBox grpBoxPlating;
         private GroupBox grpBoxPolish;
-        private int gstIndex = 0x1f;
+        private int gstIndex = 31;
         private static readonly List<string> ImageExtensions;
         private string insertFieldsSql;
         private string insertValuesSql;
@@ -210,11 +210,12 @@
         private Dictionary<string, System.Type> types;
         private List<Control> undoList = new List<Control>();
         private string updateSql;
+        private Button btnFussy;
         private Rectangle workingArea;
 
         static JobCard()
         {
-            List<string> list = new List<string> { 
+            List<string> list = new List<string> {
                 ".JPG",
                 ".JPE",
                 ".BMP",
@@ -227,7 +228,8 @@
             if (System.Environment.MachineName == "TCSP4")
             {
                 PicturePath = @"C:\Kodak Pictures\";
-            } else {
+            }
+            else {
                 PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
             }
             currentPictureIndex = 0;
@@ -257,12 +259,12 @@
             this.jobPaymentBy.SelectedIndex = 0;
             this.types = DataAccess.GetFieldDataTypes(JobCard.DBTable);
             this.photoTypes = DataAccess.GetFieldDataTypes("jobPictures");
-            SizeF factor = new SizeF(((float) base.Width) / 1384f, ((float) base.Height) / 879f);
+            SizeF factor = new SizeF(((float)base.Width) / 1384f, ((float)base.Height) / 879f);
             foreach (object obj2 in base.Controls)
             {
-                Control item = (Control) obj2;
+                Control item = (Control)obj2;
                 item.Scale(factor);
-                Font font = new Font(item.Font.FontFamily.Name, item.Font.Size * (((float) base.Width) / 1384f), item.Font.Style);
+                Font font = new Font(item.Font.FontFamily.Name, item.Font.Size * (((float)base.Width) / 1384f), item.Font.Style);
                 item.Font = font;
                 string name = item.Name;
                 if (this.types.ContainsKey(name))
@@ -271,22 +273,22 @@
                     if (item is TextBox)
                     {
                         item.TextChanged += new EventHandler(this.control_TextChanged);
-                        ((TextBox) item).DoubleClick += new EventHandler(this.SingleSearch);
+                        ((TextBox)item).DoubleClick += new EventHandler(this.SingleSearch);
                     }
                     else if (item is CheckBox)
                     {
-                        ((CheckBox) item).CheckedChanged += new EventHandler(this.control_TextChanged);
-                        ((CheckBox) item).DoubleClick += new EventHandler(this.SingleSearch);
+                        ((CheckBox)item).CheckedChanged += new EventHandler(this.control_TextChanged);
+                        ((CheckBox)item).DoubleClick += new EventHandler(this.SingleSearch);
                     }
                     else if (item is Label)
                     {
-                        ((Label) item).DoubleClick += new EventHandler(this.SingleSearch);
+                        ((Label)item).DoubleClick += new EventHandler(this.SingleSearch);
                     }
                     else if (item is ComboBox)
                     {
-                        ((ComboBox) item).FlatStyle = FlatStyle.Flat;
-                        ((ComboBox) item).TextChanged += new EventHandler(this.control_TextChanged);
-                        ((ComboBox) item).DoubleClick += new EventHandler(this.SingleSearch);
+                        ((ComboBox)item).FlatStyle = FlatStyle.Flat;
+                        ((ComboBox)item).TextChanged += new EventHandler(this.control_TextChanged);
+                        ((ComboBox)item).DoubleClick += new EventHandler(this.SingleSearch);
                     }
                     this.controls.Add(item);
                     this.fieldNameToControlMapping[name] = item;
@@ -380,7 +382,7 @@
                     TextBox box = null;
                     if (sender is TextBox)
                     {
-                        box = (TextBox) sender;
+                        box = (TextBox)sender;
                     }
                     else
                     {
@@ -420,9 +422,9 @@
                     string oldValue = flag ? "Qty" : (flag2 ? "UnitPrice" : "Price");
                     try
                     {
-                        box2 = (TextBox) this.fieldNameToControlMapping[box.Name.Replace(oldValue, "UnitPrice")];
-                        box3 = (TextBox) this.fieldNameToControlMapping[box.Name.Replace(oldValue, "Price")];
-                        box4 = (TextBox) this.fieldNameToControlMapping[box.Name.Replace(oldValue, "Qty")];
+                        box2 = (TextBox)this.fieldNameToControlMapping[box.Name.Replace(oldValue, "UnitPrice")];
+                        box3 = (TextBox)this.fieldNameToControlMapping[box.Name.Replace(oldValue, "Price")];
+                        box4 = (TextBox)this.fieldNameToControlMapping[box.Name.Replace(oldValue, "Qty")];
                     }
                     catch (Exception)
                     {
@@ -452,7 +454,7 @@
                     }
                     else if (flag3 && (((num5 != 0.0) && (result != 0)) && (box2 != null)))
                     {
-                        box2.Text = (num5 / ((double) result)).ToString("F2");
+                        box2.Text = (num5 / ((double)result)).ToString("F2");
                     }
                     if ((((flag && (result == 0)) || (flag2 && (num4 == 0.0))) && (box2 != null)) && (box4 != null))
                     {
@@ -486,7 +488,7 @@
                 }
                 if (flag)
                 {
-                    now = now.AddDays((Control.ModifierKeys == Keys.Shift) ? ((double) (-7)) : ((double) 7));
+                    now = now.AddDays((Control.ModifierKeys == Keys.Shift) ? ((double)(-7)) : ((double)7));
                     if (now < DateTime.Now)
                     {
                         now = DateTime.Now;
@@ -559,7 +561,7 @@
             if (!this.NeedSave(true, false))
             {
                 this.lastID = this.lastID + 1;
-                if (DataAccess.Update(string.Concat(new object[] { 
+                if (DataAccess.Update(string.Concat(new object[] {
                     "INSERT INTO "+JobCard.DBTable+"(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text, "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
                     "')"
                 })))
@@ -588,7 +590,7 @@
             int.TryParse(day, out _day);
             if (this.jobPaymentBy.Text.Length > 1 && "VISAMasterCard".Contains(this.jobPaymentBy.Text))
             {
-                if (new DateTime(_year,_month,_day,0,0,0,0) >= new DateTime(2016,12,31,0,0,0,0))
+                if (new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0))
                 {
                     return true;
                 }
@@ -761,7 +763,7 @@
             if (!this.NeedSave(true, false))
             {
                 this.lastID = this.lastID + 1;
-                if (DataAccess.Update("INSERT INTO "+JobCard.DBTable+"(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
+                if (DataAccess.Update("INSERT INTO " + JobCard.DBTable + "(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
                 {
                     this.DisclaimerNote();
                     this.GetLatestJob();
@@ -860,7 +862,8 @@
             string str3 = "";
             int num32 = 12;
             int num33 = 1;
-            Progress progress = new Progress {
+            Progress progress = new Progress
+            {
                 progressBar1 = { Maximum = num32 },
                 label1 = { Text = "For " + (flag ? ("Work item CONTAINING " + this.cboReportProduct.Text) : " all items") + " Between " + time.ToShortDateString() + " and " + time2.ToShortDateString() },
                 chart1 = { Visible = false }
@@ -964,7 +967,7 @@
                     object obj2 = rows[0][0];
                     if ((obj2 != null) && (obj2.GetType() != typeof(DBNull)))
                     {
-                        num35 = (int) obj2;
+                        num35 = (int)obj2;
                     }
                     for (num37 = 1; num37 <= 0x12; num37++)
                     {
@@ -972,7 +975,7 @@
                         System.Type type = obj3.GetType();
                         if ((obj3 != null) && (type != typeof(DBNull)))
                         {
-                            num36 += ((double) ((int) (((double) obj3) * 100.0))) / 100.0;
+                            num36 += ((double)((int)(((double)obj3) * 100.0))) / 100.0;
                         }
                     }
                 }
@@ -1039,7 +1042,7 @@
                         break;
                 }
             }
-            progress.richTextBox1.Text = string.Concat(new object[] { 
+            progress.richTextBox1.Text = string.Concat(new object[] {
                 "Created here but NOT Completed and NOT paid #", num8, " Total ", num9.ToString("C2"), Environment.NewLine, "Created and completed here but NOT paid #", num10, " Total ", num11.ToString("C2"), Environment.NewLine, "Created here but Completed and paid elsewhere #", num12, " Total ", num13.ToString("C2"), Environment.NewLine, "Created and completed here but paid elsewhere #",
                 num14, " Total ", num15.ToString("C2"), Environment.NewLine, "Created, completed and paid here #", num16, " Total ", num17.ToString("C2"), Environment.NewLine, "Created and paid elsewhere but completed here #", num18, " Total ", num19.ToString("C2"), Environment.NewLine, "Created elsewhere but completed and paid here #", num20,
                 " Total ", num21.ToString("C2"), Environment.NewLine, "Created and completed elsewhere but paid here #", num22, " Total ", num23.ToString("C2"), Environment.NewLine, "Created elsewhere but completed here and NOT paid #", num24, " Total ", num25.ToString("C2"), Environment.NewLine, "CREATED HERE #", num26, " TOTAL ",
@@ -1057,7 +1060,7 @@
                 JobCard.popup.Close();
             }
             Form1 form = new Form1();
-            
+
             try
             {
                 form.ShowDialog();
@@ -1285,19 +1288,19 @@
         {
             if (!this.Loading && (sender is Control))
             {
-                Control control = (Control) sender;
+                Control control = (Control)sender;
                 string stringValue = "";
                 bool flag = this.ControlValueChangedFromLoaded(control, false, out stringValue);
                 if (sender is ComboBox)
                 {
-                    ((ComboBox) control).BackColor = flag ? Color.LightYellow : Color.WhiteSmoke;
+                    ((ComboBox)control).BackColor = flag ? Color.LightYellow : Color.WhiteSmoke;
                 }
                 else
                 {
                     if (sender is TextBox)
                     {
                         TextBox key = sender as TextBox;
-                        
+
                         if (!string.IsNullOrEmpty(key.Text))
                         {
                             Graphics graphics = Graphics.FromHwnd(base.Handle);
@@ -1311,7 +1314,7 @@
                             {
                                 size = num;
                             }
-                            
+
                             Font font = new Font(key.Font.FontFamily, size, key.Font.Style);
                             for (SizeF ef = graphics.MeasureString(key.Text, font); ef.Width > key.Size.Width; ef = graphics.MeasureString(key.Text, font))
                             {
@@ -1320,7 +1323,7 @@
                                 if (size < 8)
                                     break;
                             }
-                            
+
                             if (!(size == key.Font.Size))
                             {
                                 key.Font = font;
@@ -1356,18 +1359,18 @@
             bool flag5 = control is ComboBox;
             if (flag2)
             {
-                stringValue = ((TextBox) control).Text;
+                stringValue = ((TextBox)control).Text;
                 if (isUndo)
                 {
-                    ((TextBox) control).Text = str2;
+                    ((TextBox)control).Text = str2;
                 }
             }
             else if (flag3)
             {
-                stringValue = ((Label) control).Text;
+                stringValue = ((Label)control).Text;
                 if (isUndo)
                 {
-                    ((Label) control).Text = str2;
+                    ((Label)control).Text = str2;
                 }
             }
             else if (flag4)
@@ -1376,18 +1379,18 @@
                 {
                     str2 = "False";
                 }
-                stringValue = ((CheckBox) control).Checked.ToString();
+                stringValue = ((CheckBox)control).Checked.ToString();
                 if (isUndo)
                 {
-                    ((CheckBox) control).Checked = str2.ToUpperInvariant() == "TRUE";
+                    ((CheckBox)control).Checked = str2.ToUpperInvariant() == "TRUE";
                 }
             }
             else if (flag5)
             {
-                stringValue = ((ComboBox) control).Text;
+                stringValue = ((ComboBox)control).Text;
                 if (isUndo)
                 {
-                    ((ComboBox) control).Text = str2;
+                    ((ComboBox)control).Text = str2;
                 }
             }
             flag = stringValue != str2;
@@ -1408,7 +1411,7 @@
             TextBox box = null;
             if (sender is TextBox)
             {
-                box = (TextBox) sender;
+                box = (TextBox)sender;
             }
             if ((box != null) && !string.IsNullOrWhiteSpace(box.Text))
             {
@@ -1440,54 +1443,54 @@
             int y = base.PointToClient(new Point(e.X, e.Y)).Y;
             if ((((x >= this.pictureBox1.Location.X) && (x <= (this.pictureBox1.Location.X + this.pictureBox1.Width))) && (y >= this.pictureBox1.Location.Y)) && (y <= (this.pictureBox1.Location.Y + this.pictureBox1.Height)))
             {
-         
-                    string[] data = (string[]) e.Data.GetData(DataFormats.FileDrop);
-                    foreach (string str in data)
+
+                string[] data = (string[])e.Data.GetData(DataFormats.FileDrop);
+                foreach (string str in data)
+                {
+                    try
                     {
                         try
                         {
-                            try
+                            Image image = FromFile(str);
+                            FileInfo info = new FileInfo(str);
+                            DateTime creationTime = info.CreationTime;
+                            DateTime now = DateTime.Now;
+                            if (!JobQueryForm.ParsedDateOK(this.jobDate.Text, out now))
                             {
-                                Image image = FromFile(str);
-                                FileInfo info = new FileInfo(str);
-                                DateTime creationTime = info.CreationTime;
-                                DateTime now = DateTime.Now;
-                                if (!JobQueryForm.ParsedDateOK(this.jobDate.Text, out now))
-                                {
-                                    now = DateTime.Now;
-                                }
-                                TimeSpan span = now.Subtract(creationTime);
-                                bool flag = true;
-                                if (span.TotalSeconds > 3600.0)
-                                {
-                                    DialogResult result = MessageBox.Show(string.Concat(new object[] { "Warning image file: ", str, " is ", (int) span.TotalDays, " days ", (int) span.TotalHours, " hours old. Are you sure this is the correct image file?" }), "Check Image File", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Hand);
-                                    if (result == DialogResult.Cancel)
-                                    {
-                                        break;
-                                    }
-                                    flag = result == DialogResult.Yes;
-                                }
-                                if (flag)
-                                {
-                                    string outPath = "";
-                                    this.jobPhotos = this.GetJobPictureFiles(now.Year, now.Month, int.Parse(this.jobID.Text), out outPath, false);
-                                    this.SaveUniquePhoto(outPath, image, this.jobPhotos, str);
-                                    currentPictureIndex = 0;
-                                    currentPhotoPaths = this.jobPhotos;
-                                }
-                                this.UpdatePhotos();
-                                UpdatePictureBox(this.pictureBox1, image);
+                                now = DateTime.Now;
                             }
-                            catch (Exception exception)
+                            TimeSpan span = now.Subtract(creationTime);
+                            bool flag = true;
+                            if (span.TotalSeconds > 3600.0)
                             {
-                                MessageBox.Show(str + " is NOT an image file - error:" + exception.Message + "\nStack:" + exception.StackTrace);
+                                DialogResult result = MessageBox.Show(string.Concat(new object[] { "Warning image file: ", str, " is ", (int)span.TotalDays, " days ", (int)span.TotalHours, " hours old. Are you sure this is the correct image file?" }), "Check Image File", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Hand);
+                                if (result == DialogResult.Cancel)
+                                {
+                                    break;
+                                }
+                                flag = result == DialogResult.Yes;
                             }
+                            if (flag)
+                            {
+                                string outPath = "";
+                                this.jobPhotos = this.GetJobPictureFiles(now.Year, now.Month, int.Parse(this.jobID.Text), out outPath, false);
+                                this.SaveUniquePhoto(outPath, image, this.jobPhotos, str);
+                                currentPictureIndex = 0;
+                                currentPhotoPaths = this.jobPhotos;
+                            }
+                            this.UpdatePhotos();
+                            UpdatePictureBox(this.pictureBox1, image);
                         }
-                        catch (Exception)
+                        catch (Exception exception)
                         {
+                            MessageBox.Show(str + " is NOT an image file - error:" + exception.Message + "\nStack:" + exception.StackTrace);
                         }
                     }
-                
+                    catch (Exception)
+                    {
+                    }
+                }
+
             }
         }
 
@@ -1496,7 +1499,7 @@
             e.Effect = DragDropEffects.Move;
         }
 
-        public static string DoubleQuote(string inStr) => 
+        public static string DoubleQuote(string inStr) =>
             inStr.Replace("'", "''");
 
         private void Form1_ResizeEnd(object sender, EventArgs e)
@@ -1530,7 +1533,7 @@
                 catch (Exception e)
                 {
 
-                } 
+                }
             }
             return null;
         }
@@ -1617,7 +1620,7 @@
                 try
                 {
                     this.lastID = (int)obj2;
-                    sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID=" + ((int)obj2).ToString();                    
+                    sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID=" + ((int)obj2).ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
                     this.Load(0);
                 }
@@ -1903,7 +1906,8 @@
         "This does not in any way certify the wheel for further use on a Vehicle." +
         "We do not test wheels at Advanced Chrome Platers, and take no responsibility if the wheel is used on a vehicle without the wheel being certified." +
         "It is up to the owner or customer to get the wheel certified and tested for air leaks at their own cost if they feel it is necessary." +
-        "We do not paint wheels.";
+        "We do not paint wheels.\n" +
+        "                       CUSTOMER SIGNATURE: ______________________________________________";
                     if (this.NeedSave(false, true))
                     {
                         DataAccess.Update(this.updateSql);
@@ -1914,739 +1918,968 @@
 
         private void InitializeComponent()
         {
-            ComponentResourceManager manager = new ComponentResourceManager(typeof(JobCard));
-            this.btnNewJob = new Button();
-            this.btnIncompleteJobs = new Button();
-            this.btnSearchLists = new Button();
-            this.btnUnpaidCustomers = new Button();
-            this.label1 = new Label();
-            this.jobID = new Label();
-            this.btnNavigateBack = new Button();
-            this.btnNavigateForward = new Button();
-            this.label2 = new Label();
-            this.jobDate = new TextBox();
-            this.jobCustomer = new TextBox();
-            this.label3 = new Label();
-            this.jobBusinessName = new TextBox();
-            this.labelJobBusinessName = new Label();
-            this.jobAddress = new TextBox();
-            this.label4 = new Label();
-            this.jobPhone = new TextBox();
-            this.label5 = new Label();
-            this.jobEmail = new TextBox();
-            this.label6 = new Label();
-            this.jobOrderNumber = new TextBox();
-            this.label7 = new Label();
-            this.jobDelivery = new TextBox();
-            this.label8 = new Label();
-            this.btnCollect = new Button();
-            this.btnCourier = new Button();
-            this.label9 = new Label();
-            this.jobReceivedFrom = new ComboBox();
-            this.jobDateRequired = new TextBox();
-            this.label10 = new Label();
-            this.jobDateCompleted = new TextBox();
-            this.label11 = new Label();
-            this.jobPaymentBy = new ComboBox();
-            this.label12 = new Label();
-            this.jobNotes = new TextBox();
-            this.label13 = new Label();
-            this.jobDatePaid = new TextBox();
-            this.label14 = new Label();
-            this.btnToday = new Button();
-            this.btnCopper = new Button();
-            this.btnNickle = new Button();
-            this.btnChrome = new Button();
-            this.btnBrass = new Button();
-            this.btnBronze = new Button();
-            this.btnTin = new Button();
-            this.btnGold = new Button();
-            this.btnSilver = new Button();
-            this.btnSatin = new Button();
-            this.btnGeorge = new Button();
-            this.btnHenry = new Button();
-            this.btnRakesh = new Button();
-            this.btnBritt = new Button();
-            this.datagrid = new DataGridView();
-            this.btnExit = new Button();
-            this.btnSave = new Button();
-            this.btnEmail = new Button();
-            this.btnCam1 = new Button();
-            this.btnCam2 = new Button();
-
-            this.btnPrintCustomerCopy = new Button();
-            this.btnPrintBusiness = new Button();
-            this.jobCompleted = new CheckBox();
-            this.fastPrint = new CheckBox();
-            this.panelSearchField = new Panel();
-            this.lblResults = new Label();
-            this.slider = new TrackBar();
-            this.btnCancelSearch = new Button();
-            this.btnSearchField = new Button();
-            this.txtSearchField = new TextBox();
-            this.lblSearchOnField = new Label();
-            this.btnLatestJob = new Button();
-            this.btnNextPhoto = new Button();
-            this.btnPrintForWork = new Button();
-            this.btnLockUnlock = new Button();
-            this.btnUndo = new Button();
-            this.picPaid = new PictureBox();
-            this.pictureBox1 = new PictureBox();
-            this.btnPrintAll = new Button();
-            this.btnTodayForDateCompleted = new Button();
-            this.btnAddWeek = new Button();
-            this.btnDuplicate = new Button();
-            this.grpBoxPlating = new GroupBox();
-            this.grpBoxPolish = new GroupBox();
-            this.btnCollapseToggle = new Button();
-            this.cboReportStartMonth = new ComboBox();
-            this.cboReportEndMonth = new ComboBox();
-            this.cboReportYear = new ComboBox();
-            this.cboReportProduct = new ComboBox();
-            this.btnReport = new Button();
-            this.SuperSearchField = new ComboBox();
-            ((ISupportInitialize) this.datagrid).BeginInit();
+            this.btnNewJob = new System.Windows.Forms.Button();
+            this.btnIncompleteJobs = new System.Windows.Forms.Button();
+            this.btnSearchLists = new System.Windows.Forms.Button();
+            this.btnUnpaidCustomers = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.jobID = new System.Windows.Forms.Label();
+            this.btnNavigateBack = new System.Windows.Forms.Button();
+            this.btnNavigateForward = new System.Windows.Forms.Button();
+            this.label2 = new System.Windows.Forms.Label();
+            this.jobDate = new System.Windows.Forms.TextBox();
+            this.jobCustomer = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.jobBusinessName = new System.Windows.Forms.TextBox();
+            this.labelJobBusinessName = new System.Windows.Forms.Label();
+            this.jobAddress = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.jobPhone = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.jobEmail = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.jobOrderNumber = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.jobDelivery = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.btnCollect = new System.Windows.Forms.Button();
+            this.btnCourier = new System.Windows.Forms.Button();
+            this.label9 = new System.Windows.Forms.Label();
+            this.jobReceivedFrom = new System.Windows.Forms.ComboBox();
+            this.jobDateRequired = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.jobDateCompleted = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.jobPaymentBy = new System.Windows.Forms.ComboBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.jobNotes = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.jobDatePaid = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.btnToday = new System.Windows.Forms.Button();
+            this.btnCopper = new System.Windows.Forms.Button();
+            this.btnNickle = new System.Windows.Forms.Button();
+            this.btnChrome = new System.Windows.Forms.Button();
+            this.btnBrass = new System.Windows.Forms.Button();
+            this.btnBronze = new System.Windows.Forms.Button();
+            this.btnTin = new System.Windows.Forms.Button();
+            this.btnGold = new System.Windows.Forms.Button();
+            this.btnSilver = new System.Windows.Forms.Button();
+            this.btnSatin = new System.Windows.Forms.Button();
+            this.btnGeorge = new System.Windows.Forms.Button();
+            this.btnHenry = new System.Windows.Forms.Button();
+            this.btnRakesh = new System.Windows.Forms.Button();
+            this.btnBritt = new System.Windows.Forms.Button();
+            this.datagrid = new System.Windows.Forms.DataGridView();
+            this.btnExit = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnEmail = new System.Windows.Forms.Button();
+            this.btnCam1 = new System.Windows.Forms.Button();
+            this.btnCam2 = new System.Windows.Forms.Button();
+            this.btnPrintCustomerCopy = new System.Windows.Forms.Button();
+            this.btnPrintBusiness = new System.Windows.Forms.Button();
+            this.jobCompleted = new System.Windows.Forms.CheckBox();
+            this.fastPrint = new System.Windows.Forms.CheckBox();
+            this.panelSearchField = new System.Windows.Forms.Panel();
+            this.lblResults = new System.Windows.Forms.Label();
+            this.slider = new System.Windows.Forms.TrackBar();
+            this.btnCancelSearch = new System.Windows.Forms.Button();
+            this.btnSearchField = new System.Windows.Forms.Button();
+            this.txtSearchField = new System.Windows.Forms.TextBox();
+            this.lblSearchOnField = new System.Windows.Forms.Label();
+            this.btnLatestJob = new System.Windows.Forms.Button();
+            this.btnNextPhoto = new System.Windows.Forms.Button();
+            this.btnPrintForWork = new System.Windows.Forms.Button();
+            this.btnLockUnlock = new System.Windows.Forms.Button();
+            this.btnUndo = new System.Windows.Forms.Button();
+            this.picPaid = new System.Windows.Forms.PictureBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.btnPrintAll = new System.Windows.Forms.Button();
+            this.btnTodayForDateCompleted = new System.Windows.Forms.Button();
+            this.btnAddWeek = new System.Windows.Forms.Button();
+            this.btnDuplicate = new System.Windows.Forms.Button();
+            this.grpBoxPlating = new System.Windows.Forms.GroupBox();
+            this.grpBoxPolish = new System.Windows.Forms.GroupBox();
+            this.btnCollapseToggle = new System.Windows.Forms.Button();
+            this.cboReportStartMonth = new System.Windows.Forms.ComboBox();
+            this.cboReportEndMonth = new System.Windows.Forms.ComboBox();
+            this.cboReportYear = new System.Windows.Forms.ComboBox();
+            this.cboReportProduct = new System.Windows.Forms.ComboBox();
+            this.btnReport = new System.Windows.Forms.Button();
+            this.SuperSearchField = new System.Windows.Forms.ComboBox();
+            this.btnFussy = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
-            this.slider.BeginInit();
-            ((ISupportInitialize) this.picPaid).BeginInit();
-            ((ISupportInitialize) this.pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.picPaid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.grpBoxPlating.SuspendLayout();
             this.grpBoxPolish.SuspendLayout();
-            base.SuspendLayout();
-            this.btnNewJob.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnNewJob.Location = new Point(12, 0x35);
+            this.SuspendLayout();
+            // 
+            // btnNewJob
+            // 
+            this.btnNewJob.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnNewJob.Location = new System.Drawing.Point(12, 53);
             this.btnNewJob.Name = "btnNewJob";
-            this.btnNewJob.Size = new Size(0xa2, 0x2a);
+            this.btnNewJob.Size = new System.Drawing.Size(162, 42);
             this.btnNewJob.TabIndex = 0;
             this.btnNewJob.Text = "New Job";
             this.btnNewJob.UseVisualStyleBackColor = true;
-            this.btnNewJob.Click += new EventHandler(this.btnNewJob_Click);
-            this.btnIncompleteJobs.Font = new Font("Arial", 12f, FontStyle.Bold);
-            this.btnIncompleteJobs.Location = new Point(12, 0x69);
+            this.btnNewJob.Click += new System.EventHandler(this.btnNewJob_Click);
+            // 
+            // btnIncompleteJobs
+            // 
+            this.btnIncompleteJobs.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.btnIncompleteJobs.Location = new System.Drawing.Point(12, 105);
             this.btnIncompleteJobs.Name = "btnIncompleteJobs";
-            this.btnIncompleteJobs.Size = new Size(0xa2, 0x2a);
+            this.btnIncompleteJobs.Size = new System.Drawing.Size(162, 42);
             this.btnIncompleteJobs.TabIndex = 1;
             this.btnIncompleteJobs.Text = "Incomplete Jobs";
             this.btnIncompleteJobs.UseVisualStyleBackColor = true;
-            this.btnIncompleteJobs.Click += new EventHandler(this.btnExistingJobs_Click);
-            this.btnSearchLists.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnSearchLists.Location = new Point(13, 0x99);
+            this.btnIncompleteJobs.Click += new System.EventHandler(this.btnExistingJobs_Click);
+            // 
+            // btnSearchLists
+            // 
+            this.btnSearchLists.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnSearchLists.Location = new System.Drawing.Point(13, 153);
             this.btnSearchLists.Name = "btnSearchLists";
-            this.btnSearchLists.Size = new Size(0xa2, 0x2a);
+            this.btnSearchLists.Size = new System.Drawing.Size(162, 42);
             this.btnSearchLists.TabIndex = 2;
             this.btnSearchLists.Text = "Search Lists";
             this.btnSearchLists.UseVisualStyleBackColor = true;
-            this.btnSearchLists.Click += new EventHandler(this.btnSearchLists_Click);
-            this.btnUnpaidCustomers.Font = new Font("Arial", 12f, FontStyle.Bold);
-            this.btnUnpaidCustomers.Location = new Point(13, 0xca);
+            this.btnSearchLists.Click += new System.EventHandler(this.btnSearchLists_Click);
+            // 
+            // btnUnpaidCustomers
+            // 
+            this.btnUnpaidCustomers.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.btnUnpaidCustomers.Location = new System.Drawing.Point(13, 202);
             this.btnUnpaidCustomers.Name = "btnUnpaidCustomers";
-            this.btnUnpaidCustomers.Size = new Size(0xa2, 0x2a);
+            this.btnUnpaidCustomers.Size = new System.Drawing.Size(162, 42);
             this.btnUnpaidCustomers.TabIndex = 3;
             this.btnUnpaidCustomers.Text = "Unpaid Customers";
             this.btnUnpaidCustomers.UseVisualStyleBackColor = true;
-            this.btnUnpaidCustomers.Click += new EventHandler(this.btnCustomers_Click);
+            this.btnUnpaidCustomers.Click += new System.EventHandler(this.btnCustomers_Click);
+            // 
+            // label1
+            // 
             this.label1.AutoSize = true;
-            this.label1.Font = new Font("Arial", 11f);
-            this.label1.Location = new Point(0xba, 0x10);
+            this.label1.Font = new System.Drawing.Font("Arial", 11F);
+            this.label1.Location = new System.Drawing.Point(186, 16);
             this.label1.Name = "label1";
-            this.label1.Size = new Size(0x57, 0x11);
+            this.label1.Size = new System.Drawing.Size(87, 17);
             this.label1.TabIndex = 4;
             this.label1.Text = "Job Number";
-            this.label1.TextAlign = ContentAlignment.MiddleRight;
-            this.label1.Click += new EventHandler(DeleteJobClicked);
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label1.Click += new System.EventHandler(this.DeleteJobClicked);
+            // 
+            // jobID
+            // 
             this.jobID.AutoSize = true;
-            this.jobID.Font = new Font("Arial", 14f, FontStyle.Bold);
-            this.jobID.ForeColor = Color.Red;
-            this.jobID.Location = new Point(0x117, 12);
+            this.jobID.Font = new System.Drawing.Font("Arial", 14F, System.Drawing.FontStyle.Bold);
+            this.jobID.ForeColor = System.Drawing.Color.Red;
+            this.jobID.Location = new System.Drawing.Point(279, 12);
             this.jobID.Name = "jobID";
-            this.jobID.Size = new Size(0x4c, 0x16);
+            this.jobID.Size = new System.Drawing.Size(76, 22);
             this.jobID.TabIndex = 5;
             this.jobID.Text = "000000";
-            this.jobID.TextAlign = ContentAlignment.MiddleLeft;
-            this.jobID.TextChanged += new EventHandler(this.JobIDChanged);
-            this.btnNavigateBack.Location = new Point(360, 12);
+            this.jobID.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.jobID.TextChanged += new System.EventHandler(this.JobIDChanged);
+            // 
+            // btnNavigateBack
+            // 
+            this.btnNavigateBack.Location = new System.Drawing.Point(360, 12);
             this.btnNavigateBack.Name = "btnNavigateBack";
-            this.btnNavigateBack.Size = new Size(0x1d, 0x15 + 5);
+            this.btnNavigateBack.Size = new System.Drawing.Size(29, 21);
             this.btnNavigateBack.TabIndex = 6;
             this.btnNavigateBack.Text = "<<";
             this.btnNavigateBack.UseVisualStyleBackColor = true;
-            this.btnNavigateBack.Click += new EventHandler(this.btnNavigateBack_Click);
-            this.btnNavigateForward.Location = new Point(0x18b, 12);
+            this.btnNavigateBack.Click += new System.EventHandler(this.btnNavigateBack_Click);
+            // 
+            // btnNavigateForward
+            // 
+            this.btnNavigateForward.Location = new System.Drawing.Point(395, 12);
             this.btnNavigateForward.Name = "btnNavigateForward";
-            this.btnNavigateForward.Size = new Size(0x1d, 0x15 + 5);
+            this.btnNavigateForward.Size = new System.Drawing.Size(29, 21);
             this.btnNavigateForward.TabIndex = 7;
             this.btnNavigateForward.Text = ">>";
             this.btnNavigateForward.UseVisualStyleBackColor = true;
-            this.btnNavigateForward.Click += new EventHandler(this.btnNavigateForward_Click);
+            this.btnNavigateForward.Click += new System.EventHandler(this.btnNavigateForward_Click);
+            // 
+            // label2
+            // 
             this.label2.AutoSize = true;
-            this.label2.Font = new Font("Arial", 11f);
-            this.label2.Location = new Point(0x1b4, 0x10);
+            this.label2.Font = new System.Drawing.Font("Arial", 11F);
+            this.label2.Location = new System.Drawing.Point(436, 16);
             this.label2.Name = "label2";
-            this.label2.RightToLeft = RightToLeft.No;
-            this.label2.Size = new Size(0x42, 0x11);
+            this.label2.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label2.Size = new System.Drawing.Size(66, 17);
             this.label2.TabIndex = 9;
             this.label2.Text = "Job Date";
-            this.label2.TextAlign = ContentAlignment.MiddleRight;
-            this.jobDate.Font = new Font("Arial", 11f);
-            this.jobDate.Location = new Point(0x1f7, 12);
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobDate
+            // 
+            this.jobDate.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobDate.Location = new System.Drawing.Point(503, 12);
             this.jobDate.Name = "jobDate";
-            this.jobDate.Size = new Size(0x5c, 0x18);
+            this.jobDate.Size = new System.Drawing.Size(92, 24);
             this.jobDate.TabIndex = 10;
-            this.jobDate.Validating += new CancelEventHandler(this.DateValidating);
-            this.jobCustomer.Font = new Font("Arial", 11f);
-            this.jobCustomer.Location = new Point(0x132, 0x2a);//42px h
+            this.jobDate.Validating += new System.ComponentModel.CancelEventHandler(this.DateValidating);
+            // 
+            // jobCustomer
+            // 
+            this.jobCustomer.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobCustomer.Location = new System.Drawing.Point(306, 42);
             this.jobCustomer.Name = "jobCustomer";
-            this.jobCustomer.Size = new Size(0x121, 0x18);
+            this.jobCustomer.Size = new System.Drawing.Size(289, 24);
             this.jobCustomer.TabIndex = 12;
-            this.jobBusinessName.Font = new Font("Arial", 11f);
-            this.jobBusinessName.Location = new Point(0x132, 72);//42px h
-            this.jobBusinessName.Name = "jobBusinessName";
-            this.jobBusinessName.Size = new Size(0x121, 0x18);
-            this.jobBusinessName.TabIndex = 13;
-            this.labelJobBusinessName.AutoSize = true;
-            this.labelJobBusinessName.Font = new Font("Arial", 11f);
-            this.labelJobBusinessName.Location = new Point(0xb8, 75);//45px h
-            this.labelJobBusinessName.Name = "label3";
-            this.labelJobBusinessName.RightToLeft = RightToLeft.No;
-            this.labelJobBusinessName.Size = new Size(0x74, 0x11);
-            this.labelJobBusinessName.TabIndex = 11;
-            this.labelJobBusinessName.Text = "Business Name";
-            this.labelJobBusinessName.TextAlign = ContentAlignment.MiddleRight;
-
-
+            // 
+            // label3
+            // 
             this.label3.AutoSize = true;
-            this.label3.Font = new Font("Arial", 11f);
-            this.label3.Location = new Point(0xb8, 0x2d);
+            this.label3.Font = new System.Drawing.Font("Arial", 11F);
+            this.label3.Location = new System.Drawing.Point(184, 45);
             this.label3.Name = "label3";
-            this.label3.RightToLeft = RightToLeft.No;
-            this.label3.Size = new Size(0x74, 0x11);
+            this.label3.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label3.Size = new System.Drawing.Size(116, 17);
             this.label3.TabIndex = 11;
             this.label3.Text = "Customer Name";
-            this.label3.TextAlign = ContentAlignment.MiddleRight;
-            this.jobAddress.Font = new Font("Arial", 11f);
-            this.jobAddress.Location = new Point(0x100, 104);//72px h
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobBusinessName
+            // 
+            this.jobBusinessName.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobBusinessName.Location = new System.Drawing.Point(306, 72);
+            this.jobBusinessName.Name = "jobBusinessName";
+            this.jobBusinessName.Size = new System.Drawing.Size(289, 24);
+            this.jobBusinessName.TabIndex = 13;
+            // 
+            // labelJobBusinessName
+            // 
+            this.labelJobBusinessName.AutoSize = true;
+            this.labelJobBusinessName.Font = new System.Drawing.Font("Arial", 11F);
+            this.labelJobBusinessName.Location = new System.Drawing.Point(184, 75);
+            this.labelJobBusinessName.Name = "labelJobBusinessName";
+            this.labelJobBusinessName.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.labelJobBusinessName.Size = new System.Drawing.Size(112, 17);
+            this.labelJobBusinessName.TabIndex = 11;
+            this.labelJobBusinessName.Text = "Business Name";
+            this.labelJobBusinessName.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobAddress
+            // 
+            this.jobAddress.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobAddress.Location = new System.Drawing.Point(256, 103);
             this.jobAddress.Multiline = true;
             this.jobAddress.Name = "jobAddress";
-            this.jobAddress.Size = new Size(0x152, 0x3e);//62h
+            this.jobAddress.Size = new System.Drawing.Size(338, 62);
             this.jobAddress.TabIndex = 14;
+            // 
+            // label4
+            // 
             this.label4.AutoSize = true;
-            this.label4.Font = new Font("Arial", 11f);
-            this.label4.Location = new Point(0xbd, 105); //75px h
+            this.label4.Font = new System.Drawing.Font("Arial", 11F);
+            this.label4.Location = new System.Drawing.Point(189, 105);
             this.label4.Name = "label4";
-            this.label4.RightToLeft = RightToLeft.No;
-            this.label4.Size = new Size(0x3e, 0x11);
+            this.label4.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label4.Size = new System.Drawing.Size(62, 17);
             this.label4.TabIndex = 13;
             this.label4.Text = "Address";
-            this.label4.TextAlign = ContentAlignment.MiddleRight;
-            this.jobPhone.Font = new Font("Arial", 11f);
-            this.jobPhone.Location = new Point(660, 0x2a);
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobPhone
+            // 
+            this.jobPhone.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobPhone.Location = new System.Drawing.Point(660, 42);
             this.jobPhone.Name = "jobPhone";
-            this.jobPhone.Size = new Size(0x139, 0x18);
-            this.jobPhone.TabIndex = 0x10;
+            this.jobPhone.Size = new System.Drawing.Size(313, 24);
+            this.jobPhone.TabIndex = 16;
+            // 
+            // label5
+            // 
             this.label5.AutoSize = true;
-            this.label5.Font = new Font("Arial", 11f);
-            this.label5.Location = new Point(0x25c, 0x2d);
+            this.label5.Font = new System.Drawing.Font("Arial", 11F);
+            this.label5.Location = new System.Drawing.Point(604, 45);
             this.label5.Name = "label5";
-            this.label5.RightToLeft = RightToLeft.No;
-            this.label5.Size = new Size(50, 0x11);
+            this.label5.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label5.Size = new System.Drawing.Size(50, 17);
             this.label5.TabIndex = 15;
             this.label5.Text = "Phone";
-            this.label5.TextAlign = ContentAlignment.MiddleRight;
-            this.jobEmail.Font = new Font("Arial", 11f);
-            this.jobEmail.Location = new Point(660, 0x48);
+            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobEmail
+            // 
+            this.jobEmail.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobEmail.Location = new System.Drawing.Point(660, 72);
             this.jobEmail.Name = "jobEmail";
-            this.jobEmail.Size = new Size(0x139, 0x18);
-            this.jobEmail.TabIndex = 0x12;
+            this.jobEmail.Size = new System.Drawing.Size(313, 24);
+            this.jobEmail.TabIndex = 18;
+            // 
+            // label6
+            // 
             this.label6.AutoSize = true;
-            this.label6.Font = new Font("Arial", 11f);
-            this.label6.Location = new Point(0x261, 0x4b);
+            this.label6.Font = new System.Drawing.Font("Arial", 11F);
+            this.label6.Location = new System.Drawing.Point(609, 75);
             this.label6.Name = "label6";
-            this.label6.RightToLeft = RightToLeft.No;
-            this.label6.Size = new Size(0, 0x11);
-            this.label6.TabIndex = 0x11;
-            this.label6.TextAlign = ContentAlignment.MiddleRight;
-            this.jobOrderNumber.Font = new Font("Arial", 11f);
-            this.jobOrderNumber.Location = new Point(0x2d4, 10);
+            this.label6.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label6.Size = new System.Drawing.Size(0, 17);
+            this.label6.TabIndex = 17;
+            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobOrderNumber
+            // 
+            this.jobOrderNumber.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobOrderNumber.Location = new System.Drawing.Point(724, 12);
             this.jobOrderNumber.Name = "jobOrderNumber";
-            this.jobOrderNumber.Size = new Size(0xf9, 0x18);
+            this.jobOrderNumber.Size = new System.Drawing.Size(249, 24);
             this.jobOrderNumber.TabIndex = 20;
+            // 
+            // label7
+            // 
             this.label7.AutoSize = true;
-            this.label7.Font = new Font("Arial", 11f);
-            this.label7.Location = new Point(0x259, 13);
+            this.label7.Font = new System.Drawing.Font("Arial", 11F);
+            this.label7.Location = new System.Drawing.Point(601, 13);
             this.label7.Name = "label7";
-            this.label7.RightToLeft = RightToLeft.No;
-            this.label7.Size = new Size(0x66, 0x11);
-            this.label7.TabIndex = 0x13;
+            this.label7.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label7.Size = new System.Drawing.Size(102, 17);
+            this.label7.TabIndex = 19;
             this.label7.Text = "Order Number";
-            this.label7.TextAlign = ContentAlignment.MiddleRight;
-            this.jobDelivery.Font = new Font("Arial", 11f);
-            this.jobDelivery.Location = new Point(0x149, 169); // 140px h
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobDelivery
+            // 
+            this.jobDelivery.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobDelivery.Location = new System.Drawing.Point(329, 169);
             this.jobDelivery.Multiline = true;
             this.jobDelivery.Name = "jobDelivery";
-            this.jobDelivery.Size = new Size(0x109, 0x2b);
-            this.jobDelivery.TabIndex = 0x16;
+            this.jobDelivery.Size = new System.Drawing.Size(265, 43);
+            this.jobDelivery.TabIndex = 22;
+            // 
+            // label8
+            // 
             this.label8.AutoSize = true;
-            this.label8.Font = new Font("Arial", 11f);
-            this.label8.Location = new Point(0xba, 170); // 140px h
+            this.label8.Font = new System.Drawing.Font("Arial", 11F);
+            this.label8.Location = new System.Drawing.Point(186, 170);
             this.label8.Name = "label8";
-            this.label8.RightToLeft = RightToLeft.No;
-            this.label8.Size = new Size(0x8b, 0x11);
-            this.label8.TabIndex = 0x15;
+            this.label8.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label8.Size = new System.Drawing.Size(139, 17);
+            this.label8.TabIndex = 21;
             this.label8.Text = "Delivery Instructions";
-            this.label8.TextAlign = ContentAlignment.MiddleRight;
-            this.btnCollect.Location = new Point(0x101, 190); // 160px h
+            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // btnCollect
+            // 
+            this.btnCollect.Location = new System.Drawing.Point(257, 190);
             this.btnCollect.Name = "btnCollect";
-            this.btnCollect.Size = new Size(0x3b, 0x16 + 5);
-            this.btnCollect.TabIndex = 0x17;
+            this.btnCollect.Size = new System.Drawing.Size(59, 22);
+            this.btnCollect.TabIndex = 23;
             this.btnCollect.Text = "Collect";
             this.btnCollect.UseVisualStyleBackColor = true;
-            this.btnCollect.Click += new EventHandler(this.btnCollect_Click);
-            this.btnCourier.Location = new Point(0xc0, 190); // 160px h
+            this.btnCollect.Click += new System.EventHandler(this.btnCollect_Click);
+            // 
+            // btnCourier
+            // 
+            this.btnCourier.Location = new System.Drawing.Point(192, 190);
             this.btnCourier.Name = "btnCourier";
-            this.btnCourier.Size = new Size(0x3b, 0x16 + 5);
-            this.btnCourier.TabIndex = 0x18;
+            this.btnCourier.Size = new System.Drawing.Size(59, 22);
+            this.btnCourier.TabIndex = 24;
             this.btnCourier.Text = "Courier";
             this.btnCourier.UseVisualStyleBackColor = true;
-            this.btnCourier.Click += new EventHandler(this.btnCourier_Click);
+            this.btnCourier.Click += new System.EventHandler(this.btnCourier_Click);
+            // 
+            // label9
+            // 
             this.label9.AutoSize = true;
-            this.label9.Font = new Font("Arial", 11f);
-            this.label9.Location = new Point(0x328, 0xa2);
+            this.label9.Font = new System.Drawing.Font("Arial", 11F);
+            this.label9.Location = new System.Drawing.Point(808, 162);
             this.label9.Name = "label9";
-            this.label9.RightToLeft = RightToLeft.No;
-            this.label9.Size = new Size(0x6c, 0x11);
-            this.label9.TabIndex = 0x19;
+            this.label9.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label9.Size = new System.Drawing.Size(108, 17);
+            this.label9.TabIndex = 25;
             this.label9.Text = "Received From";
-            this.label9.TextAlign = ContentAlignment.MiddleRight;
-            this.jobReceivedFrom.DropDownStyle = ComboBoxStyle.DropDownList;
-            this.jobReceivedFrom.Font = new Font("Arial", 11f);
+            this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobReceivedFrom
+            // 
+            this.jobReceivedFrom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.jobReceivedFrom.Font = new System.Drawing.Font("Arial", 11F);
             this.jobReceivedFrom.FormattingEnabled = true;
-            this.jobReceivedFrom.Items.AddRange(new object[] { "","Customer", "Courier" });
-            this.jobReceivedFrom.Location = new Point(0x39a, 0x9f);
+            this.jobReceivedFrom.Items.AddRange(new object[] {
+            "",
+            "Customer",
+            "Courier"});
+            this.jobReceivedFrom.Location = new System.Drawing.Point(922, 159);
             this.jobReceivedFrom.Name = "jobReceivedFrom";
-            this.jobReceivedFrom.Size = new Size(0x7a, 0x19);
-            this.jobReceivedFrom.TabIndex = 0x1a;
-            this.jobDateRequired.Font = new Font("Arial", 11f);
-            this.jobDateRequired.Location = new Point(0x2d1, 0x65);
+            this.jobReceivedFrom.Size = new System.Drawing.Size(122, 25);
+            this.jobReceivedFrom.TabIndex = 26;
+            // 
+            // jobDateRequired
+            // 
+            this.jobDateRequired.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobDateRequired.Location = new System.Drawing.Point(721, 103);
             this.jobDateRequired.Name = "jobDateRequired";
-            this.jobDateRequired.Size = new Size(0x48, 0x18);
-            this.jobDateRequired.TabIndex = 0x1c;
-            this.jobDateRequired.Validating += new CancelEventHandler(this.DateValidating);
+            this.jobDateRequired.Size = new System.Drawing.Size(72, 24);
+            this.jobDateRequired.TabIndex = 28;
+            this.jobDateRequired.Validating += new System.ComponentModel.CancelEventHandler(this.DateValidating);
+            // 
+            // label10
+            // 
             this.label10.AutoSize = true;
-            this.label10.Font = new Font("Arial", 11f);
-            this.label10.Location = new Point(0x259, 0x68);
+            this.label10.Font = new System.Drawing.Font("Arial", 11F);
+            this.label10.Location = new System.Drawing.Point(601, 104);
             this.label10.Name = "label10";
-            this.label10.RightToLeft = RightToLeft.No;
-            this.label10.Size = new Size(0x66, 0x11);
-            this.label10.TabIndex = 0x1b;
+            this.label10.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label10.Size = new System.Drawing.Size(102, 17);
+            this.label10.TabIndex = 27;
             this.label10.Text = "Date Required";
-            this.label10.TextAlign = ContentAlignment.MiddleRight;
-            this.jobDateCompleted.Font = new Font("Arial", 11f);
-            this.jobDateCompleted.Location = new Point(0x2d1, 0x81);
+            this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobDateCompleted
+            // 
+            this.jobDateCompleted.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobDateCompleted.Location = new System.Drawing.Point(721, 129);
             this.jobDateCompleted.Name = "jobDateCompleted";
-            this.jobDateCompleted.Size = new Size(0x48, 0x18);
+            this.jobDateCompleted.Size = new System.Drawing.Size(72, 24);
             this.jobDateCompleted.TabIndex = 30;
-            this.jobDateCompleted.Validating += new CancelEventHandler(this.DateValidating);
+            this.jobDateCompleted.Validating += new System.ComponentModel.CancelEventHandler(this.DateValidating);
+            // 
+            // label11
+            // 
             this.label11.AutoSize = true;
-            this.label11.Font = new Font("Arial", 11f);
-            this.label11.Location = new Point(0x259, 0x84);
+            this.label11.Font = new System.Drawing.Font("Arial", 11F);
+            this.label11.Location = new System.Drawing.Point(601, 132);
             this.label11.Name = "label11";
-            this.label11.RightToLeft = RightToLeft.No;
-            this.label11.Size = new Size(0x72, 0x11);
-            this.label11.TabIndex = 0x1d;
+            this.label11.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label11.Size = new System.Drawing.Size(114, 17);
+            this.label11.TabIndex = 29;
             this.label11.Text = "Date Completed";
-            this.label11.TextAlign = ContentAlignment.MiddleRight;
-            this.jobPaymentBy.DropDownStyle = ComboBoxStyle.DropDownList;
-            this.jobPaymentBy.Font = new Font("Arial", 11f);
+            this.label11.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobPaymentBy
+            // 
+            this.jobPaymentBy.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.jobPaymentBy.Font = new System.Drawing.Font("Arial", 11F);
             this.jobPaymentBy.FormattingEnabled = true;
-            this.jobPaymentBy.Items.AddRange(new object[] { "","Cash", "Cheque","Eftpos", "VISA", "MasterCard" });
-            this.jobPaymentBy.Location = new Point(0x2b6, 0x9f);
+            this.jobPaymentBy.Items.AddRange(new object[] {
+            "",
+            "Cash",
+            "Cheque",
+            "Eftpos",
+            "VISA",
+            "MasterCard"});
+            this.jobPaymentBy.Location = new System.Drawing.Point(694, 159);
             this.jobPaymentBy.Name = "jobPaymentBy";
-            this.jobPaymentBy.Size = new Size(0x6c, 0x19);
-            this.jobPaymentBy.TabIndex = 0x20;
-            this.jobPaymentBy.TextChanged += new EventHandler(this.CheckForCreditCardSurcharge);
+            this.jobPaymentBy.Size = new System.Drawing.Size(108, 25);
+            this.jobPaymentBy.TabIndex = 32;
+            this.jobPaymentBy.TextChanged += new System.EventHandler(this.CheckForCreditCardSurcharge);
+            // 
+            // label12
+            // 
             this.label12.AutoSize = true;
-            this.label12.Font = new Font("Arial", 11f);
-            this.label12.Location = new Point(0x259, 160);
+            this.label12.Font = new System.Drawing.Font("Arial", 11F);
+            this.label12.Location = new System.Drawing.Point(601, 160);
             this.label12.Name = "label12";
-            this.label12.RightToLeft = RightToLeft.No;
-            this.label12.Size = new Size(0x57, 0x11);
-            this.label12.TabIndex = 0x1f;
+            this.label12.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label12.Size = new System.Drawing.Size(87, 17);
+            this.label12.TabIndex = 31;
             this.label12.Text = "Payment By";
-            this.label12.TextAlign = ContentAlignment.MiddleRight;
-            this.jobNotes.Font = new Font("Arial", 11f);
-            this.jobNotes.Location = new Point(0xf3, 220);
+            this.label12.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobNotes
+            // 
+            this.jobNotes.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobNotes.Location = new System.Drawing.Point(243, 220);
             this.jobNotes.Multiline = true;
             this.jobNotes.Name = "jobNotes";
-            this.jobNotes.Size = new Size(0x160, 0x4e);
-            this.jobNotes.TabIndex = 0x22;
-           
-            
+            this.jobNotes.Size = new System.Drawing.Size(352, 78);
+            this.jobNotes.TabIndex = 34;
+            // 
+            // label13
+            // 
             this.label13.AutoSize = true;
-            this.label13.Font = new Font("Arial", 11f);
-            this.label13.Location = new Point(0xbf, 0xe0);
+            this.label13.Font = new System.Drawing.Font("Arial", 11F);
+            this.label13.Location = new System.Drawing.Point(191, 224);
             this.label13.Name = "label13";
-            this.label13.RightToLeft = RightToLeft.No;
-            this.label13.Size = new Size(0x2e, 0x11);
-            this.label13.TabIndex = 0x21;
+            this.label13.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label13.Size = new System.Drawing.Size(46, 17);
+            this.label13.TabIndex = 33;
             this.label13.Text = "Notes";
-            this.label13.TextAlign = ContentAlignment.MiddleRight;
-            this.jobDatePaid.Font = new Font("Arial", 11f);
-            this.jobDatePaid.Location = new Point(0x2a7, 0xc2);
+            this.label13.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // jobDatePaid
+            // 
+            this.jobDatePaid.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobDatePaid.Location = new System.Drawing.Point(679, 194);
             this.jobDatePaid.Name = "jobDatePaid";
-            this.jobDatePaid.Size = new Size(0x48, 0x18);
-            this.jobDatePaid.TabIndex = 0x24;
-            this.jobDatePaid.TextChanged += new EventHandler(this.TogglePaidStamp);
+            this.jobDatePaid.Size = new System.Drawing.Size(72, 24);
+            this.jobDatePaid.TabIndex = 36;
+            this.jobDatePaid.TextChanged += new System.EventHandler(this.TogglePaidStamp);
+            // 
+            // label14
+            // 
             this.label14.AutoSize = true;
-            this.label14.Font = new Font("Arial", 11f);
-            this.label14.Location = new Point(0x259, 0xc2);
+            this.label14.Font = new System.Drawing.Font("Arial", 11F);
+            this.label14.Location = new System.Drawing.Point(601, 194);
             this.label14.Name = "label14";
-            this.label14.RightToLeft = RightToLeft.No;
-            this.label14.Size = new Size(0x48, 0x11);
-            this.label14.TabIndex = 0x23;
+            this.label14.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.label14.Size = new System.Drawing.Size(72, 17);
+            this.label14.TabIndex = 35;
             this.label14.Text = "Date Paid";
-            this.label14.TextAlign = ContentAlignment.MiddleRight;
-            this.btnToday.Location = new Point(0x2f4, 0xc2);
+            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // btnToday
+            // 
+            this.btnToday.Location = new System.Drawing.Point(756, 194);
             this.btnToday.Name = "btnToday";
-            this.btnToday.Size = new Size(0x49, 0x16 + 5);
-            this.btnToday.TabIndex = 0x25;
+            this.btnToday.Size = new System.Drawing.Size(73, 22);
+            this.btnToday.TabIndex = 37;
             this.btnToday.Text = "Today";
             this.btnToday.UseVisualStyleBackColor = true;
-            this.btnToday.Click += new EventHandler(this.btnToday_Click);
-            this.btnCopper.Location = new Point(20, 0x13);
+            this.btnToday.Click += new System.EventHandler(this.btnToday_Click);
+            // 
+            // btnCopper
+            // 
+            this.btnCopper.Location = new System.Drawing.Point(20, 19);
             this.btnCopper.Name = "btnCopper";
-            this.btnCopper.Size = new Size(0x33, 0x17);
-            this.btnCopper.TabIndex = 0x27;
+            this.btnCopper.Size = new System.Drawing.Size(51, 23);
+            this.btnCopper.TabIndex = 39;
             this.btnCopper.Text = "Copper";
             this.btnCopper.UseVisualStyleBackColor = true;
-            this.btnCopper.Click += new EventHandler(this.MetalToPolish);
-            this.btnNickle.Location = new Point(0x51, 0x13);
+            this.btnCopper.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnNickle
+            // 
+            this.btnNickle.Location = new System.Drawing.Point(81, 19);
             this.btnNickle.Name = "btnNickle";
-            this.btnNickle.Size = new Size(0x33, 0x17);
+            this.btnNickle.Size = new System.Drawing.Size(51, 23);
             this.btnNickle.TabIndex = 40;
             this.btnNickle.Text = "Nickle";
             this.btnNickle.UseVisualStyleBackColor = true;
-            this.btnNickle.Click += new EventHandler(this.MetalToPolish);
-            this.btnChrome.Location = new Point(0x8d, 0x13);
+            this.btnNickle.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnChrome
+            // 
+            this.btnChrome.Location = new System.Drawing.Point(141, 19);
             this.btnChrome.Name = "btnChrome";
-            this.btnChrome.Size = new Size(0x33, 0x17);
-            this.btnChrome.TabIndex = 0x29;
+            this.btnChrome.Size = new System.Drawing.Size(51, 23);
+            this.btnChrome.TabIndex = 41;
             this.btnChrome.Text = "Chrome";
             this.btnChrome.UseVisualStyleBackColor = true;
-            this.btnChrome.Click += new EventHandler(this.MetalToPolish);
-            this.btnBrass.Location = new Point(0x8d, 0x30);
+            this.btnChrome.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnBrass
+            // 
+            this.btnBrass.Location = new System.Drawing.Point(141, 48);
             this.btnBrass.Name = "btnBrass";
-            this.btnBrass.Size = new Size(0x33, 0x17);
-            this.btnBrass.TabIndex = 0x2a;
+            this.btnBrass.Size = new System.Drawing.Size(51, 23);
+            this.btnBrass.TabIndex = 42;
             this.btnBrass.Text = "Brass";
             this.btnBrass.UseVisualStyleBackColor = true;
-            this.btnBrass.Click += new EventHandler(this.MetalToPolish);
-            this.btnBronze.Location = new Point(0x8d, 0x4c);
+            this.btnBrass.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnBronze
+            // 
+            this.btnBronze.Location = new System.Drawing.Point(141, 76);
             this.btnBronze.Name = "btnBronze";
-            this.btnBronze.Size = new Size(0x33, 0x17);
-            this.btnBronze.TabIndex = 0x2b;
+            this.btnBronze.Size = new System.Drawing.Size(51, 23);
+            this.btnBronze.TabIndex = 43;
             this.btnBronze.Text = "Bronze";
             this.btnBronze.UseVisualStyleBackColor = true;
-            this.btnBronze.Click += new EventHandler(this.MetalToPolish);
-            this.btnTin.Location = new Point(20, 0x30);
+            this.btnBronze.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnTin
+            // 
+            this.btnTin.Location = new System.Drawing.Point(20, 48);
             this.btnTin.Name = "btnTin";
-            this.btnTin.Size = new Size(0x33, 0x17);
-            this.btnTin.TabIndex = 0x2c;
+            this.btnTin.Size = new System.Drawing.Size(51, 23);
+            this.btnTin.TabIndex = 44;
             this.btnTin.Text = "Tin";
             this.btnTin.UseVisualStyleBackColor = true;
-            this.btnTin.Click += new EventHandler(this.MetalToPolish);
-            this.btnGold.Location = new Point(0x51, 0x4c);
+            this.btnTin.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnGold
+            // 
+            this.btnGold.Location = new System.Drawing.Point(81, 76);
             this.btnGold.Name = "btnGold";
-            this.btnGold.Size = new Size(0x33, 0x17);
-            this.btnGold.TabIndex = 0x2f;
+            this.btnGold.Size = new System.Drawing.Size(51, 23);
+            this.btnGold.TabIndex = 47;
             this.btnGold.Text = "Gold";
             this.btnGold.UseVisualStyleBackColor = true;
-            this.btnGold.Click += new EventHandler(this.MetalToPolish);
-            this.btnSilver.Location = new Point(20, 0x4c);
+            this.btnGold.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnSilver
+            // 
+            this.btnSilver.Location = new System.Drawing.Point(20, 76);
             this.btnSilver.Name = "btnSilver";
-            this.btnSilver.Size = new Size(0x33, 0x17);
-            this.btnSilver.TabIndex = 0x2e;
+            this.btnSilver.Size = new System.Drawing.Size(51, 23);
+            this.btnSilver.TabIndex = 46;
             this.btnSilver.Text = "Silver";
             this.btnSilver.UseVisualStyleBackColor = true;
-            this.btnSilver.Click += new EventHandler(this.MetalToPolish);
-            this.btnSatin.Location = new Point(0x51, 0x30);
+            this.btnSilver.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnSatin
+            // 
+            this.btnSatin.Location = new System.Drawing.Point(81, 48);
             this.btnSatin.Name = "btnSatin";
-            this.btnSatin.Size = new Size(0x33, 0x17);
-            this.btnSatin.TabIndex = 0x2d;
+            this.btnSatin.Size = new System.Drawing.Size(51, 23);
+            this.btnSatin.TabIndex = 45;
             this.btnSatin.Text = "Satin";
             this.btnSatin.UseVisualStyleBackColor = true;
-            this.btnSatin.Click += new EventHandler(this.MetalToPolish);
-
-            /*
-            this.btnCopper.Visible = false;
-            this.btnNickle.Visible = false;
-            this.btnChrome.Visible = false;
-            this.btnTin.Visible = false;
-            this.btnSatin.Visible = false;
-            this.btnBrass.Visible = false;
-            this.btnSilver.Visible = false;
-            this.btnGold.Visible = false;
-            this.btnBronze.Visible = false;
-            */
-            this.btnGeorge.Location = new Point(0x2a, 0x13);
+            this.btnSatin.Click += new System.EventHandler(this.MetalToPolish);
+            // 
+            // btnGeorge
+            // 
+            this.btnGeorge.Location = new System.Drawing.Point(42, 19);
             this.btnGeorge.Name = "btnGeorge";
-            this.btnGeorge.Size = new Size(0x1f, 0x1c);
-            this.btnGeorge.TabIndex = 0x31;
+            this.btnGeorge.Size = new System.Drawing.Size(31, 28);
+            this.btnGeorge.TabIndex = 49;
             this.btnGeorge.Text = "G";
             this.btnGeorge.UseVisualStyleBackColor = true;
-            this.btnGeorge.Click += new EventHandler(this.PolisherSelect);
-            this.btnHenry.Location = new Point(0x4f, 0x13);
+            this.btnGeorge.Click += new System.EventHandler(this.PolisherSelect);
+            // 
+            // btnHenry
+            // 
+            this.btnHenry.Location = new System.Drawing.Point(79, 19);
             this.btnHenry.Name = "btnHenry";
-            this.btnHenry.Size = new Size(0x1f, 0x1c);
+            this.btnHenry.Size = new System.Drawing.Size(31, 28);
             this.btnHenry.TabIndex = 50;
             this.btnHenry.Text = "H";
             this.btnHenry.UseVisualStyleBackColor = true;
-            this.btnHenry.Click += new EventHandler(this.PolisherSelect);
-            this.btnRakesh.Location = new Point(0x74, 0x13);
+            this.btnHenry.Click += new System.EventHandler(this.PolisherSelect);
+            // 
+            // btnRakesh
+            // 
+            this.btnRakesh.Location = new System.Drawing.Point(116, 19);
             this.btnRakesh.Name = "btnRakesh";
-            this.btnRakesh.Size = new Size(0x1f, 0x1c);
-            this.btnRakesh.TabIndex = 0x33;
+            this.btnRakesh.Size = new System.Drawing.Size(31, 28);
+            this.btnRakesh.TabIndex = 51;
             this.btnRakesh.Text = "R";
             this.btnRakesh.UseVisualStyleBackColor = true;
-            this.btnRakesh.Click += new EventHandler(this.PolisherSelect);
-            this.btnBritt.Location = new Point(0x99, 0x13);
+            this.btnRakesh.Click += new System.EventHandler(this.PolisherSelect);
+            // 
+            // btnBritt
+            // 
+            this.btnBritt.Location = new System.Drawing.Point(153, 19);
             this.btnBritt.Name = "btnBritt";
-            this.btnBritt.Size = new Size(0x1f, 0x1c);
-            this.btnBritt.TabIndex = 0x34;
+            this.btnBritt.Size = new System.Drawing.Size(31, 28);
+            this.btnBritt.TabIndex = 52;
             this.btnBritt.Text = "B";
             this.btnBritt.UseVisualStyleBackColor = true;
-            this.btnBritt.Click += new EventHandler(this.PolisherSelect);
-            this.datagrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.datagrid.Location = new Point(13, -23);
+            this.btnBritt.Click += new System.EventHandler(this.PolisherSelect);
+            // 
+            // datagrid
+            // 
+            this.datagrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.datagrid.Location = new System.Drawing.Point(13, -23);
             this.datagrid.Name = "datagrid";
-            this.datagrid.Size = new Size(0x9f, 0x25);
-            this.datagrid.TabIndex = 0x36;
+            this.datagrid.Size = new System.Drawing.Size(159, 37);
+            this.datagrid.TabIndex = 54;
             this.datagrid.Visible = false;
-            this.btnExit.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnExit.Location = new Point(12, 0x188);
+            // 
+            // btnExit
+            // 
+            this.btnExit.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnExit.Location = new System.Drawing.Point(12, 392);
             this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new Size(0xa2, 0x2a);
-            this.btnExit.TabIndex = 0x37;
+            this.btnExit.Size = new System.Drawing.Size(162, 42);
+            this.btnExit.TabIndex = 55;
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
-            this.btnExit.Click += new EventHandler(this.btnExit_Click);
-
-            this.btnCam1.Font = new Font("Arial", 13f, FontStyle.Regular);
-            this.btnCam1.Location = new Point(0x343+ 80, 0xc2);
-            this.btnCam1.Name = "btnCam1";
-            this.btnCam1.Size = new Size(0xb1 - 40, 50);
-            this.btnCam1.TabIndex = 0x38;
-            this.btnCam1.Text = "Snap Cam1";
-            this.btnCam1.UseVisualStyleBackColor = true;
-            this.btnCam1.Click += new EventHandler(this.btnCam1_Click);
-
-            this.btnCam2.Font = new Font("Arial", 13f, FontStyle.Regular);
-            this.btnCam2.Location = new Point(0x343+ 80, 0xc2 + 50);
-            this.btnCam2.Name = "btnCam2";
-            this.btnCam2.Size = new Size(0xb1 - 40, 50);
-            this.btnCam2.TabIndex = 0x38;
-            this.btnCam2.Text = "Snap Cam2";
-            this.btnCam2.UseVisualStyleBackColor = true;
-            this.btnCam2.Click += new EventHandler(this.btnCam2_Click);
-
-            this.btnSave.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnSave.Location = new Point(0x259, 0xc2 + 30);//new Point(0x343, 0xc2);
+            this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnSave.Location = new System.Drawing.Point(601, 194);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new Size(0xb1, 75); //new Size(0xb1, 100);
-            this.btnSave.TabIndex = 0x38;
+            this.btnSave.Size = new System.Drawing.Size(177, 75);
+            this.btnSave.TabIndex = 56;
             this.btnSave.Text = "Save Job";
             this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new EventHandler(this.btnSave_Click);
-            this.btnEmail.Font = new Font("Arial", 9f);
-            this.btnEmail.Location = new Point(0x25f, 0x48);
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnEmail
+            // 
+            this.btnEmail.Font = new System.Drawing.Font("Arial", 9F);
+            this.btnEmail.Location = new System.Drawing.Point(607, 72);
             this.btnEmail.Name = "btnEmail";
-            this.btnEmail.Size = new Size(0x33, 0x17 + 5);
-            this.btnEmail.TabIndex = 0x39;
+            this.btnEmail.Size = new System.Drawing.Size(51, 23);
+            this.btnEmail.TabIndex = 57;
             this.btnEmail.Text = "email";
             this.btnEmail.UseVisualStyleBackColor = true;
-            this.btnEmail.Click += new EventHandler(this.btnEmail_Click);
-            this.btnPrintCustomerCopy.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnPrintCustomerCopy.Location = new Point(12, 0x23d);
+            this.btnEmail.Click += new System.EventHandler(this.btnEmail_Click);
+            // 
+            // btnCam1
+            // 
+            this.btnCam1.Font = new System.Drawing.Font("Arial", 13F);
+            this.btnCam1.Location = new System.Drawing.Point(835, 194);
+            this.btnCam1.Name = "btnCam1";
+            this.btnCam1.Size = new System.Drawing.Size(137, 50);
+            this.btnCam1.TabIndex = 56;
+            this.btnCam1.Text = "Snap Cam1";
+            this.btnCam1.UseVisualStyleBackColor = true;
+            this.btnCam1.Click += new System.EventHandler(this.btnCam1_Click);
+            // 
+            // btnCam2
+            // 
+            this.btnCam2.Font = new System.Drawing.Font("Arial", 13F);
+            this.btnCam2.Location = new System.Drawing.Point(915, 244);
+            this.btnCam2.Name = "btnCam2";
+            this.btnCam2.Size = new System.Drawing.Size(137, 50);
+            this.btnCam2.TabIndex = 56;
+            this.btnCam2.Text = "Snap Cam2";
+            this.btnCam2.UseVisualStyleBackColor = true;
+            this.btnCam2.Click += new System.EventHandler(this.btnCam2_Click);
+            // 
+            // btnPrintCustomerCopy
+            // 
+            this.btnPrintCustomerCopy.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnPrintCustomerCopy.Location = new System.Drawing.Point(12, 573);
             this.btnPrintCustomerCopy.Name = "btnPrintCustomerCopy";
-            this.btnPrintCustomerCopy.Size = new Size(0xa1, 0x2a);
-            this.btnPrintCustomerCopy.TabIndex = 0x3a;
+            this.btnPrintCustomerCopy.Size = new System.Drawing.Size(161, 42);
+            this.btnPrintCustomerCopy.TabIndex = 58;
             this.btnPrintCustomerCopy.Text = "Print Customer";
             this.btnPrintCustomerCopy.UseVisualStyleBackColor = true;
-            this.btnPrintCustomerCopy.Click += new EventHandler(this.btnPrintCustomerCopy_Click);
-            this.btnPrintBusiness.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnPrintBusiness.Location = new Point(12, 0x26d);
+            this.btnPrintCustomerCopy.Click += new System.EventHandler(this.btnPrintCustomerCopy_Click);
+            // 
+            // btnPrintBusiness
+            // 
+            this.btnPrintBusiness.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnPrintBusiness.Location = new System.Drawing.Point(12, 621);
             this.btnPrintBusiness.Name = "btnPrintBusiness";
-            this.btnPrintBusiness.Size = new Size(0xa1, 0x2a);
-            this.btnPrintBusiness.TabIndex = 0x3b;
+            this.btnPrintBusiness.Size = new System.Drawing.Size(161, 42);
+            this.btnPrintBusiness.TabIndex = 59;
             this.btnPrintBusiness.Text = "Print ACP Copy";
             this.btnPrintBusiness.UseVisualStyleBackColor = true;
-            this.btnPrintBusiness.Click += new EventHandler(this.btnPrintBusiness_Click);
+            this.btnPrintBusiness.Click += new System.EventHandler(this.btnPrintBusiness_Click);
+            // 
+            // jobCompleted
+            // 
             this.jobCompleted.AutoSize = true;
-            this.jobCompleted.Font = new Font("Arial", 12f);
-            this.jobCompleted.Location = new Point(12, 0x21f);
+            this.jobCompleted.Font = new System.Drawing.Font("Arial", 12F);
+            this.jobCompleted.Location = new System.Drawing.Point(12, 543);
             this.jobCompleted.Name = "jobCompleted";
-            this.jobCompleted.RightToLeft = RightToLeft.Yes;
-            this.jobCompleted.Size = new Size(0x97, 0x16);
+            this.jobCompleted.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.jobCompleted.Size = new System.Drawing.Size(151, 22);
             this.jobCompleted.TabIndex = 60;
             this.jobCompleted.Text = "Duplicate Receipt";
             this.jobCompleted.UseVisualStyleBackColor = true;
-            this.jobCompleted.CheckedChanged += new EventHandler(this.jobCompleted_CheckedChanged);
-
+            this.jobCompleted.CheckedChanged += new System.EventHandler(this.jobCompleted_CheckedChanged);
+            // 
+            // fastPrint
+            // 
             this.fastPrint.AutoSize = true;
-            this.fastPrint.Font = new Font("Arial", 12f);
-            this.fastPrint.Location = new Point(12, 0x2cd + 0x2a + 10);
+            this.fastPrint.Checked = true;
+            this.fastPrint.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.fastPrint.Font = new System.Drawing.Font("Arial", 12F);
+            this.fastPrint.Location = new System.Drawing.Point(12, 717);
             this.fastPrint.Name = "fastPrint";
-            this.fastPrint.RightToLeft = RightToLeft.Yes;
-            this.fastPrint.Size = new Size(0x97, 0x16);
+            this.fastPrint.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.fastPrint.Size = new System.Drawing.Size(94, 22);
             this.fastPrint.TabIndex = 60;
             this.fastPrint.Text = "Fast Print";
             this.fastPrint.UseVisualStyleBackColor = true;
-            this.fastPrint.Checked = true;
-
-
-            this.panelSearchField.BackColor = Color.FromArgb(0xc0, 0xc0, 0xff);
+            // 
+            // panelSearchField
+            // 
+            this.panelSearchField.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.panelSearchField.Controls.Add(this.lblResults);
             this.panelSearchField.Controls.Add(this.slider);
             this.panelSearchField.Controls.Add(this.btnCancelSearch);
             this.panelSearchField.Controls.Add(this.btnSearchField);
             this.panelSearchField.Controls.Add(this.txtSearchField);
             this.panelSearchField.Controls.Add(this.lblSearchOnField);
-            this.panelSearchField.Location = new Point(660, 0x1c4);
+            this.panelSearchField.Location = new System.Drawing.Point(660, 452);
             this.panelSearchField.Name = "panelSearchField";
-            this.panelSearchField.Size = new Size(0x1f0, 0xc3);
-            this.panelSearchField.TabIndex = 0x3d;
+            this.panelSearchField.Size = new System.Drawing.Size(496, 195);
+            this.panelSearchField.TabIndex = 61;
             this.panelSearchField.Visible = false;
-            this.panelSearchField.Paint += new PaintEventHandler(this.panelSearchField_Paint);
-            this.panelSearchField.MouseDown += new MouseEventHandler(this.PanelMouseDown);
-            this.panelSearchField.MouseMove += new MouseEventHandler(this.panelSearchField_MouseMove);
-            this.panelSearchField.MouseUp += new MouseEventHandler(this.PanelMouseUp);
+            this.panelSearchField.Paint += new System.Windows.Forms.PaintEventHandler(this.panelSearchField_Paint);
+            this.panelSearchField.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PanelMouseDown);
+            this.panelSearchField.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelSearchField_MouseMove);
+            this.panelSearchField.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PanelMouseUp);
+            // 
+            // lblResults
+            // 
             this.lblResults.AutoSize = true;
-            this.lblResults.Font = new Font("Arial", 14f);
-            this.lblResults.Location = new Point(0x88, 0xa9);
+            this.lblResults.Font = new System.Drawing.Font("Arial", 14F);
+            this.lblResults.Location = new System.Drawing.Point(136, 169);
             this.lblResults.Name = "lblResults";
-            this.lblResults.Size = new Size(0, 0x16);
+            this.lblResults.Size = new System.Drawing.Size(0, 22);
             this.lblResults.TabIndex = 6;
-            this.slider.Location = new Point(0x22, 0x79);
+            // 
+            // slider
+            // 
+            this.slider.Location = new System.Drawing.Point(34, 121);
             this.slider.Name = "slider";
-            this.slider.Size = new Size(0x1ac, 0x2d);
+            this.slider.Size = new System.Drawing.Size(428, 45);
             this.slider.TabIndex = 5;
             this.slider.Visible = false;
-            this.slider.Scroll += new EventHandler(this.slider_Scroll);
-            this.btnCancelSearch.Font = new Font("Arial", 14f);
-            this.btnCancelSearch.Location = new Point(340, 0x52);
+            this.slider.Scroll += new System.EventHandler(this.slider_Scroll);
+            // 
+            // btnCancelSearch
+            // 
+            this.btnCancelSearch.Font = new System.Drawing.Font("Arial", 14F);
+            this.btnCancelSearch.Location = new System.Drawing.Point(340, 82);
             this.btnCancelSearch.Name = "btnCancelSearch";
-            this.btnCancelSearch.Size = new Size(0x73, 0x21);
+            this.btnCancelSearch.Size = new System.Drawing.Size(115, 33);
             this.btnCancelSearch.TabIndex = 4;
             this.btnCancelSearch.Text = "Cancel";
             this.btnCancelSearch.UseVisualStyleBackColor = true;
-            this.btnCancelSearch.Click += new EventHandler(this.btnCancelSearch_Click);
-            this.btnSearchField.Font = new Font("Arial", 14f);
-            this.btnSearchField.Location = new Point(0x2a, 0x52);
+            this.btnCancelSearch.Click += new System.EventHandler(this.btnCancelSearch_Click);
+            // 
+            // btnSearchField
+            // 
+            this.btnSearchField.Font = new System.Drawing.Font("Arial", 14F);
+            this.btnSearchField.Location = new System.Drawing.Point(42, 82);
             this.btnSearchField.Name = "btnSearchField";
-            this.btnSearchField.Size = new Size(0x73, 0x21);
+            this.btnSearchField.Size = new System.Drawing.Size(115, 33);
             this.btnSearchField.TabIndex = 3;
             this.btnSearchField.Text = "Search";
             this.btnSearchField.UseVisualStyleBackColor = true;
-            this.btnSearchField.Click += new EventHandler(this.btnSearchField_Click);
-            this.txtSearchField.Font = new Font("Arial", 14f);
-            this.txtSearchField.Location = new Point(0x2a, 0x29);
+            this.btnSearchField.Click += new System.EventHandler(this.btnSearchField_Click);
+            // 
+            // txtSearchField
+            // 
+            this.txtSearchField.Font = new System.Drawing.Font("Arial", 14F);
+            this.txtSearchField.Location = new System.Drawing.Point(42, 41);
             this.txtSearchField.Name = "txtSearchField";
-            this.txtSearchField.Size = new Size(0x19d, 0x1d);
+            this.txtSearchField.Size = new System.Drawing.Size(413, 29);
             this.txtSearchField.TabIndex = 2;
-            this.txtSearchField.TextChanged += new EventHandler(this.txtSearchField_TextChanged);
+            this.txtSearchField.TextChanged += new System.EventHandler(this.txtSearchField_TextChanged);
+            // 
+            // lblSearchOnField
+            // 
             this.lblSearchOnField.AutoSize = true;
-            this.lblSearchOnField.Font = new Font("Arial", 15f);
-            this.lblSearchOnField.Location = new Point(0x9f, 15);
+            this.lblSearchOnField.Font = new System.Drawing.Font("Arial", 15F);
+            this.lblSearchOnField.Location = new System.Drawing.Point(159, 15);
             this.lblSearchOnField.Name = "lblSearchOnField";
-            this.lblSearchOnField.Size = new Size(0x8d, 0x17);
+            this.lblSearchOnField.Size = new System.Drawing.Size(141, 23);
             this.lblSearchOnField.TabIndex = 0;
             this.lblSearchOnField.Text = "Search on field";
-            this.btnLatestJob.Font = new Font("Arial", 12f, FontStyle.Bold);
-            this.btnLatestJob.Location = new Point(12, 250);
+            // 
+            // btnLatestJob
+            // 
+            this.btnLatestJob.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.btnLatestJob.Location = new System.Drawing.Point(12, 250);
             this.btnLatestJob.Name = "btnLatestJob";
-            this.btnLatestJob.Size = new Size(0xa2, 0x2a);
-            this.btnLatestJob.TabIndex = 0x3e;
+            this.btnLatestJob.Size = new System.Drawing.Size(162, 42);
+            this.btnLatestJob.TabIndex = 62;
             this.btnLatestJob.Text = "Latest Job";
             this.btnLatestJob.UseVisualStyleBackColor = true;
-            this.btnLatestJob.Click += new EventHandler(this.btnLatestJob_Click);
-            this.btnNextPhoto.Font = new Font("Arial", 10f);
-            this.btnNextPhoto.Location = new Point(990, 3);
+            this.btnLatestJob.Click += new System.EventHandler(this.btnLatestJob_Click);
+            // 
+            // btnNextPhoto
+            // 
+            this.btnNextPhoto.Font = new System.Drawing.Font("Arial", 10F);
+            this.btnNextPhoto.Location = new System.Drawing.Point(990, 3);
             this.btnNextPhoto.Name = "btnNextPhoto";
-            this.btnNextPhoto.Size = new Size(0x36, 0x92);
-            this.btnNextPhoto.TabIndex = 0x3f;
+            this.btnNextPhoto.Size = new System.Drawing.Size(54, 146);
+            this.btnNextPhoto.TabIndex = 63;
             this.btnNextPhoto.Text = "Next Photo";
             this.btnNextPhoto.UseVisualStyleBackColor = true;
-            this.btnNextPhoto.Click += new EventHandler(this.btnNextPhoto_Click);
-            this.btnPrintForWork.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnPrintForWork.Location = new Point(12, 0x29d);
+            this.btnNextPhoto.Click += new System.EventHandler(this.btnNextPhoto_Click);
+            // 
+            // btnPrintForWork
+            // 
+            this.btnPrintForWork.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnPrintForWork.Location = new System.Drawing.Point(12, 669);
             this.btnPrintForWork.Name = "btnPrintForWork";
-            this.btnPrintForWork.Size = new Size(0xa1, 0x2a);
-            this.btnPrintForWork.TabIndex = 0x40;
+            this.btnPrintForWork.Size = new System.Drawing.Size(161, 42);
+            this.btnPrintForWork.TabIndex = 64;
             this.btnPrintForWork.Text = "Print for Work";
             this.btnPrintForWork.UseVisualStyleBackColor = true;
-            this.btnPrintForWork.Click += new EventHandler(this.btnPrintForWork_Click);
-            this.btnLockUnlock.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnLockUnlock.Location = new Point(12, 0x1e8);
+            this.btnPrintForWork.Click += new System.EventHandler(this.btnPrintForWork_Click);
+            // 
+            // btnLockUnlock
+            // 
+            this.btnLockUnlock.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnLockUnlock.Location = new System.Drawing.Point(12, 488);
             this.btnLockUnlock.Name = "btnLockUnlock";
-            this.btnLockUnlock.Size = new Size(0xa2, 0x2a);
-            this.btnLockUnlock.TabIndex = 0x41;
+            this.btnLockUnlock.Size = new System.Drawing.Size(162, 42);
+            this.btnLockUnlock.TabIndex = 65;
             this.btnLockUnlock.Text = "Lock";
             this.btnLockUnlock.UseVisualStyleBackColor = true;
-            this.btnLockUnlock.Click += new EventHandler(this.btnLockUnlock_Click);
-            this.btnUndo.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnUndo.Location = new Point(12, 440);
+            this.btnLockUnlock.Click += new System.EventHandler(this.btnLockUnlock_Click);
+            // 
+            // btnUndo
+            // 
+            this.btnUndo.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnUndo.Location = new System.Drawing.Point(12, 440);
             this.btnUndo.Name = "btnUndo";
-            this.btnUndo.Size = new Size(0xa2, 0x2a);
-            this.btnUndo.TabIndex = 0x42;
+            this.btnUndo.Size = new System.Drawing.Size(162, 42);
+            this.btnUndo.TabIndex = 66;
             this.btnUndo.Text = "Undo";
             this.btnUndo.UseVisualStyleBackColor = true;
-            this.btnUndo.Click += new EventHandler(this.btnUndo_Click);
-            this.picPaid.Image = Resources.paid_stamp;
-            this.picPaid.Location = new Point(0x377, 0x66);
+            this.btnUndo.Click += new System.EventHandler(this.btnUndo_Click);
+            // 
+            // picPaid
+            // 
+            this.picPaid.Location = new System.Drawing.Point(887, 102);
             this.picPaid.Name = "picPaid";
-            this.picPaid.Size = new Size(0x61, 0x33);
-            this.picPaid.SizeMode = PictureBoxSizeMode.Zoom;
-            this.picPaid.TabIndex = 0x26;
+            this.picPaid.Size = new System.Drawing.Size(97, 51);
+            this.picPaid.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picPaid.TabIndex = 38;
             this.picPaid.TabStop = false;
             this.picPaid.Visible = false;
-            this.pictureBox1.BackColor = SystemColors.ActiveBorder;
-            this.pictureBox1.Location = new Point(0x425, 3);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.pictureBox1.Location = new System.Drawing.Point(1061, 3);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new Size(0x127, 290);
-            this.pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+            this.pictureBox1.Size = new System.Drawing.Size(295, 290);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 8;
             this.pictureBox1.TabStop = false;
-            this.pictureBox1.Click += new EventHandler(this.pictureBox1_Click);
-            this.btnPrintAll.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnPrintAll.Location = new Point(13, 0x2cd);
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
+            // 
+            // btnPrintAll
+            // 
+            this.btnPrintAll.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnPrintAll.Location = new System.Drawing.Point(13, 717);
             this.btnPrintAll.Name = "btnPrintAll";
-            this.btnPrintAll.Size = new Size(0xa1, 0x2a);
-            this.btnPrintAll.TabIndex = 0x43;
+            this.btnPrintAll.Size = new System.Drawing.Size(161, 42);
+            this.btnPrintAll.TabIndex = 67;
             this.btnPrintAll.Text = "Print 3 Copies";
             this.btnPrintAll.UseVisualStyleBackColor = true;
-            this.btnPrintAll.Click += new EventHandler(this.btnPrintAll_Click);
-            this.btnTodayForDateCompleted.Location = new Point(0x31e, 0x83);
+            this.btnPrintAll.Click += new System.EventHandler(this.btnPrintAll_Click);
+            // 
+            // btnTodayForDateCompleted
+            // 
+            this.btnTodayForDateCompleted.Location = new System.Drawing.Point(798, 131);
             this.btnTodayForDateCompleted.Name = "btnTodayForDateCompleted";
-            this.btnTodayForDateCompleted.Size = new Size(0x49, 0x16 + 5);
-            this.btnTodayForDateCompleted.TabIndex = 0x44;
+            this.btnTodayForDateCompleted.Size = new System.Drawing.Size(73, 22);
+            this.btnTodayForDateCompleted.TabIndex = 68;
             this.btnTodayForDateCompleted.Text = "Today";
             this.btnTodayForDateCompleted.UseVisualStyleBackColor = true;
-            this.btnTodayForDateCompleted.Click += new EventHandler(this.btnTodayForDateCompleted_Click);
-            this.btnAddWeek.Font = new Font("Arial", 8f);
-            this.btnAddWeek.Location = new Point(0x31f, 0x65);
+            this.btnTodayForDateCompleted.Click += new System.EventHandler(this.btnTodayForDateCompleted_Click);
+            // 
+            // btnAddWeek
+            // 
+            this.btnAddWeek.Font = new System.Drawing.Font("Arial", 8F);
+            this.btnAddWeek.Location = new System.Drawing.Point(799, 101);
             this.btnAddWeek.Name = "btnAddWeek";
-            this.btnAddWeek.Size = new Size(0x48, 0x16 + 5);
-            this.btnAddWeek.TabIndex = 0x45;
+            this.btnAddWeek.Size = new System.Drawing.Size(72, 22);
+            this.btnAddWeek.TabIndex = 69;
             this.btnAddWeek.Text = "+1 week";
             this.btnAddWeek.UseVisualStyleBackColor = true;
-            this.btnAddWeek.Click += new EventHandler(this.btnAddWeek_Click);
-            this.btnDuplicate.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnDuplicate.Location = new Point(13, 5);
+            this.btnAddWeek.Click += new System.EventHandler(this.btnAddWeek_Click);
+            // 
+            // btnDuplicate
+            // 
+            this.btnDuplicate.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnDuplicate.Location = new System.Drawing.Point(13, 5);
             this.btnDuplicate.Name = "btnDuplicate";
-            this.btnDuplicate.Size = new Size(0xa2, 0x2a);
+            this.btnDuplicate.Size = new System.Drawing.Size(162, 42);
             this.btnDuplicate.TabIndex = 70;
             this.btnDuplicate.Text = "Duplicate Job";
             this.btnDuplicate.UseVisualStyleBackColor = true;
-            this.btnDuplicate.Click += new EventHandler(this.btnDuplicate_Click);
+            this.btnDuplicate.Click += new System.EventHandler(this.btnDuplicate_Click);
+            // 
+            // grpBoxPlating
+            // 
             this.grpBoxPlating.Controls.Add(this.btnChrome);
             this.grpBoxPlating.Controls.Add(this.btnCopper);
             this.grpBoxPlating.Controls.Add(this.btnNickle);
@@ -2656,189 +2889,277 @@
             this.grpBoxPlating.Controls.Add(this.btnTin);
             this.grpBoxPlating.Controls.Add(this.btnSatin);
             this.grpBoxPlating.Controls.Add(this.btnGold);
-            this.grpBoxPlating.Location = new Point(0x343, 0xc2);
+            this.grpBoxPlating.Location = new System.Drawing.Point(835, 194);
             this.grpBoxPlating.Name = "grpBoxPlating";
-            this.grpBoxPlating.Size = new Size(0xd1, 0x69);
-            this.grpBoxPlating.TabIndex = 0x47;
+            this.grpBoxPlating.Size = new System.Drawing.Size(209, 105);
+            this.grpBoxPlating.TabIndex = 71;
             this.grpBoxPlating.TabStop = false;
             this.grpBoxPlating.Text = "Plating";
             this.grpBoxPlating.Visible = false;
+            // 
+            // grpBoxPolish
+            // 
             this.grpBoxPolish.Controls.Add(this.btnRakesh);
             this.grpBoxPolish.Controls.Add(this.btnGeorge);
             this.grpBoxPolish.Controls.Add(this.btnHenry);
             this.grpBoxPolish.Controls.Add(this.btnBritt);
-            this.grpBoxPolish.Location = new Point(0x25c, 0xe5);
+            this.grpBoxPolish.Location = new System.Drawing.Point(604, 229);
             this.grpBoxPolish.Name = "grpBoxPolish";
-            this.grpBoxPolish.Size = new Size(0xd6, 0x45);
-            this.grpBoxPolish.TabIndex = 0x48;
+            this.grpBoxPolish.Size = new System.Drawing.Size(214, 69);
+            this.grpBoxPolish.TabIndex = 72;
             this.grpBoxPolish.TabStop = false;
             this.grpBoxPolish.Text = "Polish";
             this.grpBoxPolish.Visible = false;
-            this.btnCollapseToggle.Font = new Font("Microsoft Sans Serif", 10f, FontStyle.Bold, GraphicsUnit.Point, 0);
-            this.btnCollapseToggle.Location = new Point(12, 0x134);
+            // 
+            // btnCollapseToggle
+            // 
+            this.btnCollapseToggle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCollapseToggle.Location = new System.Drawing.Point(12, 308);
             this.btnCollapseToggle.Name = "btnCollapseToggle";
-            this.btnCollapseToggle.Size = new Size(160, 0x27);
-            this.btnCollapseToggle.TabIndex = 0x49;
+            this.btnCollapseToggle.Size = new System.Drawing.Size(160, 39);
+            this.btnCollapseToggle.TabIndex = 73;
             this.btnCollapseToggle.Text = "Collapse/Expand";
             this.btnCollapseToggle.UseVisualStyleBackColor = true;
-            this.btnCollapseToggle.Click += new EventHandler(this.btnCollapseToggle_Click);
+            this.btnCollapseToggle.Click += new System.EventHandler(this.btnCollapseToggle_Click);
+            // 
+            // cboReportStartMonth
+            // 
             this.cboReportStartMonth.DropDownHeight = 250;
             this.cboReportStartMonth.FormattingEnabled = true;
             this.cboReportStartMonth.IntegralHeight = false;
-            this.cboReportStartMonth.Items.AddRange(new object[] { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12" });
-            this.cboReportStartMonth.Location = new Point(0xbd, 0x2f2);
+            this.cboReportStartMonth.Items.AddRange(new object[] {
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10",
+            "11",
+            "12"});
+            this.cboReportStartMonth.Location = new System.Drawing.Point(189, 754);
             this.cboReportStartMonth.Name = "cboReportStartMonth";
-            this.cboReportStartMonth.Size = new Size(0xa3, 0x15);
-            this.cboReportStartMonth.TabIndex = 0x4a;
+            this.cboReportStartMonth.Size = new System.Drawing.Size(163, 21);
+            this.cboReportStartMonth.TabIndex = 74;
             this.cboReportStartMonth.Text = "<Select Report Start Month>";
+            // 
+            // cboReportEndMonth
+            // 
             this.cboReportEndMonth.DropDownHeight = 250;
             this.cboReportEndMonth.FormattingEnabled = true;
             this.cboReportEndMonth.IntegralHeight = false;
-            this.cboReportEndMonth.Items.AddRange(new object[] { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12" });
-            this.cboReportEndMonth.Location = new Point(0xbd, 0x30d);
+            this.cboReportEndMonth.Items.AddRange(new object[] {
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10",
+            "11",
+            "12"});
+            this.cboReportEndMonth.Location = new System.Drawing.Point(189, 781);
             this.cboReportEndMonth.Name = "cboReportEndMonth";
-            this.cboReportEndMonth.Size = new Size(0xa3, 0x15);
-            this.cboReportEndMonth.TabIndex = 0x4b;
+            this.cboReportEndMonth.Size = new System.Drawing.Size(163, 21);
+            this.cboReportEndMonth.TabIndex = 75;
             this.cboReportEndMonth.Text = "<Select Report End Month>";
+            // 
+            // cboReportYear
+            // 
             this.cboReportYear.DropDownHeight = 250;
             this.cboReportYear.FormattingEnabled = true;
             this.cboReportYear.IntegralHeight = false;
-            this.cboReportYear.Items.AddRange(new object[] { "2015", "2016", "2017", "2018", "2019", "2020" });
-            this.cboReportYear.Location = new Point(0xbd, 0x328);
+            this.cboReportYear.Items.AddRange(new object[] {
+            "2015",
+            "2016",
+            "2017",
+            "2018",
+            "2019",
+            "2020"});
+            this.cboReportYear.Location = new System.Drawing.Point(189, 808);
             this.cboReportYear.Name = "cboReportYear";
-            this.cboReportYear.Size = new Size(0xa3, 0x15);
-            this.cboReportYear.TabIndex = 0x4c;
+            this.cboReportYear.Size = new System.Drawing.Size(163, 21);
+            this.cboReportYear.TabIndex = 76;
             this.cboReportYear.Text = "<Select Report Year>";
+            // 
+            // cboReportProduct
+            // 
             this.cboReportProduct.DropDownHeight = 250;
             this.cboReportProduct.FormattingEnabled = true;
             this.cboReportProduct.IntegralHeight = false;
-            this.cboReportProduct.Items.AddRange(new object[] { 
-                "Strip", "Repair", "Polish", "Laquer", "Copper", "Nickle", "Chrome", "Brass", "Bronze", "Tin", "Satin", "Silver", "Gold", "Tyre", "Small Crack", "Large Crack",
-                "Small Dent", "Large Dent", "Machine", "Silver Galv", "Gold Galv", "Other"
-            });
-            this.cboReportProduct.Location = new Point(360, 0x2f2);
+            this.cboReportProduct.Items.AddRange(new object[] {
+            "Strip",
+            "Repair",
+            "Polish",
+            "Laquer",
+            "Copper",
+            "Nickle",
+            "Chrome",
+            "Brass",
+            "Bronze",
+            "Tin",
+            "Satin",
+            "Silver",
+            "Gold",
+            "Tyre",
+            "Small Crack",
+            "Large Crack",
+            "Small Dent",
+            "Large Dent",
+            "Machine",
+            "Silver Galv",
+            "Gold Galv",
+            "Other"});
+            this.cboReportProduct.Location = new System.Drawing.Point(360, 754);
             this.cboReportProduct.Name = "cboReportProduct";
-            this.cboReportProduct.Size = new Size(0xa3, 0x15);
-            this.cboReportProduct.TabIndex = 0x4d;
+            this.cboReportProduct.Size = new System.Drawing.Size(163, 21);
+            this.cboReportProduct.TabIndex = 77;
             this.cboReportProduct.Text = "<Select Report Product>";
-            this.cboReportProduct.SelectedIndexChanged += new EventHandler(this.cboReportProduct_SelectedIndexChanged);
-            this.btnReport.Font = new Font("Arial", 13f, FontStyle.Bold);
-            this.btnReport.Location = new Point(360, 0x30d);
+            this.cboReportProduct.SelectedIndexChanged += new System.EventHandler(this.cboReportProduct_SelectedIndexChanged);
+            // 
+            // btnReport
+            // 
+            this.btnReport.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnReport.Location = new System.Drawing.Point(360, 781);
             this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new Size(0xa3, 0x30);
-            this.btnReport.TabIndex = 0x4e;
+            this.btnReport.Size = new System.Drawing.Size(163, 48);
+            this.btnReport.TabIndex = 78;
             this.btnReport.Text = "Report";
             this.btnReport.UseVisualStyleBackColor = true;
-            this.btnReport.Click += new EventHandler(this.btnReport_Click);
+            this.btnReport.Click += new System.EventHandler(this.btnReport_Click);
+            // 
+            // SuperSearchField
+            // 
             this.SuperSearchField.DropDownHeight = 250;
-            this.SuperSearchField.DropDownStyle = ComboBoxStyle.Simple;
+            this.SuperSearchField.DropDownStyle = System.Windows.Forms.ComboBoxStyle.Simple;
             this.SuperSearchField.FormattingEnabled = true;
             this.SuperSearchField.IntegralHeight = false;
-            this.SuperSearchField.Location = new Point(0xbd, 0x2d7);
+            this.SuperSearchField.Location = new System.Drawing.Point(189, 727);
             this.SuperSearchField.Name = "SuperSearchField";
-            this.SuperSearchField.Size = new Size(0x310, 0x15);
+            this.SuperSearchField.Size = new System.Drawing.Size(784, 21);
             this.SuperSearchField.TabIndex = 80;
             this.SuperSearchField.Text = "Enter super SQL search (advanced users only!)";
-            this.SuperSearchField.KeyDown += new KeyEventHandler(this.OnSuperSearchEnterKey);
+            this.SuperSearchField.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnSuperSearchEnterKey);
+            // 
+            // btnFussy
+            // 
+            this.btnFussy.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
+            this.btnFussy.Location = new System.Drawing.Point(194, 126);
+            this.btnFussy.Name = "btnFussy";
+            this.btnFussy.Size = new System.Drawing.Size(56, 39);
+            this.btnFussy.TabIndex = 81;
+            this.btnFussy.Text = "!";
+            this.btnFussy.UseVisualStyleBackColor = false;
+            this.btnFussy.Click += new System.EventHandler(this.btnFussy_Click);
+            // 
+            // JobCard
+            // 
             this.AllowDrop = true;
-            base.AutoScaleDimensions = new SizeF(96f, 96f);
-            base.AutoScaleMode = AutoScaleMode.Dpi;
-            base.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            base.ClientSize = new Size(0x558, 0x349);
-            base.Controls.Add(this.SuperSearchField);
-            base.Controls.Add(this.btnReport);
-            base.Controls.Add(this.cboReportProduct);
-            base.Controls.Add(this.cboReportYear);
-            base.Controls.Add(this.cboReportEndMonth);
-            base.Controls.Add(this.cboReportStartMonth);
-            base.Controls.Add(this.btnCollapseToggle);
-            base.Controls.Add(this.grpBoxPolish);
-            base.Controls.Add(this.grpBoxPlating);
-            base.Controls.Add(this.panelSearchField);
-            base.Controls.Add(this.btnDuplicate);
-            base.Controls.Add(this.btnAddWeek);
-            base.Controls.Add(this.btnTodayForDateCompleted);
-            base.Controls.Add(this.btnPrintAll);
-            base.Controls.Add(this.btnUndo);
-            base.Controls.Add(this.btnLockUnlock);
-            base.Controls.Add(this.btnPrintForWork);
-            base.Controls.Add(this.btnNextPhoto);
-            base.Controls.Add(this.btnLatestJob);
-            base.Controls.Add(this.jobCompleted);
-            base.Controls.Add(this.btnPrintBusiness);
-            base.Controls.Add(this.btnPrintCustomerCopy);
-            base.Controls.Add(this.btnEmail);
-            base.Controls.Add(this.btnSave);
-            base.Controls.Add(this.btnCam1);
-            base.Controls.Add(this.btnCam2);
-            base.Controls.Add(this.btnExit);
-            base.Controls.Add(this.datagrid);
-            base.Controls.Add(this.picPaid);
-            base.Controls.Add(this.fastPrint);
-            base.Controls.Add(this.btnToday);
-            base.Controls.Add(this.jobDatePaid);
-            base.Controls.Add(this.label14);
-            base.Controls.Add(this.jobNotes);
-            base.Controls.Add(this.label13);
-            base.Controls.Add(this.jobPaymentBy);
-            base.Controls.Add(this.label12);
-            base.Controls.Add(this.jobDateCompleted);
-            base.Controls.Add(this.label11);
-            base.Controls.Add(this.jobDateRequired);
-            base.Controls.Add(this.label10);
-            base.Controls.Add(this.jobReceivedFrom);
-            base.Controls.Add(this.label9);
-            base.Controls.Add(this.btnCourier);
-            base.Controls.Add(this.btnCollect);
-            base.Controls.Add(this.jobDelivery);
-            base.Controls.Add(this.label8);
-            base.Controls.Add(this.jobOrderNumber);
-            base.Controls.Add(this.label7);
-            base.Controls.Add(this.jobEmail);
-            base.Controls.Add(this.label6);
-            base.Controls.Add(this.jobPhone);
-            base.Controls.Add(this.label5);
-            base.Controls.Add(this.jobAddress);
-            base.Controls.Add(this.label4);
-            base.Controls.Add(this.jobCustomer);
-            base.Controls.Add(this.label3);
-            base.Controls.Add(this.jobBusinessName);
-            base.Controls.Add(this.labelJobBusinessName);
-            base.Controls.Add(this.jobDate);
-            base.Controls.Add(this.label2);
-            base.Controls.Add(this.pictureBox1);
-            base.Controls.Add(this.btnNavigateForward);
-            base.Controls.Add(this.btnNavigateBack);
-            base.Controls.Add(this.jobID);
-            base.Controls.Add(this.label1);
-            base.Controls.Add(this.btnUnpaidCustomers);
-            base.Controls.Add(this.btnSearchLists);
-            base.Controls.Add(this.btnIncompleteJobs);
-            base.Controls.Add(this.btnNewJob);
-            base.Icon = (Icon) manager.GetObject("$this.Icon");
-            base.Name = "JobCard";
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.ClientSize = new System.Drawing.Size(1362, 741);
+            this.Controls.Add(this.btnFussy);
+            this.Controls.Add(this.SuperSearchField);
+            this.Controls.Add(this.btnReport);
+            this.Controls.Add(this.cboReportProduct);
+            this.Controls.Add(this.cboReportYear);
+            this.Controls.Add(this.cboReportEndMonth);
+            this.Controls.Add(this.cboReportStartMonth);
+            this.Controls.Add(this.btnCollapseToggle);
+            this.Controls.Add(this.grpBoxPolish);
+            this.Controls.Add(this.grpBoxPlating);
+            this.Controls.Add(this.panelSearchField);
+            this.Controls.Add(this.btnDuplicate);
+            this.Controls.Add(this.btnAddWeek);
+            this.Controls.Add(this.btnTodayForDateCompleted);
+            this.Controls.Add(this.btnPrintAll);
+            this.Controls.Add(this.btnUndo);
+            this.Controls.Add(this.btnLockUnlock);
+            this.Controls.Add(this.btnPrintForWork);
+            this.Controls.Add(this.btnNextPhoto);
+            this.Controls.Add(this.btnLatestJob);
+            this.Controls.Add(this.jobCompleted);
+            this.Controls.Add(this.btnPrintBusiness);
+            this.Controls.Add(this.btnPrintCustomerCopy);
+            this.Controls.Add(this.btnEmail);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnCam1);
+            this.Controls.Add(this.btnCam2);
+            this.Controls.Add(this.btnExit);
+            this.Controls.Add(this.datagrid);
+            this.Controls.Add(this.picPaid);
+            this.Controls.Add(this.fastPrint);
+            this.Controls.Add(this.btnToday);
+            this.Controls.Add(this.jobDatePaid);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.jobNotes);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.jobPaymentBy);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.jobDateCompleted);
+            this.Controls.Add(this.label11);
+            this.Controls.Add(this.jobDateRequired);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.jobReceivedFrom);
+            this.Controls.Add(this.label9);
+            this.Controls.Add(this.btnCourier);
+            this.Controls.Add(this.btnCollect);
+            this.Controls.Add(this.jobDelivery);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.jobOrderNumber);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.jobEmail);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.jobPhone);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.jobAddress);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.jobCustomer);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.jobBusinessName);
+            this.Controls.Add(this.labelJobBusinessName);
+            this.Controls.Add(this.jobDate);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.btnNavigateForward);
+            this.Controls.Add(this.btnNavigateBack);
+            this.Controls.Add(this.jobID);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.btnUnpaidCustomers);
+            this.Controls.Add(this.btnSearchLists);
+            this.Controls.Add(this.btnIncompleteJobs);
+            this.Controls.Add(this.btnNewJob);
+            this.Name = "JobCard";
             this.Text = "JobCard";
-            base.FormClosing += new FormClosingEventHandler(this.CheckBeforeQuit);
-            base.ControlAdded += new ControlEventHandler(this.ControlAdd);
-            base.DragDrop += new DragEventHandler(this.DoDragDrop);
-            base.DragEnter += new DragEventHandler(this.DoDragEnter);
-            base.Resize += new EventHandler(this.Form1_ResizeEnd);
-            ((ISupportInitialize) this.datagrid).EndInit();
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckBeforeQuit);
+            this.ControlAdded += new System.Windows.Forms.ControlEventHandler(this.ControlAdd);
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.DoDragDrop);
+            this.DragEnter += new System.Windows.Forms.DragEventHandler(this.DoDragEnter);
+            this.Resize += new System.EventHandler(this.Form1_ResizeEnd);
+            ((System.ComponentModel.ISupportInitialize)(this.datagrid)).EndInit();
             this.panelSearchField.ResumeLayout(false);
             this.panelSearchField.PerformLayout();
-            this.slider.EndInit();
-            ((ISupportInitialize) this.picPaid).EndInit();
-            ((ISupportInitialize) this.pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.slider)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.picPaid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.grpBoxPlating.ResumeLayout(false);
             this.grpBoxPolish.ResumeLayout(false);
-            base.ResumeLayout(false);
-            base.PerformLayout();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
         }
 
-        private bool IsCompleted() => 
+        private bool IsCompleted() =>
             !string.IsNullOrWhiteSpace(this.jobDateCompleted.Text);
 
-        private bool IsPaid() => 
+        private bool IsPaid() =>
             !string.IsNullOrWhiteSpace(this.jobDatePaid.Text);
 
         private bool IsValid(string emailaddress)
@@ -2871,8 +3192,8 @@
                     }
                 }
             }
-        }    
-        
+        }
+
         private void JobCard_DropDown(CheckBoxComboBox c, string toSet)
         {
             string str = toSet;
@@ -2909,7 +3230,7 @@
         {
             if (sender is TextBox)
             {
-                TextBox box = (TextBox) sender;
+                TextBox box = (TextBox)sender;
                 JobTypePopup.jobType = box;
 
                 if (JobCard.popup == null)
@@ -2918,15 +3239,15 @@
                 }
                 if (box.Enabled)
                 {
-                    
+
                     if (JobCard.popup.IsDisposed)
                     {
                         JobCard.popup = new JobTypePopup();
-                        
+
                     }
-                    
+
                     JobCard.popup.Show();
-                    
+
                 }
             }
         }
@@ -2957,29 +3278,29 @@
                     bool flag3 = false;
                     if (((obj2 is float) || (obj2 is double)) || (obj2 is float))
                     {
-                        toSet = ((float) obj2).ToString("F2");
+                        toSet = ((float)obj2).ToString("F2");
                     }
                     if ((obj2 is int) || (obj2 is long))
                     {
-                        toSet = ((int) obj2).ToString();
+                        toSet = ((int)obj2).ToString();
                     }
                     else if (obj2 is DateTime)
                     {
                         if (name == "jobDate")
                         {
-                            this.jobDateValForPhoto = (DateTime) obj2;
+                            this.jobDateValForPhoto = (DateTime)obj2;
                             this.UpdatePhotos();
                         }
-                        toSet = ((DateTime) obj2).ToString("d/M/yy");
+                        toSet = ((DateTime)obj2).ToString("d/M/yy");
                     }
                     else if (obj2 is bool)
                     {
-                        flag3 = (bool) obj2;
+                        flag3 = (bool)obj2;
                         toSet = flag3.ToString();
                     }
                     else if (obj2 is string)
                     {
-                        toSet = (string) obj2;
+                        toSet = (string)obj2;
                     }
                     System.Type valueType = cell.ValueType;
                     if (this.fieldNameToControlMapping.ContainsKey(name))
@@ -2998,23 +3319,23 @@
                         }
                         if (flag8)
                         {
-                            CheckBoxComboBox c = (CheckBoxComboBox) control;
+                            CheckBoxComboBox c = (CheckBoxComboBox)control;
                             c.BackColor = whiteSmoke;
                             this.JobCard_DropDown(c, toSet);
                         }
                         else if (flag4)
                         {
-                            TextBox box2 = (TextBox) control;
+                            TextBox box2 = (TextBox)control;
                             box2.BackColor = whiteSmoke;
                             box2.Text = toSet;
                         }
                         else if (flag5)
                         {
-                            ((Label) control).Text = toSet;
+                            ((Label)control).Text = toSet;
                         }
                         else if (flag6)
                         {
-                            CheckBox item = (CheckBox) control;
+                            CheckBox item = (CheckBox)control;
                             item.BackColor = whiteSmoke;
                             item.Checked = flag3;
                             if (name != "jobCompleted")
@@ -3026,7 +3347,7 @@
                         }
                         else if (flag7)
                         {
-                            ComboBox box4 = (ComboBox) control;
+                            ComboBox box4 = (ComboBox)control;
                             box4.BackColor = whiteSmoke;
                             box4.Text = toSet;
                         }
@@ -3039,9 +3360,17 @@
                 this.LockAll(this.NeedLock());
                 this.undoList.Clear();
                 this.Loading = false;
-                this.updateCreditCardSurcharge();                
+                this.updateCreditCardSurcharge();
                 this.RedrawArrayComponent();
                 DisclaimerNote();
+            }
+            bool isFussy = DataAccess.isFussyCustomers(this.jobPhone.Text, this.jobEmail.Text);
+            if (isFussy)
+            {
+                this.BackColor = Color.LightSalmon;
+            } else
+            {
+                this.BackColor = Color.LightGray;
             }
         }
 
@@ -3062,7 +3391,7 @@
                 Button button = null;
                 if (sender is Button)
                 {
-                    button = (Button) sender;
+                    button = (Button)sender;
                 }
                 if (button != null)
                 {
@@ -3112,7 +3441,7 @@
 
         private void UpdateAllTotals()
         {
-           
+
             double num2 = 0.0;
             double num3 = 0.0;
             double num4 = 0.0;
@@ -3226,7 +3555,7 @@
                 }
                 else
                 {
-                    this.panelSearchField.Location = new Point((int) (((float) base.Width) / 3f), (int) (((float) base.Height) / 2.5f));
+                    this.panelSearchField.Location = new Point((int)(((float)base.Width) / 3f), (int)(((float)base.Height) / 2.5f));
                 }
                 this.txtSearchField.Text = this.SuperSearchField.Text;
                 this.searchFieldName = "";
@@ -3305,7 +3634,7 @@
                         JobCard.currentPhotoPaths.RemoveAt(currentPictureIndex);
                         if (currentPictureIndex >= JobCard.currentPhotoPaths.Count)
                         {
-                            currentPictureIndex = JobCard.currentPhotoPaths.Count-1;
+                            currentPictureIndex = JobCard.currentPhotoPaths.Count - 1;
                         }
                         if (currentPictureIndex >= 0)
                         {
@@ -3327,7 +3656,7 @@
                 Button button = null;
                 if (sender is Button)
                 {
-                    button = (Button) sender;
+                    button = (Button)sender;
                 }
                 if (button != null)
                 {
@@ -3342,21 +3671,22 @@
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
             CustomerCopy.autoPrint = fastPrint.Checked;
-            CustomerCopy copy = new CustomerCopy {
+            CustomerCopy copy = new CustomerCopy
+            {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
             };
-            copy.Height = (int) (copy.Width * Math.Sqrt(2.0));
+            copy.Height = (int)(copy.Width * Math.Sqrt(2.0));
             RichTextBox r = copy.richTextBox1;
             this.AddLine(r, "");
             if (this.pictureBox1.Image != null)
             {
-                Clipboard.SetImage(resizeImage(this.pictureBox1.Image, new Size((int) (copy.Width * 0.8f), (int) (copy.Height * 0.25f))));
+                Clipboard.SetImage(resizeImage(this.pictureBox1.Image, new Size((int)(copy.Width * 0.8f), (int)(copy.Height * 0.25f))));
                 r.Paste();
             }
             this.AddLine(r, this.jobID.Text, "Arial", 100, FontStyle.Bold, 0);
             this.AddLine(r, "Job Date: " + this.jobDate.Text.PadLeft(10) + "Order Number: ".PadLeft(40) + this.jobOrderNumber.Text, "Courier New", 0x10, FontStyle.Regular, 0);
             this.AddLine(r, "Business/Customer:", FontStyle.Bold);
-            this.AddLine(r, "Business/Customer:" + this.jobBusinessName.Text+"/"+this.jobCustomer.Text.PadRight(0x23) + " Ph:" + this.jobPhone.Text, FontStyle.Regular);
+            this.AddLine(r, "Business/Customer:" + this.jobBusinessName.Text + "/" + this.jobCustomer.Text.PadRight(0x23) + " Ph:" + this.jobPhone.Text, FontStyle.Regular);
             this.AddLine(r, "Date Required: " + this.jobDateRequired.Text.PadLeft(10) + (this.IsPaid() ? ("  Payment By: " + this.jobPaymentBy.Text) : ""));
             this.AddLine(r, "Details:", FontStyle.Bold);
             this.AddLine(r, this.CombinedDetailText(true), FontStyle.Regular);
@@ -3379,7 +3709,7 @@
 
         private void PromptDatabasePath()
         {
-            DialogResult result = MessageBox.Show("Initial Setup requires you to point to the "+JobCard.DBPath+" database" + Environment.NewLine + " Would you like to auto search for it (will take time to search your entire computer), or would you rather search manually?)" + Environment.NewLine + "Yes - to auto search" + Environment.NewLine + "No - to manual search (via dialog)", "Find JobCard.mdb", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult result = MessageBox.Show("Initial Setup requires you to point to the " + JobCard.DBPath + " database" + Environment.NewLine + " Would you like to auto search for it (will take time to search your entire computer), or would you rather search manually?)" + Environment.NewLine + "Yes - to auto search" + Environment.NewLine + "No - to manual search (via dialog)", "Find JobCard.mdb", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             string path = "";
             if (result == DialogResult.Yes)
             {
@@ -3387,7 +3717,8 @@
             }
             if (!System.IO.File.Exists(path))
             {
-                OpenFileDialog dialog = new OpenFileDialog {
+                OpenFileDialog dialog = new OpenFileDialog
+                {
                     InitialDirectory = @"c:\",
                     Filter = "MS Access database files (*.mdb)|*.mdb",
                     FilterIndex = 1,
@@ -3435,12 +3766,12 @@
                 }
                 int num2 = 10;
                 int num3 = this.pictureBox1.Right - (this.btnCollapseToggle.Right + num2);
-                
+
                 int num4 = this.btnPrintAll.Bottom - this.btnCollapseToggle.Top;
                 int num5 = list[0];
                 int num6 = 3;
-                int height = ((int) (((float) num4) / ((float) list.Count))) - num6;
-                float emSize = Math.Min((float) 11f, (float) (0.6111111f * height));
+                int height = ((int)(((float)num4) / ((float)list.Count))) - num6;
+                float emSize = Math.Min((float)11f, (float)(0.6111111f * height));
                 double num9 = 1.0;
                 for (num = 0; num < list.Count; num++)
                 {
@@ -3451,7 +3782,7 @@
                     {
                         num9 = 0.0;
                     }
-                    this.jobDetail[index].Size = new Size((int) (num3 * 0.4), height);
+                    this.jobDetail[index].Size = new Size((int)(num3 * 0.4), height);
                     this.jobDetail[index].TabIndex = 40 + (num * 3);
                     if (num >= 0x12)
                     {
@@ -3468,14 +3799,14 @@
                         this.jobUnitPrice[index].Enabled = false;
                     }
                     this.jobPrice[index].Font = new Font("Arial", emSize);
-                    this.jobPrice[index].Size = new Size((int) (num3 * 0.07), this.jobDetail[index].Height);
+                    this.jobPrice[index].Size = new Size((int)(num3 * 0.07), this.jobDetail[index].Height);
                     this.jobPrice[index].Location = new Point(this.pictureBox1.Right - this.jobPrice[index].Width, this.jobDetail[index].Location.Y);
                     this.jobPrice[index].TabIndex = 0x2a + (num * 3);
                     this.jobUnitPrice[index].Font = new Font("Arial", emSize);
-                    this.jobUnitPrice[index].Size = new Size((int) (num3 * 0.06), this.jobDetail[index].Height);
+                    this.jobUnitPrice[index].Size = new Size((int)(num3 * 0.06), this.jobDetail[index].Height);
                     this.jobUnitPrice[index].Location = new Point((this.jobPrice[index].Left - num2) - this.jobUnitPrice[index].Width, this.jobDetail[index].Location.Y);
                     this.jobQty[index].Font = new Font("Arial", emSize);
-                    this.jobQty[index].Size = new Size((int) (num3 * 0.04), this.jobDetail[index].Height);
+                    this.jobQty[index].Size = new Size((int)(num3 * 0.04), this.jobDetail[index].Height);
                     this.jobQty[index].Location = new Point((this.jobUnitPrice[index].Left - num2) - this.jobQty[index].Width, this.jobDetail[index].Location.Y);
                     this.jobType[index].Font = new Font("Arial", emSize);
                     int width = ((this.jobQty[index].Left - num2) - this.jobDetail[index].Right) - num2;
@@ -3529,8 +3860,8 @@
             float num3 = 0f;
             float num4 = 0f;
             float num5 = 0f;
-            num4 = ((float) size.Width) / ((float) width);
-            num5 = ((float) size.Height) / ((float) height);
+            num4 = ((float)size.Width) / ((float)width);
+            num5 = ((float)size.Height) / ((float)height);
             if (num5 < num4)
             {
                 num3 = num5;
@@ -3539,8 +3870,8 @@
             {
                 num3 = num4;
             }
-            int num6 = (int) (width * num3);
-            int num7 = (int) (height * num3);
+            int num6 = (int)(width * num3);
+            int num7 = (int)(height * num3);
             if (b != null)
             {
                 b.Dispose();
@@ -3576,7 +3907,7 @@
                 {
                     now = DateTime.Now;
                 }
-              
+
                 this.jobPhotos = this.GetJobPictureFiles(now.Year, now.Month, int.Parse(this.jobID.Text), out path, false);
                 for (int i = 0; i < images.Count; i++)
                 {
@@ -3662,9 +3993,9 @@
                 string businessName = "";
                 if (this.jobBusinessName.Text.Length > 0)
                 {
-                    businessName = this.jobBusinessName.Text+"-";
+                    businessName = this.jobBusinessName.Text + "-";
                 }
-                string str7 = (this.jobID.Text + " " + businessName+this.jobCustomer.Text + " " + (string.IsNullOrWhiteSpace(this.jobPhone.Text) ? "" : (this.jobPhone.Text + " ")) + str6 + str5 + str2).Replace('<', '-').Replace('>', '-').Replace(':', '-').Replace('"', '-').Replace('/', '-').Replace('\\', '-').Replace('|', '-').Replace('?', '-').Replace('*', '-');
+                string str7 = (this.jobID.Text + " " + businessName + this.jobCustomer.Text + " " + (string.IsNullOrWhiteSpace(this.jobPhone.Text) ? "" : (this.jobPhone.Text + " ")) + str6 + str5 + str2).Replace('<', '-').Replace('>', '-').Replace(':', '-').Replace('"', '-').Replace('/', '-').Replace('\\', '-').Replace('|', '-').Replace('?', '-').Replace('*', '-');
                 string destFileName = path + @"\" + str7;
                 System.IO.File.Copy(sourcePath, destFileName);
             }
@@ -3793,7 +4124,8 @@
         {
             MailAddress from = new MailAddress("team@plating.co.nz", "Advanced Chrome Platers");
             MailAddress to = new MailAddress(mailTo);
-            MailMessage message = new MailMessage(from, to) {
+            MailMessage message = new MailMessage(from, to)
+            {
                 Subject = csSubject,
                 Body = csBody,
                 IsBodyHtml = false,
@@ -3805,7 +4137,8 @@
                 message.Attachments.Add(new Attachment(attachment));
             }
 
-            SmtpClient client = new SmtpClient("mail.1stdomains.co.nz", 587) {
+            SmtpClient client = new SmtpClient("mail.1stdomains.co.nz", 587)
+            {
                 Credentials = new NetworkCredential("team@plating.co.nz", "Sterling-03")
                 //Credentials = CredentialCache.DefaultNetworkCredentials
             };
@@ -3824,7 +4157,7 @@
             return true;
         }
 
-        private DialogResult ShowError(string errMsg, string title, bool yesNoCancel = false) => 
+        private DialogResult ShowError(string errMsg, string title, bool yesNoCancel = false) =>
             MessageBox.Show(errMsg, title, yesNoCancel ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.OK, MessageBoxIcon.Hand);
 
         private bool ShowPrintForm(bool customerCopy = true, bool isPrintAll = false, string printToPDF = null)
@@ -3833,10 +4166,11 @@
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
             CustomerCopy.autoPrint = fastPrint.Checked;
-            CustomerCopy copy = new CustomerCopy {
+            CustomerCopy copy = new CustomerCopy
+            {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
             };
-            copy.Height = (int) (copy.Width * Math.Sqrt(2.0));
+            copy.Height = (int)(copy.Width * Math.Sqrt(2.0));
             RichTextBox r = copy.richTextBox1;
             this.AddLine(r, "");
             Resources.logo.MakeTransparent();
@@ -3846,7 +4180,7 @@
             }
             else if (this.pictureBox1.Image != null)
             {
-                Clipboard.SetImage(resizeImage(this.pictureBox1.Image, new Size((int) (copy.Width * 0.8f), (int) (copy.Height * 0.25f))));
+                Clipboard.SetImage(resizeImage(this.pictureBox1.Image, new Size((int)(copy.Width * 0.8f), (int)(copy.Height * 0.25f))));
             }
             r.Paste();
             this.AddLine(r, this.jobID.Text, "Arial", 0x24, FontStyle.Bold, 0);
@@ -3862,7 +4196,7 @@
                 businessName = this.jobBusinessName.Text + " / ";
             }
             this.AddLine(r, businessCustomerTitle, FontStyle.Bold);
-            
+
             this.AddLine(r, businessName + this.jobCustomer.Text.PadRight(0x2d) + " Ph:" + this.jobPhone.Text, FontStyle.Regular);
             if (!string.IsNullOrWhiteSpace(this.jobEmail.Text))
             {
@@ -3947,16 +4281,16 @@
                 }
                 else
                 {
-                    this.panelSearchField.Location = new Point((int) (((float) base.Width) / 3f), (int) (((float) base.Height) / 2.5f));
+                    this.panelSearchField.Location = new Point((int)(((float)base.Width) / 3f), (int)(((float)base.Height) / 2.5f));
                 }
                 this.txtSearchField.Text = "";
-                this.searchFieldName = ((Control) sender).Name;
+                this.searchFieldName = ((Control)sender).Name;
                 this.slider.Visible = false;
                 this.slider.Value = 0;
                 this.slider.Maximum = 0;
                 this.lblResults.Text = "";
                 this.lblSearchOnField.Text = "Search on " + this.searchFieldName;
-                
+
                 this.btnSearchField.Visible = true;
                 this.txtSearchField.Enabled = true;
                 this.panelSearchField.Visible = true;
@@ -3982,7 +4316,7 @@
         {
             if (sender is TextBox)
             {
-                this.picPaid.Visible = ((TextBox) sender).Text.Length >= 8;
+                this.picPaid.Visible = ((TextBox)sender).Text.Length >= 8;
             }
         }
 
@@ -4058,7 +4392,7 @@
             object confirmConversions = Missing.Value;
             try
             {
-                application = (Microsoft.Office.Interop.Word.Application) Activator.CreateInstance(System.Type.GetTypeFromCLSID(new Guid("000209FF-0000-0000-C000-000000000046")));
+                application = (Microsoft.Office.Interop.Word.Application)Activator.CreateInstance(System.Type.GetTypeFromCLSID(new Guid("000209FF-0000-0000-C000-000000000046")));
                 FileInfo info = new FileInfo(docFileName);
                 application.Visible = false;
                 application.ScreenUpdating = false;
@@ -4122,6 +4456,112 @@
                     }
                 }
                 return str;
+            }
+        }
+
+
+        private bool interceptTabKey = true;
+        protected override bool ProcessTabKey(bool forward)
+        {
+            // We can intercept/process the [Keys.Tab] via this method.
+            if (interceptTabKey)
+            {
+                var activeControl = FindFocusedControl(this);
+
+                if (forward)            // [Keys.Shift] was not used
+                {
+                    this.GetTextBoxes(activeControl, 1);
+                }
+                else                    // [Keys.Shift] was used
+                {
+                    this.GetTextBoxes(activeControl, -1);
+                }
+
+                // [return true;]  -- To indicate that a control is selected.
+                // [return false;] -- Also, it happens that [return false;] causes the TabKey 
+                //                    to be processed by the [OnKeyDown()] and related methods.
+                return true;
+                //return false;
+            }
+
+            return base.ProcessTabKey(forward); // One would normally do this, but we may
+                                                // have wanted to intercept [Keys.Tab] above
+        }
+
+        public void GetTextBoxes(Control activeControl, int dir)
+        {
+            string t = "";
+            SortedList<int, TextBox> s = new SortedList<int, TextBox>();
+            foreach (var control in Controls)
+            {
+                if (control is TextBox)
+                {
+                    //Box the control into a textbox. Not really needed, but do it anyway
+                    var textbox = (TextBox)control;
+                    var key = textbox.Top * 2000 + textbox.Left;
+                    if (key > 0 && textbox.Visible && textbox.Enabled)
+                    {
+                        s.Add(key, textbox);
+                        //textbox.Text = textbox.Name;
+                    }
+                }
+            }
+            List<TextBox> l = new List<TextBox>();
+            t = "";
+            int index = 0;
+            int foundIndex = -1;
+            foreach (var textbox in s)
+            {
+                if (activeControl != null && activeControl is TextBox)
+                {
+                    if (textbox.Value == (TextBox)activeControl)
+                    {
+                        foundIndex = index;
+                        
+                    }
+                }
+                l.Add(textbox.Value);
+                index++;
+                t += ",  " + textbox.Value.Name;
+            }
+           
+            if (foundIndex > -1)
+            {
+                foundIndex += dir;
+                if (foundIndex >= 0 && foundIndex < l.Count)
+                {
+                    l[foundIndex].Focus();
+                }
+            }
+            //MessageBox.Show("Found " + foundIndex + " t-=" + t);          
+        }
+
+        public static Control FindFocusedControl(Control control)
+        {
+            var container = control as IContainerControl;
+            while (container != null)
+            {
+                control = container.ActiveControl;
+                container = control as IContainerControl;
+            }
+            return control;
+        }
+
+        private void btnFussy_Click(object sender, EventArgs e)
+        {
+            string phone = this.jobPhone.Text;
+            string email = this.jobEmail.Text;
+            if (!string.IsNullOrEmpty(phone))
+            {
+                DialogResult dialogResult = MessageBox.Show("Sure", "Put EXCLAMATION", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    DataAccess.InsertFussyCustomer(phone, email);
+                }
+                
+            } else
+            {
+                MessageBox.Show("Phone must have at least a 9 digit number");
             }
         }
     }

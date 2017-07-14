@@ -91,6 +91,103 @@
             return null;
         }
 
+        public static string StripPhoneAndEmailToSqlSuitable(string phone, string email)
+        {            
+            List<string> all = new List<string>();
+            phone = phone.Trim();
+            email = email.Trim();
+            int len = 0;
+            int nonLen = 0;
+        
+            string x = "";
+            for (int i=0; i < phone.Length; i++)
+            {
+                var c = phone[i];
+                switch (c)
+                {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        len++;
+                        nonLen = 0;
+                        x = x + c;
+                        break;
+                    case ' ':
+                        nonLen++;
+                        if (len >= 9)
+                        {
+                            all.Add(x);
+                            x = "";
+                            len = 0;
+                        }
+                        break;
+                    default:
+                        nonLen++;
+                        break;
+                }
+                if (nonLen >= 2)
+                {
+                    len = 0;
+                    x = "";
+                }                
+            }
+            if (len >= 9)
+            {
+                all.Add(x);
+            }
+            string retVal = "";
+            for (int i=0; i < all.Count; i++)
+            {
+                string s = all[i];
+                retVal += ((i > 0) ? ",'" : "'") + s + "'"; 
+            }
+            return retVal;
+        }
+
+        public static bool isFussyCustomers(string phone, string email)
+        {
+            int count = 0;
+            OleDbConnection myConnection = new OleDbConnection(ConnectionString);
+            myConnection.Open();
+            try {
+                OleDbCommand myCommand = new OleDbCommand();
+                myCommand.Connection = myConnection;
+                myCommand.CommandText = "CREATE TABLE fussyCustomer(phoneOrEmail TEXT(50))";
+                int result1 = myCommand.ExecuteNonQuery();
+
+                myCommand.CommandText = "CREATE INDEX idxFussyPhoneOrEmail ON fussyCustomer(phoneOrEmail)";
+                int result2 = myCommand.ExecuteNonQuery();                
+            }
+            catch (Exception err)
+            {
+
+            };
+            try
+            {
+                OleDbCommand myCommand = new OleDbCommand();
+                myCommand.Connection = myConnection;
+                string data = StripPhoneAndEmailToSqlSuitable(phone, email);
+                if (data != "")
+                {
+                    string t = "SELECT COUNT(phoneOrEmail) FROM fussyCustomer WHERE phoneOrEmail IN (" + data + ")";
+                    myCommand.CommandText = t;
+                    count = (int)myCommand.ExecuteScalar();
+                }
+            } catch (Exception err)
+            {
+                //MessageBox.Show("PJC REMOVE err " + err);   
+            };
+            myConnection.Close();
+            return count > 0;
+        }
+
         public static DataRowCollection ReadRecords(string sql)
         {
             OleDbConnection selectConnection = null;
@@ -250,6 +347,50 @@
                 }                
             }
             return (num > 0);
+        }
+
+        public static void InsertFussyCustomer(string phone, string email = "")
+        {
+            int num = 0;
+            OleDbConnection connection = null;
+            try
+            {
+                connection = new OleDbConnection(ConnectionString);
+
+                connection.Open();
+                using (OleDbCommand command = connection.CreateCommand())
+                {
+                    command.CommandType = CommandType.Text;
+                    string phones = StripPhoneAndEmailToSqlSuitable(phone, email);
+                    if (phones != "")
+                    {
+                        string[] split = phones.Split(',');
+                        for (int i = 0; i < split.Length; i++)
+                        {
+                            try
+                            {
+                                command.CommandText = "INSERT INTO fussyCustomer VALUES (" + split[i] + ")";
+                                num = command.ExecuteNonQuery();
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
+                        }
+                    }
+                }
+                connection.Close();
+                if (num == 0)
+                {
+                    MessageBox.Show("Error No records updated");
+                    num = 1;
+                    //throw new Exception("Failed to update " + sql);
+                }
+
+            }
+            catch (Exception exception)
+            {
+            }
         }
 
         private static string ConnectionString =>
