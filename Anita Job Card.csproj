@@ -6,7 +6,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{2F738980-E789-4C6B-92F9-A676702FD0A3}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <AssemblyName>Anita Job Card</AssemblyName>
+    <AssemblyName>Georges WHEEL</AssemblyName>
     <OutputType>WinExe</OutputType>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
@@ -55,7 +55,12 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <EmbeddedResource Include="Job_Card\Form1.resx" />
-   
+    <EmbeddedResource Include="Job_Card\JobCard.resx">
+      <DependentUpon>JobCard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Job_Card\JobTypePopup.resx">
+      <DependentUpon>JobTypePopup.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Job_Card\PictureViewer.resx">
       <DependentUpon>PictureViewer.cs</DependentUpon>
     </EmbeddedResource>
@@ -125,9 +130,7 @@
     <EmbeddedResource Include="Job_Card.Resources.paid-stamp.png" />
     <EmbeddedResource Include="Job_Card.Progress.resources" />
     <EmbeddedResource Include="Job_Card.JobQueryForm.resources" />
-    <EmbeddedResource Include="Job_Card.JobTypePopup.resources" />
     <EmbeddedResource Include="Job_Card.Properties.Resources.resources" />
-    <EmbeddedResource Include="Job_Card.JobCard.resources" />
     <EmbeddedResource Include="Job_Card.CustomerCopy.resources" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectView>ShowAllFiles</ProjectView>
+    <ProjectView>ProjectFiles</ProjectView>
     <PublishUrlHistory>publish\</PublishUrlHistory>
     <InstallUrlHistory />
     <SupportUrlHistory />
@@ -13,6 +13,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <StartAction>Program</StartAction>
-    <StartProgram>C:\Users\Peter\Documents\JobCard\bin\Anita Job Card.exe</StartProgram>
+    <StartProgram>C:\Users\Peter\Documents\JobCard\bin\Georges WHEEL.exe</StartProgram>
   </PropertyGroup>
 </Project>

@@ -574,26 +574,31 @@
 
         private bool incurCreditCardSurcharge()
         {
-            int jobYear = 0;
-            int lastSlash = this.jobDate.Text.LastIndexOf('/');
-            string year = this.jobDate.Text.Substring(lastSlash + 1);
-            int firstSlash = this.jobDate.Text.IndexOf('/');
-            string month = this.jobDate.Text.Substring(firstSlash + 1, lastSlash - firstSlash - 1);
-            string day = this.jobDate.Text.Substring(0, firstSlash);
-            int _year = 2017;
-            int _month = 1;
-            int _day = 1;
-            int.TryParse(year, out _year);
-            if (_year < 2000)
-                _year += 2000;
-            int.TryParse(month, out _month);
-            int.TryParse(day, out _day);
-            if (this.jobPaymentBy.Text.Length > 1 && "VISAMasterCard".Contains(this.jobPaymentBy.Text))
-            {
-                if (new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0))
+            try {
+                int jobYear = 0;
+                int lastSlash = this.jobDate.Text.LastIndexOf('/');
+                string year = this.jobDate.Text.Substring(lastSlash + 1);
+                int firstSlash = this.jobDate.Text.IndexOf('/');
+                string month = this.jobDate.Text.Substring(firstSlash + 1, lastSlash - firstSlash - 1);
+                string day = this.jobDate.Text.Substring(0, firstSlash);
+                int _year = 2017;
+                int _month = 1;
+                int _day = 1;
+                int.TryParse(year, out _year);
+                if (_year < 2000)
+                    _year += 2000;
+                int.TryParse(month, out _month);
+                int.TryParse(day, out _day);
+                if (this.jobPaymentBy.Text.Length > 1 && "VISAMasterCard".Contains(this.jobPaymentBy.Text))
                 {
-                    return true;
+                    if (new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0))
+                    {
+                        return true;
+                    }
                 }
+            } catch (Exception err)
+            {
+
             }
             return false;
         }
@@ -2430,9 +2435,9 @@
             // 
             // btnToday
             // 
-            this.btnToday.Location = new System.Drawing.Point(756, 194);
+            this.btnToday.Location = new System.Drawing.Point(756, 190);
             this.btnToday.Name = "btnToday";
-            this.btnToday.Size = new System.Drawing.Size(73, 22);
+            this.btnToday.Size = new System.Drawing.Size(73, 28);
             this.btnToday.TabIndex = 37;
             this.btnToday.Text = "Today";
             this.btnToday.UseVisualStyleBackColor = true;
@@ -2530,7 +2535,7 @@
             // 
             // btnGeorge
             // 
-            this.btnGeorge.Location = new System.Drawing.Point(42, 19);
+            this.btnGeorge.Location = new System.Drawing.Point(6, 15);
             this.btnGeorge.Name = "btnGeorge";
             this.btnGeorge.Size = new System.Drawing.Size(31, 28);
             this.btnGeorge.TabIndex = 49;
@@ -2540,7 +2545,7 @@
             // 
             // btnHenry
             // 
-            this.btnHenry.Location = new System.Drawing.Point(79, 19);
+            this.btnHenry.Location = new System.Drawing.Point(42, 15);
             this.btnHenry.Name = "btnHenry";
             this.btnHenry.Size = new System.Drawing.Size(31, 28);
             this.btnHenry.TabIndex = 50;
@@ -2550,7 +2555,7 @@
             // 
             // btnRakesh
             // 
-            this.btnRakesh.Location = new System.Drawing.Point(116, 19);
+            this.btnRakesh.Location = new System.Drawing.Point(6, 46);
             this.btnRakesh.Name = "btnRakesh";
             this.btnRakesh.Size = new System.Drawing.Size(31, 28);
             this.btnRakesh.TabIndex = 51;
@@ -2560,7 +2565,7 @@
             // 
             // btnBritt
             // 
-            this.btnBritt.Location = new System.Drawing.Point(153, 19);
+            this.btnBritt.Location = new System.Drawing.Point(42, 46);
             this.btnBritt.Name = "btnBritt";
             this.btnBritt.Size = new System.Drawing.Size(31, 28);
             this.btnBritt.TabIndex = 52;
@@ -2591,9 +2596,9 @@
             // btnSave
             // 
             this.btnSave.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
-            this.btnSave.Location = new System.Drawing.Point(601, 194);
+            this.btnSave.Location = new System.Drawing.Point(604, 224);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(177, 75);
+            this.btnSave.Size = new System.Drawing.Size(137, 68);
             this.btnSave.TabIndex = 56;
             this.btnSave.Text = "Save Job";
             this.btnSave.UseVisualStyleBackColor = true;
@@ -2624,7 +2629,7 @@
             // btnCam2
             // 
             this.btnCam2.Font = new System.Drawing.Font("Arial", 13F);
-            this.btnCam2.Location = new System.Drawing.Point(915, 244);
+            this.btnCam2.Location = new System.Drawing.Point(916, 242);
             this.btnCam2.Name = "btnCam2";
             this.btnCam2.Size = new System.Drawing.Size(137, 50);
             this.btnCam2.TabIndex = 56;
@@ -2903,9 +2908,9 @@
             this.grpBoxPolish.Controls.Add(this.btnGeorge);
             this.grpBoxPolish.Controls.Add(this.btnHenry);
             this.grpBoxPolish.Controls.Add(this.btnBritt);
-            this.grpBoxPolish.Location = new System.Drawing.Point(604, 229);
+            this.grpBoxPolish.Location = new System.Drawing.Point(747, 219);
             this.grpBoxPolish.Name = "grpBoxPolish";
-            this.grpBoxPolish.Size = new System.Drawing.Size(214, 69);
+            this.grpBoxPolish.Size = new System.Drawing.Size(82, 75);
             this.grpBoxPolish.TabIndex = 72;
             this.grpBoxPolish.TabStop = false;
             this.grpBoxPolish.Text = "Polish";
@@ -3064,7 +3069,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(1362, 741);
+            this.ClientSize = new System.Drawing.Size(1354, 733);
             this.Controls.Add(this.btnFussy);
             this.Controls.Add(this.SuperSearchField);
             this.Controls.Add(this.btnReport);
@@ -3232,7 +3237,19 @@
             {
                 TextBox box = (TextBox)sender;
                 JobTypePopup.jobType = box;
+                if (JobTypePopup.isWheelApp())
+                {
+                    string qtyName = box.Name.Replace("Type", "Qty");
+                    JobTypePopup.jobQty = this.Controls.Find(qtyName, true)[0] as TextBox;
+                    string unitPriceName = box.Name.Replace("Type", "UnitPrice");
+                    JobTypePopup.jobUnitPrice = this.Controls.Find(unitPriceName, true)[0] as TextBox;
+                    string priceName = box.Name.Replace("Type", "Price");
+                    JobTypePopup.jobPrice = this.Controls.Find(priceName, true)[0] as TextBox;
+                    string detailName = box.Name.Replace("Type", "Detail");
+                    JobTypePopup.jobDetail = this.Controls.Find(detailName, true)[0] as TextBox;
 
+
+                }
                 if (JobCard.popup == null)
                 {
                     JobCard.popup = new JobTypePopup();
@@ -3245,8 +3262,9 @@
                         JobCard.popup = new JobTypePopup();
 
                     }
-
+                    JobCard.popup.jobCard = this;
                     JobCard.popup.Show();
+                    
 
                 }
             }
@@ -3439,7 +3457,7 @@
             return !flag;
         }
 
-        private void UpdateAllTotals()
+        public void UpdateAllTotals()
         {
 
             double num2 = 0.0;
