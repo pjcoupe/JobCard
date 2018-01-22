@@ -1272,7 +1272,7 @@
                             else
                             {
                                 str7 = str + (str3 + str2).PadRight(0x49) + Environment.NewLine;
-                                str = str7 + str5.PadRight(0x2a) + " x" + this.jobQty[i].Text.PadLeft(3) + " @ $" + this.jobUnitPrice[i].Text.PadLeft(8) + "=" + (string.IsNullOrWhiteSpace(this.jobPrice[i].Text) ? "" : (" $" + this.jobPrice[i].Text.PadLeft(8))) + Environment.NewLine;
+                                str = str7 + str5.PadRight(44) + " x" + this.jobQty[i].Text.PadLeft(3) + " @ $" + this.jobUnitPrice[i].Text.PadLeft(8) + "=" + (string.IsNullOrWhiteSpace(this.jobPrice[i].Text) ? "" : (" $" + this.jobPrice[i].Text.PadLeft(8))) + Environment.NewLine;
                             }
                         }
                     }
@@ -1905,14 +1905,14 @@
             {
                 if (this.jobNotes.Text == null || this.jobNotes.Text.Length < 300)
                 {
+                    
                     this.jobNotes.Text += "DISCLAIMER NOTICE:\n" +
         "When Aluminium wheels have cracks or are damaged in any way the stresses caused by the impact cannot be truly identified without getting the wheel tested." +
         "We at Advanced Chrome Platers weld the cracks and push out dents with a specific wheel repair machine designed and built in Europe." +
         "This does not in any way certify the wheel for further use on a Vehicle." +
         "We do not test wheels at Advanced Chrome Platers, and take no responsibility if the wheel is used on a vehicle without the wheel being certified." +
         "It is up to the owner or customer to get the wheel certified and tested for air leaks at their own cost if they feel it is necessary." +
-        "We do not paint wheels.\n" +
-        "                       CUSTOMER SIGNATURE: ______________________________________________";
+        "We do not paint wheels.\nCUSTOMER SIGNATURE:   x\n";
                     if (this.NeedSave(false, true))
                     {
                         DataAccess.Update(this.updateSql);
@@ -2393,7 +2393,7 @@
             // 
             // jobNotes
             // 
-            this.jobNotes.Font = new System.Drawing.Font("Arial", 11F);
+            this.jobNotes.Font = new System.Drawing.Font("Arial", 12);
             this.jobNotes.Location = new System.Drawing.Point(243, 220);
             this.jobNotes.Multiline = true;
             this.jobNotes.Name = "jobNotes";
@@ -4157,7 +4157,7 @@
 
             SmtpClient client = new SmtpClient("mail.1stdomains.co.nz", 587)
             {
-                Credentials = new NetworkCredential("team@plating.co.nz", "Sterling-03")
+                Credentials = new NetworkCredential("team@plating.co.nz", "1GeorgeTartan2312621")
                 //Credentials = CredentialCache.DefaultNetworkCredentials
             };
             client.EnableSsl = true;
@@ -4201,10 +4201,10 @@
                 Clipboard.SetImage(resizeImage(this.pictureBox1.Image, new Size((int)(copy.Width * 0.8f), (int)(copy.Height * 0.25f))));
             }
             r.Paste();
-            this.AddLine(r, this.jobID.Text, "Arial", 0x24, FontStyle.Bold, 0);
-            this.AddLine(r, this.IsCompleted() ? "Tax Invoice  GST 83-712-147" : "Quotation/Job Card", null, 0x12, FontStyle.Regular, 0);
+            this.AddLine(r, this.jobID.Text, "Arial", 24, FontStyle.Bold, 0);
+            this.AddLine(r, this.IsCompleted() ? "Tax Invoice  GST 83-712-147" : "Quotation/Job Card", null, 12, FontStyle.Regular, 0);
             this.AddLine(r, "");
-            this.AddLine(r, "Job Date: " + this.jobDate.Text.PadLeft(10) + "Order Number: ".PadLeft(40) + this.jobOrderNumber.Text, "Courier New", 0x10, FontStyle.Regular, 0);
+            this.AddLine(r, "Job Date: " + this.jobDate.Text.PadLeft(10) + "Order Number: ".PadLeft(40) + this.jobOrderNumber.Text, "Courier New", 12, FontStyle.Regular, 0);
             this.AddLine(r, "".PadRight(0x4a, '-'));
             string businessCustomerTitle = "Customer:";
             string businessName = "";
@@ -4250,11 +4250,11 @@
             }
             this.AddLine(r, "".PadRight(0x4a, '-'));
             this.AddLine(r, "Notes");
-            this.AddLine(r, this.jobNotes.Text);
-            this.AddLine(r, "".PadRight(0x4a, '-'));
-            this.AddLine(r, "DISCLAIMER", "Arial", 15, FontStyle.Bold, 0);
-            this.AddLine(r, Disclaimer, null, 10, FontStyle.Regular, 0);
-            this.AddLine(r, "".PadRight(0x4a, '-'), "Courier New", 0x10, FontStyle.Regular, 0);
+            this.AddLine(r, this.jobNotes.Text, "Arial", 9, FontStyle.Regular);
+            this.AddLine(r, "".PadRight(0x8a, '-'));
+            this.AddLine(r, "DISCLAIMER", "Arial", 10, FontStyle.Bold, 0);
+            this.AddLine(r, Disclaimer, null, 7, FontStyle.Regular, 0);
+            this.AddLine(r, "".PadRight(0x4a, '-'), "Courier New", 13, FontStyle.Regular, 0);
             if (customerCopy)
             {
                 this.AddLine(r, "CUSTOMER COPY - " + (this.IsCompleted() ? " ** TAX INVOICE **" : "PRICING ABOVE AN ESTIMATE ONLY"), FontStyle.Bold);
