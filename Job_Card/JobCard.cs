@@ -4258,6 +4258,7 @@
             if (customerCopy)
             {
                 this.AddLine(r, "CUSTOMER COPY - " + (this.IsCompleted() ? " ** TAX INVOICE **" : "PRICING ABOVE AN ESTIMATE ONLY"), FontStyle.Bold);
+                this.AddLine(r, "Our bank details are: 031557013897600 , use job#" + this.jobID.Text + " as reference");
             }
             else
             {
