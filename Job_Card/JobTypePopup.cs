@@ -86,12 +86,16 @@
         private Button button42;
         private Button button41;
         private Button button40;
+        private Button button45;
+        private Button button44;
+        private Button button43;
         private bool startup = true;
 
         public JobTypePopup()
         {
             this.startup = true;
             this.InitializeComponent();
+            
             List<string> list = jobType.Text.Split(new string[] { ", " }, StringSplitOptions.None).ToList<string>();
             foreach (object obj2 in base.Controls)
             {
@@ -157,7 +161,7 @@
                     item = new CultureInfo("en-NZ", false).TextInfo.ToTitleCase(box.Text.ToLowerInvariant());
                 } else
                 {
-                    if (prnt.Text.Contains("damage") || prnt.Text.Contains("Wheel repair"))
+                    if (prnt.Text.Contains("damage") || prnt.Text.Contains("Wheel"))
                     {
                         jobDetail.Text = prnt.Text;
                     }
@@ -306,6 +310,7 @@
             this.checkBox6 = new System.Windows.Forms.Button();
             this.checkBox5 = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.button40 = new System.Windows.Forms.Button();
             this.button42 = new System.Windows.Forms.Button();
             this.button41 = new System.Windows.Forms.Button();
             this.groupBox7 = new System.Windows.Forms.GroupBox();
@@ -356,7 +361,9 @@
             this.checkBox20 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.checkBox22 = new System.Windows.Forms.Button();
-            this.button40 = new System.Windows.Forms.Button();
+            this.button43 = new System.Windows.Forms.Button();
+            this.button44 = new System.Windows.Forms.Button();
+            this.button45 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -540,6 +547,9 @@
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.button45);
+            this.groupBox3.Controls.Add(this.button44);
+            this.groupBox3.Controls.Add(this.button43);
             this.groupBox3.Controls.Add(this.button40);
             this.groupBox3.Controls.Add(this.button42);
             this.groupBox3.Controls.Add(this.button41);
@@ -553,11 +563,21 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Wheel repair";
             // 
+            // button40
+            // 
+            this.button40.Location = new System.Drawing.Point(310, 16);
+            this.button40.Name = "button40";
+            this.button40.Size = new System.Drawing.Size(50, 35);
+            this.button40.TabIndex = 30;
+            this.button40.Text = "Other weld";
+            this.button40.UseVisualStyleBackColor = true;
+            this.button40.Click += new System.EventHandler(this.CheckedChanged);
+            // 
             // button42
             // 
-            this.button42.Location = new System.Drawing.Point(241, 19);
+            this.button42.Location = new System.Drawing.Point(197, 16);
             this.button42.Name = "button42";
-            this.button42.Size = new System.Drawing.Size(116, 23);
+            this.button42.Size = new System.Drawing.Size(111, 23);
             this.button42.TabIndex = 29;
             this.button42.Text = "Machining tyre bead    $12";
             this.button42.UseVisualStyleBackColor = true;
@@ -565,9 +585,9 @@
             // 
             // button41
             // 
-            this.button41.Location = new System.Drawing.Point(123, 19);
+            this.button41.Location = new System.Drawing.Point(100, 16);
             this.button41.Name = "button41";
-            this.button41.Size = new System.Drawing.Size(104, 23);
+            this.button41.Size = new System.Drawing.Size(93, 23);
             this.button41.TabIndex = 28;
             this.button41.Text = "Remove curbing    $35";
             this.button41.UseVisualStyleBackColor = true;
@@ -1012,9 +1032,9 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(12, 19);
+            this.button1.Location = new System.Drawing.Point(6, 16);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(97, 23);
+            this.button1.Size = new System.Drawing.Size(92, 23);
             this.button1.TabIndex = 18;
             this.button1.Text = "Set up on lathe   $35";
             this.button1.UseVisualStyleBackColor = true;
@@ -1071,15 +1091,35 @@
             this.checkBox22.UseVisualStyleBackColor = true;
             this.checkBox22.Click += new System.EventHandler(this.CheckedChanged);
             // 
-            // button40
+            // button43
             // 
-            this.button40.Location = new System.Drawing.Point(123, 48);
-            this.button40.Name = "button40";
-            this.button40.Size = new System.Drawing.Size(104, 23);
-            this.button40.TabIndex = 30;
-            this.button40.Text = "Other weld";
-            this.button40.UseVisualStyleBackColor = true;
-            this.button40.Click += new System.EventHandler(this.CheckedChanged);
+            this.button43.Location = new System.Drawing.Point(6, 45);
+            this.button43.Name = "button43";
+            this.button43.Size = new System.Drawing.Size(92, 23);
+            this.button43.TabIndex = 31;
+            this.button43.Text = "CNC facing #1  $55";
+            this.button43.UseVisualStyleBackColor = true;
+            this.button43.Click += new System.EventHandler(this.CheckedChanged);
+            // 
+            // button44
+            // 
+            this.button44.Location = new System.Drawing.Point(100, 45);
+            this.button44.Name = "button44";
+            this.button44.Size = new System.Drawing.Size(92, 23);
+            this.button44.TabIndex = 32;
+            this.button44.Text = "CNC facing #2  $72";
+            this.button44.UseVisualStyleBackColor = true;
+            this.button44.Click += new System.EventHandler(this.CheckedChanged);
+            // 
+            // button45
+            // 
+            this.button45.Location = new System.Drawing.Point(198, 45);
+            this.button45.Name = "button45";
+            this.button45.Size = new System.Drawing.Size(92, 23);
+            this.button45.TabIndex = 33;
+            this.button45.Text = "CNC facing #3  $92";
+            this.button45.UseVisualStyleBackColor = true;
+            this.button45.Click += new System.EventHandler(this.CheckedChanged);
             // 
             // JobTypePopup
             // 
@@ -1126,7 +1166,10 @@
             }
             else
             {
-                this.groupBox4.Visible = false;
+                this.groupBox4.Text =  "Wheel Tyre Service";
+                this.checkBox20.Text = "Remove Tyre              $6";
+                this.checkBox21.Text = "Fit Tyre                $6";
+
                 this.groupBox2.Visible = false;
                 this.checkBox4.Visible = false;
             }
@@ -1152,6 +1195,7 @@
         {
 
         }
+
     }
 }
 
