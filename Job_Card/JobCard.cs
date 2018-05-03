@@ -589,9 +589,14 @@
                     _year += 2000;
                 int.TryParse(month, out _month);
                 int.TryParse(day, out _day);
+                bool is2017AndBeyond = new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0);
+                if (is2017AndBeyond && this.jobPaymentBy.Text.Length <= 1)
+                {
+                    return true;
+                }
                 if (this.jobPaymentBy.Text.Length > 1 && "VISAMasterCard".Contains(this.jobPaymentBy.Text))
                 {
-                    if (new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0))
+                    if (is2017AndBeyond)
                     {
                         return true;
                     }
