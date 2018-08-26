@@ -227,7 +227,7 @@
             ImageExtensions = list;
             if (System.Environment.MachineName == "TCSP4")
             {
-                PicturePath = @"C:\Kodak Pictures\";
+                PicturePath = @"D:\Kodak Pictures\";
             }
             else {
                 PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
@@ -3736,13 +3736,13 @@
             string path = "";
             if (result == DialogResult.Yes)
             {
-                path = this.SearchFile(@"C:\Users", "jobCard.mdb");
+                path = this.SearchFile(@"D:\JobCard", "jobCard.mdb");
             }
             if (!System.IO.File.Exists(path))
             {
                 OpenFileDialog dialog = new OpenFileDialog
                 {
-                    InitialDirectory = @"c:\",
+                    InitialDirectory = @"D:\",
                     Filter = "MS Access database files (*.mdb)|*.mdb",
                     FilterIndex = 1,
                     RestoreDirectory = true,
