@@ -1,12 +1,16 @@
 ﻿namespace Job_Card
 {
     using Job_Card.Properties;
+    using System.Threading.Tasks;
     using Microsoft.Office.Interop.Word;
     using PresentationControls;
     using System = System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Data;
+    using MongoDB.Bson;
+    using MongoDB.Bson.Serialization.Attributes;
+    using MongoDB.Driver;
     using Guid = System.Guid;
     using Activator = System.Activator;
     using MailMessage = System.Net.Mail.MailMessage;
@@ -16,7 +20,7 @@
     using Math = System.Math;
     using Exception = System.Exception;
     using EventHandler = System.EventHandler;
-    using Environment= System.Environment;
+    using Environment = System.Environment;
     using EventArgs = System.EventArgs;
     using DateTime = System.DateTime;
     using System.Drawing;
@@ -35,9 +39,13 @@
     using System.Security.Principal;
     using System.Windows.Forms;
     using CheckBox = System.Windows.Forms.CheckBox;
+    using System;
 
     public class JobCard : Form
     {
+        private MongoClient client;
+        private IMongoDatabase db;
+        
         private bool amountValidating = false;
         private static Bitmap b;
         private Button btnAddWeek;
@@ -190,7 +198,6 @@
         private bool panelMoved = false;
         private Panel panelSearchField;
         private bool panelSetLocation = false;
-        private Dictionary<string, System.Type> photoTypes;
         private PictureBox picPaid;
         internal PictureBox pictureBox1;
         public static string PicturePath;
@@ -210,6 +217,7 @@
         private Dictionary<string, System.Type> types;
         private List<Control> undoList = new List<Control>();
         private string updateSql;
+        private List<KeyValuePair<string, dynamic>> updateSqlSetList;
         private Button btnFussy;
         private Rectangle workingArea;
 
@@ -244,6 +252,7 @@
 
         public JobCard()
         {
+
             this.fieldNameToControlMapping = new Dictionary<string, Control>();
             this.originalValues = new Dictionary<string, string>();
             this.InitializeComponent();
@@ -257,8 +266,7 @@
             this.datagrid.AllowUserToAddRows = false;
             this.jobReceivedFrom.SelectedIndex = 0;
             this.jobPaymentBy.SelectedIndex = 0;
-            this.types = DataAccess.GetFieldDataTypes(JobCard.DBTable);
-            this.photoTypes = DataAccess.GetFieldDataTypes("jobPictures");
+            this.types = DataAccess.GetFieldDataTypes();
             SizeF factor = new SizeF(((float)base.Width) / 1384f, ((float)base.Height) / 879f);
             foreach (object obj2 in base.Controls)
             {
@@ -295,10 +303,17 @@
                     this.originalValues[name] = null;
                 }
             }
-            if (!System.IO.File.Exists(DBPath))
-            {
-            }
-            this.GetLatestJob();
+
+            this.initJobCard();
+        }
+
+        private async System.Threading.Tasks.Task initJobCard() { 
+            DataAccess.connectMongoDb();
+
+            await DataAccess.migrateJobCardAsync();
+            await DataAccess.migrateFussyCustomer();
+
+            await this.GetLatestJobAsync();
         }
 
         private void AddLine(RichTextBox r, string line)
@@ -540,34 +555,60 @@
             }
         }
 
-        private void btnCustomers_Click(object sender, EventArgs e)
+        private async void btnCustomers_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+
+            if (!(await this.NeedSaveAsync(true, false)))
             {
                 JobQueryForm form = new JobQueryForm();
+                DataGridView datagrid = form.getSearchDataGridView();
+                var filter = Builders<JobCardDoc>.Filter.Ne("jobDateCompleted", BsonNull.Value);
+
+                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDateCompleted");
+                /* PJC OLD
                 form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPhone, jobDateCompleted," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE NOT ISNULL(jobDateCompleted) ORDER BY jobDateCompleted desc");
+                */
                 form.ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
+                    /* PJC OLD
                     string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
+                    var list = await DataAccess.FindJobByFieldAsync(this.datagrid, "jobID", JobQueryForm.selectedJobId);
                     this.Load(0);
                 }
             }
         }
 
-        private void btnDuplicate_Click(object sender, EventArgs e)
+        private async void btnDuplicate_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
-                this.lastID = this.lastID + 1;
+                this.lastID = await DataAccess.GetLastJobIDAsync();
+                this.lastID++;
+                JobCardDoc newDoc = new JobCardDoc();
+                newDoc.jobID = this.lastID;
+                newDoc.jobDate = DateTime.Now;
+                newDoc.jobOrderNumber = this.jobOrderNumber.Text;
+                newDoc.jobCustomer = this.jobCustomer.Text;
+                newDoc.jobBusinessName = this.jobBusinessName.Text;
+                newDoc.jobPhone = this.jobPhone.Text;
+                newDoc.jobAddress = this.jobAddress.Text;
+                newDoc.jobEmail = this.jobEmail.Text;
+                newDoc.jobDelivery = this.jobDelivery.Text;
+                newDoc.jobReceivedFrom = this.jobReceivedFrom.Text;
+                await DataAccess.CreateJobAsync(newDoc);
+                /* PJC OLD
                 if (DataAccess.Update(string.Concat(new object[] {
-                    "INSERT INTO "+JobCard.DBTable+"(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text, "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
+                    "INSERT INTO "+JobCard.DBTable+"(jobID, jobDate, jobOrderNumber, jobCustomer, jobBusinessName, jobPhone, jobAddress, jobEmail, jobDelivery, jobReceivedFrom) Values (", this.lastID.ToString(), ",DATE(),'", this.jobOrderNumber.Text, "', '", this.jobCustomer.Text,
+                    "', '", this.jobBusinessName.Text, "', '", this.jobPhone.Text, "', '", this.jobAddress.Text, "', '", this.jobEmail.Text, "', '", this.jobDelivery.Text, "', '", this.jobReceivedFrom,
                     "')"
                 })))
-                {
-                    this.GetLatestJob();
-                }
+                */
+                
+                await this.GetLatestJobAsync();
+                
                 this.jobDateRequired.Focus();
             }
         }
@@ -704,17 +745,26 @@
             }
         }
 
-        private void btnExistingJobs_Click(object sender, EventArgs e)
+        private async void btnExistingJobs_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
                 JobQueryForm form = new JobQueryForm();
+                DataGridView datagrid = form.getSearchDataGridView();
+                var filter = Builders<JobCardDoc>.Filter.Eq("jobDateCompleted", BsonNull.Value);
+
+                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDate", false);
+                /* PJC OLD
                 form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPaymentBy, jobPhone, jobDate," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE ISNULL(jobDateCompleted) ORDER BY jobDate");
+                */
                 form.ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
+                    /* PJC OLD
                     string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
+                    var list = await DataAccess.FindJobByFieldAsync(this.datagrid, "jobID", JobQueryForm.selectedJobId);
                     this.Load(0);
                 }
             }
@@ -725,13 +775,17 @@
             base.Close();
         }
 
-        private void btnLatestJob_Click(object sender, EventArgs e)
+        private async void btnLatestJob_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
+                /* PJC OLD
                 string sql = "Select Top 1 * from " + JobCard.DBTable + " ORDER BY jobID desc";
                 DataAccess.ReadRecords(this.datagrid, sql);
                 this.Load(0);
+                */
+                await this.GetLatestJobAsync();
+                
             }
         }
 
@@ -758,26 +812,33 @@
             this.LockAll(this.isLocked);
         }
 
-        private void btnNavigateBack_Click(object sender, EventArgs e)
+        private async void btnNavigateBack_Click(object sender, EventArgs e)
         {
-            this.GetPreviousJob();
+            await this.GetPreviousJobAsync();
         }
 
-        private void btnNavigateForward_Click(object sender, EventArgs e)
+        private async void btnNavigateForward_Click(object sender, EventArgs e)
         {
-            this.GetNextJob();
+            await this.GetNextJobAsync();
         }
 
-        private void btnNewJob_Click(object sender, EventArgs e)
+        private async void btnNewJob_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
-                this.lastID = this.lastID + 1;
+                this.lastID = await DataAccess.GetLastJobIDAsync();
+                this.lastID++;
+                JobCardDoc newDoc = new JobCardDoc();
+                newDoc.jobID = this.lastID;
+                newDoc.jobDate = DateTime.Now;               
+                await DataAccess.CreateJobAsync(newDoc);
+                /* PJC OLD
                 if (DataAccess.Update("INSERT INTO " + JobCard.DBTable + "(jobID, jobDate) Values (" + this.lastID.ToString() + ",DATE())"))
-                {
-                    this.DisclaimerNote();
-                    this.GetLatestJob();
-                }
+                */
+                
+                    await this.DisclaimerNoteAsync();
+                    await this.GetLatestJobAsync();
+                
                 this.jobCustomer.Focus();
             }
         }
@@ -1098,18 +1159,27 @@
             catch (Exception err)
             { }
         }
-        private void btnSave_Click(object sender, EventArgs e)
+        private async void btnSave_Click(object sender, EventArgs e)
         {
-            if (this.NeedSave(false, true))
+            if (await this.NeedSaveAsync(false, true))
             {
-                if (!DataAccess.Update(this.updateSql))
+                var ok = await DataAccess.UpdateMongoAsync(this.updateSqlSetList);
+                if (!ok
+                    /* PJC OLD
+                    DataAccess.Update(this.updateSql)
+                    */
+                    )
                 {
                     MessageBox.Show("Save failed", "SAVE FAIL", MessageBoxButtons.OK, MessageBoxIcon.Hand);
                 }
                 else
                 {
+                    int jobId = int.Parse(this.jobID.Text);
+                    var list = await DataAccess.FindJobByFieldAsync(this.datagrid, "jobID", jobId);
+                    /* PJC OLD
                     string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + this.jobID.Text;
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
                     this.Load(0);
                 }
             }
@@ -1119,20 +1189,23 @@
             }
         }
 
-        private void btnSearchField_Click(object sender, EventArgs e)
+        private async void btnSearchField_Click(object sender, EventArgs e)
         {
-            this.Search();
+            await this.SearchAsync();
         }
 
-        private void btnSearchLists_Click(object sender, EventArgs e)
+        private async void btnSearchLists_Click(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
                 new JobQueryForm().ShowDialog();
                 if (JobQueryForm.selectedJobId > -1)
                 {
+                    /* PJC OLD
                     string sql = "SELECT * FROM " + JobCard.DBTable + " WHERE jobID = " + JobQueryForm.selectedJobId.ToString();
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
+                    var list = await DataAccess.FindJobByFieldAsync(this.datagrid, "jobID", JobQueryForm.selectedJobId);
                     this.Load(0);
                 }
             }
@@ -1214,9 +1287,9 @@
             return false;
         }
 
-        private void CheckBeforeQuit(object sender, FormClosingEventArgs e)
+        private async void CheckBeforeQuit(object sender, FormClosingEventArgs e)
         {
-            if (this.NeedSave(true, false))
+            if (await this.NeedSaveAsync(true, false))
             {
                 e.Cancel = true;
             }
@@ -1621,8 +1694,9 @@
             return list;
         }
 
-        private void GetLatestJob()
+        private async System.Threading.Tasks.Task GetLatestJobAsync()
         {
+            /* PJC OLD
             string sql = "SELECT MAX(jobID) FROM " + JobCard.DBTable;
             object obj2 = DataAccess.ReadSingleValue(sql);
             if (obj2 != null)
@@ -1636,22 +1710,33 @@
                 }
                 catch (Exception err)
                 {
-                    sql = "INSERT INTO " + JobCard.DBTable + "(jobID, jobDate) Values(1000, DATE())";
-                    DataAccess.Update(sql);
+                    
                 }
             }
+            */
+            this.lastID = await DataAccess.GetLastJobIDAsync();
+            var list = await DataAccess.FindJobByFieldAsync(this.datagrid, "jobID", this.lastID);
+            /* PJC OLD
             DataAccess.ReadRecords(this.datagrid, sql);
+            */
             this.Load(0);
+            
         }
 
-        private void GetNextJob()
+        private async System.Threading.Tasks.Task GetNextJobAsync()
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
-                if (int.Parse(this.jobID.Text) < this.lastID)
+                this.lastID = await DataAccess.GetLastJobIDAsync();
+                int jobId = int.Parse(this.jobID.Text);
+                if (jobId < this.lastID)
                 {
+                    var filter = Builders<JobCardDoc>.Filter.Gt("jobID", jobId);
+                    var list = await DataAccess.findJobByFilterAsync(this.datagrid, filter, "jobID", false);
+                    /* PJC OLD
                     string sql = "SELECT TOP 1 * FROM " + JobCard.DBTable + " WHERE jobID > " + this.jobID.Text + " ORDER BY jobID";
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
                     this.Load(0);
                 }
                 else
@@ -1661,14 +1746,19 @@
             }
         }
 
-        private void GetPreviousJob()
+        private async System.Threading.Tasks.Task GetPreviousJobAsync()
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
-                if (int.Parse(this.jobID.Text) > 0)
+                int jobId = int.Parse(this.jobID.Text);
+                if (jobId > 0)
                 {
+                    var filter = Builders<JobCardDoc>.Filter.Lt("jobID", jobId);
+                    var list = await DataAccess.findJobByFilterAsync(this.datagrid, filter, "jobID", true);
+                    /* PJC OLD
                     string sql = "SELECT TOP 1 * FROM " + JobCard.DBTable + " WHERE jobID < " + this.jobID.Text + " ORDER BY jobID desc";
                     DataAccess.ReadRecords(this.datagrid, sql);
+                    */
                     this.Load(0);
                 }
                 else
@@ -1903,7 +1993,7 @@
             this.RedrawArrayComponent();
         }
 
-        private void DisclaimerNote()
+        private async System.Threading.Tasks.Task DisclaimerNoteAsync()
         {
 
             if (JobTypePopup.isWheelApp())
@@ -1918,9 +2008,13 @@
         "We do not test wheels at Advanced Chrome Platers, and take no responsibility if the wheel is used on a vehicle without the wheel being certified." +
         "It is up to the owner or customer to get the wheel certified and tested for air leaks at their own cost if they feel it is necessary." +
         "We do not paint wheels.\nCUSTOMER SIGNATURE:   x\n";
-                    if (this.NeedSave(false, true))
+                    if (await this.NeedSaveAsync(false, true))
                     {
-                        DataAccess.Update(this.updateSql);
+                        var ok = await DataAccess.UpdateMongoAsync(this.updateSqlSetList);
+                    /* PJC OLD
+                    DataAccess.Update(this.updateSql)
+                    */
+                    
                     }
                 }
             }
@@ -3185,7 +3279,7 @@
             }
         }
 
-        private void DeleteJobClicked(object sender, EventArgs e)
+        private async void DeleteJobClicked(object sender, EventArgs e)
         {
             MouseEventArgs me = (MouseEventArgs)e;
             if (me.Button == MouseButtons.Right)
@@ -3194,9 +3288,13 @@
                 {
                     if (MessageBox.Show("Are you REALLY REALLY REALLY sure you wish to delete this JOB?" + Environment.NewLine + "This cannot be undone", "Confirm Deletion", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK)
                     {
-                        if (DataAccess.Update("DELETE FROM " + JobCard.DBTable + " WHERE jobID=" + this.jobID.Text))
+                        if (await DataAccess.DeleteJobAsync(System.Convert.ToInt32(this.jobID.Text))
+                            /* PJC OLD
+                            DataAccess.Update("DELETE FROM " + JobCard.DBTable + " WHERE jobID=" + this.jobID.Text)
+                            */
+                            )
                         {
-                            GetPreviousJob();
+                            await this.GetPreviousJobAsync();
                         }
                         this.jobCustomer.Focus();
                     }
@@ -3385,7 +3483,7 @@
                 this.Loading = false;
                 this.updateCreditCardSurcharge();
                 this.RedrawArrayComponent();
-                DisclaimerNote();
+                DisclaimerNoteAsync();
             }
             bool isFussy = DataAccess.isFussyCustomers(this.jobPhone.Text, this.jobEmail.Text);
             if (isFussy)
@@ -3504,7 +3602,7 @@
                 num9 = result + num8;
             }
         }
-        private bool NeedSave(bool promptIfChanged = true, bool fromSaveButton = false)
+        private async System.Threading.Tasks.Task<bool> NeedSaveAsync(bool promptIfChanged = true, bool fromSaveButton = false)
         {
             bool flag = true;
             int num = 0;
@@ -3513,6 +3611,7 @@
                 //return true;
             }
             this.updateSql = "UPDATE " + JobCard.DBTable + " SET ";
+            this.updateSqlSetList = new List<KeyValuePair<string, dynamic>>();
             this.UpdateAllTotals();
             foreach (Control control in this.fieldNameToControlMapping.Values)
             {
@@ -3523,22 +3622,55 @@
                 {
                     flag = false;
                     System.Type type = this.types[name];
-                    bool flag2 = type == typeof(DateTime);
-                    string str3 = (type == typeof(string)) ? "'" : "";
-                    if (string.IsNullOrWhiteSpace(stringValue))
+                    DateTime time = DateTime.Now;
+                    bool isDateTime = (type == typeof(DateTime));
+                    bool isBool = (type == typeof(bool));
+                    bool isString = (type == typeof(string));
+                    bool isInt = (type == typeof(int)) || (type == typeof(long));
+                    bool isFloat = (type == typeof(float)) || (type == typeof(decimal)) || (type == typeof(Single)) || (type == typeof(Double));
+                    string str3 = (isString) ? "'" : "";
+                    
+                    bool isNull = string.IsNullOrWhiteSpace(stringValue);
+                    if (isNull)
                     {
                         stringValue = "null";
                         str3 = "";
                     }
-                    else
+                    else if (isDateTime)
                     {
-                        DateTime time;
-                        if (flag2 && JobQueryForm.ParsedDateOK(stringValue, out time))
+                        
+                        if (JobQueryForm.ParsedDateOK(stringValue, out time))
                         {
                             stringValue = "#" + time.ToString("MM/dd/yyyy") + "#";
+                        } else
+                        {
+                            MessageBox.Show("Invalid date format MM/dd/yyyy in field " + name);
+                            isNull = true;
                         }
                     }
                     string updateSql = this.updateSql;
+                    if (isNull)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, DBNull.Value));
+                    } else if (isDateTime)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name,time));
+                    } else if (isString)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, stringValue));
+                    } else if (isBool)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToBoolean(stringValue)));
+                    } else if (isInt)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToInt32(stringValue)));
+                    } else if (isFloat)
+                    {
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToSingle(stringValue)));
+                    } else
+                    {
+                        MessageBox.Show("Unknown type for field " + name + " type was: " + type.ToString());
+                    }
                     this.updateSql = updateSql + ((num > 0) ? "," : "") + name + "=" + str3 + DoubleQuote(stringValue) + str3;
                     num++;
                 }
@@ -3546,31 +3678,21 @@
             this.updateSql = this.updateSql + " WHERE jobID=" + this.jobID.Text;
             if (!flag && promptIfChanged)
             {
-                flag = DataAccess.Update(this.updateSql);
-                /*
-                switch (MessageBox.Show("This operation will cause you to LOSE UNSAVED DATA!" + Environment.NewLine + "Do you wish to Save first?" + Environment.NewLine + "Yes - to save" + Environment.NewLine + "No - to lose data and continue" + Environment.NewLine + "Cancel - to cancel operation", "Save First?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Hand))
-                {
-                    case DialogResult.No:
-                        flag = true;
-                        break;
+                flag = await DataAccess.UpdateMongoAsync(this.updateSqlSetList);
+                    /* PJC OLD
+                    DataAccess.Update(this.updateSql)
+                    */
+                    
 
-                    case DialogResult.Yes:
-                        flag = DataAccess.Update(this.updateSql);
-                        break;
-                }
-                */
             }
             return !flag;
         }
 
-        private void OnSuperSearchEnterKey(object sender, KeyEventArgs e)
+        private async void OnSuperSearchEnterKey(object sender, KeyEventArgs e)
         {
-            if ((e.KeyCode == Keys.Enter) && this.SuperSearchField.Text.StartsWith("PJC"))
-            {
-                string cmd = this.SuperSearchField.Text.Substring(3);
-                DataAccess.Update(cmd);
-            }
-            if ((!this.panelSearchField.Visible && (e.KeyCode == Keys.Enter)) && !this.NeedSave(true, false))
+            MessageBox.Show("This is now deprecated talk to Peter");
+            return;
+            if ((!this.panelSearchField.Visible && (e.KeyCode == Keys.Enter)) && !(await this.NeedSaveAsync(true, false)))
             {
                 if (this.panelSetLocation)
                 {
@@ -4024,10 +4146,16 @@
             }
         }
 
-        private void Search()
+        private async System.Threading.Tasks.Task SearchAsync()
         {
             if (this.types.ContainsKey(this.searchFieldName))
             {
+                BsonDocument bson = new BsonDocument();
+                bool bsonValid = false;
+                bool useRegEx = false;
+                FilterDefinition<JobCardDoc> filter = null;
+
+
                 string str2;
                 string sql = "";
                 System.Type type = this.types[this.searchFieldName];
@@ -4036,6 +4164,8 @@
                     DateTime time;
                     if (this.CheckDate(this.txtSearchField.Text, out time))
                     {
+                        bson[searchFieldName] = time;
+                        bsonValid = true;
                         str2 = sql;
                         sql = str2 + this.searchFieldName + "=#" + time.ToString("MM/dd/yyyy") + "#";
                     }
@@ -4045,6 +4175,8 @@
                     float result = 0f;
                     if (float.TryParse(this.txtSearchField.Text, out result))
                     {
+                        bson[searchFieldName] = result;
+                        bsonValid = true;
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
                     else
@@ -4057,6 +4189,8 @@
                     bool flag = false;
                     if (bool.TryParse(this.txtSearchField.Text, out flag))
                     {
+                        bson[searchFieldName] = flag;
+                        bsonValid = true;
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
                     else
@@ -4067,6 +4201,9 @@
                 else if (type == typeof(string))
                 {
                     str2 = sql;
+                    filter = Builders<JobCardDoc>.Filter.Regex(this.searchFieldName, new BsonRegularExpression(this.txtSearchField.Text, "i"));
+                    bsonValid = true;
+                    useRegEx = true;
                     sql = str2 + this.searchFieldName + " LIKE '%" + this.txtSearchField.Text + "%'";
                 }
                 else if (type == typeof(int))
@@ -4074,17 +4211,28 @@
                     int num2 = 0;
                     if (int.TryParse(this.txtSearchField.Text, out num2))
                     {
+                        bson[searchFieldName] = num2;
+                        bsonValid = true;
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
                     else
                     {
                         MessageBox.Show("You must only have digits in this field");
                     }
+                } else
+                {
+                    MessageBox.Show("Unknown type " + type.ToString());
                 }
+                /* PJC OLD
                 if (sql != "")
                 {
                     sql = "Select * from " + JobCard.DBTable + " WHERE " + sql + " order by jobDate desc";
                     this.SearchSQL(sql);
+                }
+                */
+                if (bsonValid)
+                {
+
                 }
             }
         }
@@ -4097,6 +4245,7 @@
                 {
                     try
                     {
+                        
                         foreach (string str2 in Directory.GetFiles(str, fileToFind))
                         {
                             if (str2.EndsWith(fileToFind, true, CultureInfo.InvariantCulture))
@@ -4295,9 +4444,9 @@
             return true;
         }
 
-        private void SingleSearch(object sender, EventArgs e)
+        private async void SingleSearch(object sender, EventArgs e)
         {
-            if (!this.NeedSave(true, false))
+            if (!(await this.NeedSaveAsync(true, false)))
             {
                 if (this.panelSetLocation)
                 {
@@ -4328,11 +4477,11 @@
             this.lblResults.Text = string.Concat(new object[] { "Showing match ", this.slider.Value + 1, " of ", searchRows });
         }
 
-        private void tb_KeyDown(object sender, KeyEventArgs e)
+        private async void tb_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                this.Search();
+                await this.SearchAsync();
             }
         }
 

@@ -52,6 +52,8 @@
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
+            MessageBox.Show("This is deprecated talk to Peter C");
+            return;
             if ((this.cboWhereClause.SelectedIndex == -1) && (this.cboWhereClause.Text != ""))
             {
                 lastWhereClause = this.cboWhereClause.Text;
@@ -64,7 +66,7 @@
                     lastData1Text = this.txtData1.Text;
                     lastData2Text = this.txtData2.Text;
                     lastComboText = this.cboWhereClause.Text;
-                    this.Search(sql);
+                    
                 }
                 catch (Exception exception)
                 {
@@ -223,6 +225,10 @@
             }
         }
 
+        public DataGridView getSearchDataGridView()
+        {
+            return this.dataGridView;
+        }
         public void Search(string sql)
         {
             try
