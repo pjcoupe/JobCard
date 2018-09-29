@@ -10,7 +10,17 @@
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new JobCard());
+            try {
+                Application.Run(new JobCard());
+            } catch (Exception err)
+            {
+                var message = err.Message;
+                if (err.InnerException != null)
+                {
+                    message += " INNER: " + err.InnerException.Message;
+                }
+                MessageBox.Show("The Application will exit message:" + message);
+            }
         }
     }
 }

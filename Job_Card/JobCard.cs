@@ -40,7 +40,7 @@
     using System.Windows.Forms;
     using CheckBox = System.Windows.Forms.CheckBox;
     using System;
-
+    using System.Timers;
     public class JobCard : Form
     {
         private MongoClient client;
@@ -235,7 +235,14 @@
             ImageExtensions = list;
             if (System.Environment.MachineName == "TCSP4")
             {
-                PicturePath = @"D:\Kodak Pictures\";
+                if (Directory.Exists("K:"))
+                {
+                    PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
+                } else
+                {
+                    PicturePath = @"D:\Kodak Pictures\";
+                }
+                
             }
             else {
                 PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
@@ -252,7 +259,9 @@
 
         public JobCard()
         {
-
+            DataAccess.connectMongoDb();
+            DataAccess.migrateJobCardAsync();
+            DataAccess.migrateFussyCustomerAsync();
             this.fieldNameToControlMapping = new Dictionary<string, Control>();
             this.originalValues = new Dictionary<string, string>();
             this.InitializeComponent();
@@ -304,17 +313,8 @@
                 }
             }
 
-            this.initJobCard();
         }
 
-        private async System.Threading.Tasks.Task initJobCard() { 
-            DataAccess.connectMongoDb();
-
-            await DataAccess.migrateJobCardAsync();
-            await DataAccess.migrateFussyCustomer();
-
-            await this.GetLatestJobAsync();
-        }
 
         private void AddLine(RichTextBox r, string line)
         {
@@ -3257,7 +3257,14 @@
             this.grpBoxPolish.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
-
+            var getLatestTimer = new System.Timers.Timer(1000);
+            getLatestTimer.Elapsed += (Object source, ElapsedEventArgs e) =>
+            {
+                this.GetLatestJobAsync();
+            };
+            getLatestTimer.AutoReset = false;
+            getLatestTimer.Enabled = true;
+            
         }
 
         private bool IsCompleted() =>
@@ -3618,16 +3625,24 @@
                 string name = control.Name;
                 string stringValue = "";
                 control.DoubleClick += new EventHandler(this.SingleSearch);
+                if (name == "jobID")
+                {
+                    this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToInt32(control.Text)));
+                }
                 if (this.ControlValueChangedFromLoaded(control, false, out stringValue))
                 {
+                    if (name == "jobID" && stringValue == "000000")
+                    {
+                        continue;
+                    }
                     flag = false;
                     System.Type type = this.types[name];
                     DateTime time = DateTime.Now;
-                    bool isDateTime = (type == typeof(DateTime));
-                    bool isBool = (type == typeof(bool));
+                    bool isDateTime = (type == typeof(DateTime)) || (type == typeof(DateTime?));
+                    bool isBool = (type == typeof(bool)) || (type == typeof(bool?));
                     bool isString = (type == typeof(string));
-                    bool isInt = (type == typeof(int)) || (type == typeof(long));
-                    bool isFloat = (type == typeof(float)) || (type == typeof(decimal)) || (type == typeof(Single)) || (type == typeof(Double));
+                    bool isInt = (type == typeof(int)) || (type == typeof(long)) || (type == typeof(long?)) || (type == typeof(int?));
+                    bool isFloat = (type == typeof(float)) || (type == typeof(decimal)) || (type == typeof(Single)) || (type == typeof(Double))  || (type == typeof(Double?)) || (type == typeof(Single?)) || (type == typeof(decimal?)) || (type == typeof(float?));
                     string str3 = (isString) ? "'" : "";
                     
                     bool isNull = string.IsNullOrWhiteSpace(stringValue);
@@ -3651,7 +3666,7 @@
                     string updateSql = this.updateSql;
                     if (isNull)
                     {
-                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, DBNull.Value));
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, null));
                     } else if (isDateTime)
                     {
                         this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name,time));
@@ -3666,7 +3681,7 @@
                         this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToInt32(stringValue)));
                     } else if (isFloat)
                     {
-                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToSingle(stringValue)));
+                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToDouble(stringValue)));
                     } else
                     {
                         MessageBox.Show("Unknown type for field " + name + " type was: " + type.ToString());
@@ -4167,6 +4182,7 @@
                         bson[searchFieldName] = time;
                         bsonValid = true;
                         str2 = sql;
+                        filter = Builders<JobCardDoc>.Filter.Eq(this.searchFieldName, time);
                         sql = str2 + this.searchFieldName + "=#" + time.ToString("MM/dd/yyyy") + "#";
                     }
                 }
@@ -4177,6 +4193,7 @@
                     {
                         bson[searchFieldName] = result;
                         bsonValid = true;
+                        filter = Builders<JobCardDoc>.Filter.Eq(this.searchFieldName, result);
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
                     else
@@ -4190,6 +4207,7 @@
                     if (bool.TryParse(this.txtSearchField.Text, out flag))
                     {
                         bson[searchFieldName] = flag;
+                        filter = Builders<JobCardDoc>.Filter.Eq(this.searchFieldName, flag);
                         bsonValid = true;
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
@@ -4213,6 +4231,7 @@
                     {
                         bson[searchFieldName] = num2;
                         bsonValid = true;
+                        filter = Builders<JobCardDoc>.Filter.Eq(this.searchFieldName, num2);
                         sql = sql + this.searchFieldName + "=" + this.txtSearchField.Text;
                     }
                     else
@@ -4232,7 +4251,14 @@
                 */
                 if (bsonValid)
                 {
-
+                    var list = await DataAccess.findJobByFilterAsync(this.datagrid, filter, "jobDate", true, 0, 50);
+                    if (list != null && list.Count > 0)
+                    {
+                        this.Load(0);
+                    } else
+                    {
+                        MessageBox.Show("No results found");
+                    }
                 }
             }
         }

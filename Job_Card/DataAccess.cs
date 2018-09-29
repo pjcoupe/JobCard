@@ -15,6 +15,7 @@
     using System.Reflection;
     using System.Threading.Tasks;
     using System.ComponentModel;
+    using System.Runtime.Remoting;
     public class FussyCustomerDoc
     {
         [BsonId]
@@ -31,8 +32,25 @@
         [BsonElement("jobID")]
         public int jobID { get; set; }
 
+
+        [BsonIgnore]
+        private BsonDateTime _jobDate;
         [BsonElement("jobDate")]
-        public DateTime jobDate { get; set; }
+        public DateTime? jobDate
+        {
+            get
+            {
+                if (_jobDate == null)
+                {
+                    return null;
+                }
+                return _jobDate.ToNullableLocalTime();
+            }
+            set
+            {
+                _jobDate = value;
+            }
+        }
 
         [BsonElement("jobCustomer")]
         public string jobCustomer { get; set; }
@@ -55,11 +73,44 @@
         [BsonElement("jobReceivedFrom")]
         public string jobReceivedFrom { get; set; }
 
-        [BsonElement("jobDateRequired")]
-        public DateTime jobDateRequired { get; set; }
 
+        [BsonIgnore]
+        private BsonDateTime _jobDateRequired;
+        [BsonElement("jobDateRequired")]
+        public DateTime? jobDateRequired
+        {
+            get
+            {
+                if (_jobDateRequired == null)
+                {
+                    return null;
+                }
+                return _jobDateRequired.ToNullableLocalTime();
+            }
+            set
+            {
+                _jobDateRequired = value;
+            }
+        }
+
+        [BsonIgnore]
+        private BsonDateTime _jobDateCompleted;
         [BsonElement("jobDateCompleted")]
-        public DateTime jobDateCompleted { get; set; }
+        public DateTime? jobDateCompleted
+        {
+            get
+            {
+                if (_jobDateCompleted == null)
+                {
+                    return null;
+                }
+                return _jobDateCompleted.ToNullableLocalTime();
+            }
+            set
+            {
+                _jobDateCompleted = value;
+            }
+        }
 
         [BsonElement("jobPaymentBy")]
         public string jobPaymentBy { get; set; }
@@ -67,8 +118,25 @@
         [BsonElement("jobNotes")]
         public string jobNotes { get; set; }
 
+
+        [BsonIgnore]
+        private BsonDateTime _jobDatePaid;
         [BsonElement("jobDatePaid")]
-        public DateTime jobDatePaid { get; set; }
+        public DateTime? jobDatePaid
+        {
+            get
+            {
+                if (_jobDatePaid == null)
+                {
+                    return null;
+                }
+                return _jobDatePaid.ToNullableLocalTime();
+            }
+            set
+            {
+                _jobDatePaid = value;
+            }
+        }
 
         [BsonElement("jobDetail00")]
         public string jobDetail00 { get; set; }
@@ -77,13 +145,13 @@
         public string jobType00 { get; set; }
 
         [BsonElement("jobQty00")]
-        public int jobQty00 { get; set; }
+        public int? jobQty00 { get; set; }
 
         [BsonElement("jobUnitPrice00")]
-        public float jobUnitPrice00 { get; set; }
+        public float? jobUnitPrice00 { get; set; }
 
         [BsonElement("jobPrice00")]
-        public float jobPrice00 { get; set; }
+        public float? jobPrice00 { get; set; }
 
         [BsonElement("jobDetail01")]
         public string jobDetail01 { get; set; }
@@ -92,13 +160,13 @@
         public string jobType01 { get; set; }
 
         [BsonElement("jobQty01")]
-        public int jobQty01 { get; set; }
+        public int? jobQty01 { get; set; }
 
         [BsonElement("jobUnitPrice01")]
-        public float jobUnitPrice01 { get; set; }
+        public float? jobUnitPrice01 { get; set; }
 
         [BsonElement("jobPrice01")]
-        public float jobPrice01 { get; set; }
+        public float? jobPrice01 { get; set; }
 
         [BsonElement("jobDetail02")]
         public string jobDetail02 { get; set; }
@@ -107,13 +175,13 @@
         public string jobType02 { get; set; }
 
         [BsonElement("jobQty02")]
-        public int jobQty02 { get; set; }
+        public int? jobQty02 { get; set; }
 
         [BsonElement("jobUnitPrice02")]
-        public float jobUnitPrice02 { get; set; }
+        public float? jobUnitPrice02 { get; set; }
 
         [BsonElement("jobPrice02")]
-        public float jobPrice02 { get; set; }
+        public float? jobPrice02 { get; set; }
 
         [BsonElement("jobDetail03")]
         public string jobDetail03 { get; set; }
@@ -122,13 +190,13 @@
         public string jobType03 { get; set; }
 
         [BsonElement("jobQty03")]
-        public int jobQty03 { get; set; }
+        public int? jobQty03 { get; set; }
 
         [BsonElement("jobUnitPrice03")]
-        public float jobUnitPrice03 { get; set; }
+        public float? jobUnitPrice03 { get; set; }
 
         [BsonElement("jobPrice03")]
-        public float jobPrice03 { get; set; }
+        public float? jobPrice03 { get; set; }
 
         [BsonElement("jobDetail04")]
         public string jobDetail04 { get; set; }
@@ -137,13 +205,13 @@
         public string jobType04 { get; set; }
 
         [BsonElement("jobQty04")]
-        public int jobQty04 { get; set; }
+        public int? jobQty04 { get; set; }
 
         [BsonElement("jobUnitPrice04")]
-        public float jobUnitPrice04 { get; set; }
+        public float? jobUnitPrice04 { get; set; }
 
         [BsonElement("jobPrice04")]
-        public float jobPrice04 { get; set; }
+        public float? jobPrice04 { get; set; }
 
         [BsonElement("jobDetail05")]
         public string jobDetail05 { get; set; }
@@ -152,13 +220,13 @@
         public string jobType05 { get; set; }
 
         [BsonElement("jobQty05")]
-        public int jobQty05 { get; set; }
+        public int? jobQty05 { get; set; }
 
         [BsonElement("jobUnitPrice05")]
-        public float jobUnitPrice05 { get; set; }
+        public float? jobUnitPrice05 { get; set; }
 
         [BsonElement("jobPrice05")]
-        public float jobPrice05 { get; set; }
+        public float? jobPrice05 { get; set; }
 
         [BsonElement("jobDetail06")]
         public string jobDetail06 { get; set; }
@@ -167,13 +235,13 @@
         public string jobType06 { get; set; }
 
         [BsonElement("jobQty06")]
-        public int jobQty06 { get; set; }
+        public int? jobQty06 { get; set; }
 
         [BsonElement("jobUnitPrice06")]
-        public float jobUnitPrice06 { get; set; }
+        public float? jobUnitPrice06 { get; set; }
 
         [BsonElement("jobPrice06")]
-        public float jobPrice06 { get; set; }
+        public float? jobPrice06 { get; set; }
 
         [BsonElement("jobDetail07")]
         public string jobDetail07 { get; set; }
@@ -182,13 +250,13 @@
         public string jobType07 { get; set; }
 
         [BsonElement("jobQty07")]
-        public int jobQty07 { get; set; }
+        public int? jobQty07 { get; set; }
 
         [BsonElement("jobUnitPrice07")]
-        public float jobUnitPrice07 { get; set; }
+        public float? jobUnitPrice07 { get; set; }
 
         [BsonElement("jobPrice07")]
-        public float jobPrice07 { get; set; }
+        public float? jobPrice07 { get; set; }
 
         [BsonElement("jobDetail08")]
         public string jobDetail08 { get; set; }
@@ -197,13 +265,13 @@
         public string jobType08 { get; set; }
 
         [BsonElement("jobQty08")]
-        public int jobQty08 { get; set; }
+        public int? jobQty08 { get; set; }
 
         [BsonElement("jobUnitPrice08")]
-        public float jobUnitPrice08 { get; set; }
+        public float? jobUnitPrice08 { get; set; }
 
         [BsonElement("jobPrice08")]
-        public float jobPrice08 { get; set; }
+        public float? jobPrice08 { get; set; }
 
         [BsonElement("jobDetail09")]
         public string jobDetail09 { get; set; }
@@ -212,13 +280,13 @@
         public string jobType09 { get; set; }
 
         [BsonElement("jobQty09")]
-        public int jobQty09 { get; set; }
+        public int? jobQty09 { get; set; }
 
         [BsonElement("jobUnitPrice09")]
-        public float jobUnitPrice09 { get; set; }
+        public float? jobUnitPrice09 { get; set; }
 
         [BsonElement("jobPrice09")]
-        public float jobPrice09 { get; set; }
+        public float? jobPrice09 { get; set; }
 
         [BsonElement("jobDetail10")]
         public string jobDetail10 { get; set; }
@@ -227,13 +295,13 @@
         public string jobType10 { get; set; }
 
         [BsonElement("jobQty10")]
-        public int jobQty10 { get; set; }
+        public int? jobQty10 { get; set; }
 
         [BsonElement("jobUnitPrice10")]
-        public float jobUnitPrice10 { get; set; }
+        public float? jobUnitPrice10 { get; set; }
 
         [BsonElement("jobPrice10")]
-        public float jobPrice10 { get; set; }
+        public float? jobPrice10 { get; set; }
 
         [BsonElement("jobDetail11")]
         public string jobDetail11 { get; set; }
@@ -242,13 +310,13 @@
         public string jobType11 { get; set; }
 
         [BsonElement("jobQty11")]
-        public int jobQty11 { get; set; }
+        public int? jobQty11 { get; set; }
 
         [BsonElement("jobUnitPrice11")]
-        public float jobUnitPrice11 { get; set; }
+        public float? jobUnitPrice11 { get; set; }
 
         [BsonElement("jobPrice11")]
-        public float jobPrice11 { get; set; }
+        public float? jobPrice11 { get; set; }
 
         [BsonElement("jobDetail12")]
         public string jobDetail12 { get; set; }
@@ -257,13 +325,13 @@
         public string jobType12 { get; set; }
 
         [BsonElement("jobQty12")]
-        public int jobQty12 { get; set; }
+        public int? jobQty12 { get; set; }
 
         [BsonElement("jobUnitPrice12")]
-        public float jobUnitPrice12 { get; set; }
+        public float? jobUnitPrice12 { get; set; }
 
         [BsonElement("jobPrice12")]
-        public float jobPrice12 { get; set; }
+        public float? jobPrice12 { get; set; }
 
         [BsonElement("jobDetail13")]
         public string jobDetail13 { get; set; }
@@ -272,13 +340,13 @@
         public string jobType13 { get; set; }
 
         [BsonElement("jobQty13")]
-        public int jobQty13 { get; set; }
+        public int? jobQty13 { get; set; }
 
         [BsonElement("jobUnitPrice13")]
-        public float jobUnitPrice13 { get; set; }
+        public float? jobUnitPrice13 { get; set; }
 
         [BsonElement("jobPrice13")]
-        public float jobPrice13 { get; set; }
+        public float? jobPrice13 { get; set; }
 
         [BsonElement("jobDetail14")]
         public string jobDetail14 { get; set; }
@@ -287,13 +355,13 @@
         public string jobType14 { get; set; }
 
         [BsonElement("jobQty14")]
-        public int jobQty14 { get; set; }
+        public int? jobQty14 { get; set; }
 
         [BsonElement("jobUnitPrice14")]
-        public float jobUnitPrice14 { get; set; }
+        public float? jobUnitPrice14 { get; set; }
 
         [BsonElement("jobPrice14")]
-        public float jobPrice14 { get; set; }
+        public float? jobPrice14 { get; set; }
 
         [BsonElement("jobDetail15")]
         public string jobDetail15 { get; set; }
@@ -302,13 +370,13 @@
         public string jobType15 { get; set; }
 
         [BsonElement("jobQty15")]
-        public int jobQty15 { get; set; }
+        public int? jobQty15 { get; set; }
 
         [BsonElement("jobUnitPrice15")]
-        public float jobUnitPrice15 { get; set; }
+        public float? jobUnitPrice15 { get; set; }
 
         [BsonElement("jobPrice15")]
-        public float jobPrice15 { get; set; }
+        public float? jobPrice15 { get; set; }
 
         [BsonElement("jobDetail16")]
         public string jobDetail16 { get; set; }
@@ -317,13 +385,13 @@
         public string jobType16 { get; set; }
 
         [BsonElement("jobQty16")]
-        public int jobQty16 { get; set; }
+        public int? jobQty16 { get; set; }
 
         [BsonElement("jobUnitPrice16")]
-        public float jobUnitPrice16 { get; set; }
+        public float? jobUnitPrice16 { get; set; }
 
         [BsonElement("jobPrice16")]
-        public float jobPrice16 { get; set; }
+        public float? jobPrice16 { get; set; }
 
         [BsonElement("jobDetail17")]
         public string jobDetail17 { get; set; }
@@ -332,16 +400,16 @@
         public string jobType17 { get; set; }
 
         [BsonElement("jobQty17")]
-        public int jobQty17 { get; set; }
+        public int? jobQty17 { get; set; }
 
         [BsonElement("jobUnitPrice17")]
-        public float jobUnitPrice17 { get; set; }
+        public float? jobUnitPrice17 { get; set; }
 
         [BsonElement("jobPrice17")]
-        public float jobPrice17 { get; set; }
+        public float? jobPrice17 { get; set; }
 
         [BsonElement("jobRepair")]
-        public bool jobRepair { get; set; }
+        public bool? jobRepair { get; set; }
 
         [BsonElement("jobRepairText")]
         public string jobRepairText { get; set; }
@@ -350,16 +418,16 @@
         public string jobRepairType { get; set; }
 
         [BsonElement("jobRepairQty")]
-        public int jobRepairQty { get; set; }
+        public int? jobRepairQty { get; set; }
 
         [BsonElement("jobRepairUnitPrice")]
-        public float jobRepairUnitPrice { get; set; }
+        public float? jobRepairUnitPrice { get; set; }
 
         [BsonElement("jobRepairPrice")]
-        public float jobRepairPrice { get; set; }
+        public float? jobRepairPrice { get; set; }
 
         [BsonElement("jobStrip")]
-        public bool jobStrip { get; set; }
+        public bool? jobStrip { get; set; }
 
         [BsonElement("jobStripText")]
         public string jobStripText { get; set; }
@@ -368,16 +436,16 @@
         public string jobStripType { get; set; }
 
         [BsonElement("jobStripQty")]
-        public int jobStripQty { get; set; }
+        public int? jobStripQty { get; set; }
 
         [BsonElement("jobStripUnitPrice")]
-        public float jobStripUnitPrice { get; set; }
+        public float? jobStripUnitPrice { get; set; }
 
         [BsonElement("jobStripPrice")]
-        public float jobStripPrice { get; set; }
+        public float? jobStripPrice { get; set; }
 
         [BsonElement("jobPolish")]
-        public bool jobPolish { get; set; }
+        public bool? jobPolish { get; set; }
 
         [BsonElement("jobPolishText")]
         public string jobPolishText { get; set; }
@@ -386,16 +454,16 @@
         public string jobPolishType { get; set; }
 
         [BsonElement("jobPolishQty")]
-        public int jobPolishQty { get; set; }
+        public int? jobPolishQty { get; set; }
 
         [BsonElement("jobPolishUnitPrice")]
-        public float jobPolishUnitPrice { get; set; }
+        public float? jobPolishUnitPrice { get; set; }
 
         [BsonElement("jobPolishPrice")]
-        public float jobPolishPrice { get; set; }
+        public float? jobPolishPrice { get; set; }
 
         [BsonElement("jobPlating")]
-        public bool jobPlating { get; set; }
+        public bool? jobPlating { get; set; }
 
         [BsonElement("jobPlatingText")]
         public string jobPlatingText { get; set; }
@@ -404,16 +472,16 @@
         public string jobPlatingType { get; set; }
 
         [BsonElement("jobPlatingQty")]
-        public int jobPlatingQty { get; set; }
+        public int? jobPlatingQty { get; set; }
 
         [BsonElement("jobPlatingUnitPrice")]
-        public float jobPlatingUnitPrice { get; set; }
+        public float? jobPlatingUnitPrice { get; set; }
 
         [BsonElement("jobPlatingPrice")]
-        public float jobPlatingPrice { get; set; }
+        public float? jobPlatingPrice { get; set; }
 
         [BsonElement("jobLaquer")]
-        public bool jobLaquer { get; set; }
+        public bool? jobLaquer { get; set; }
 
         [BsonElement("jobLaquerText")]
         public string jobLaquerText { get; set; }
@@ -422,16 +490,16 @@
         public string jobLaquerType { get; set; }
 
         [BsonElement("jobLaquerQty")]
-        public int jobLaquerQty { get; set; }
+        public int? jobLaquerQty { get; set; }
 
         [BsonElement("jobLaquerUnitPrice")]
-        public float jobLaquerUnitPrice { get; set; }
+        public float? jobLaquerUnitPrice { get; set; }
 
         [BsonElement("jobLaquerPrice")]
-        public float jobLaquerPrice { get; set; }
+        public float? jobLaquerPrice { get; set; }
 
         [BsonElement("jobSilvGalv")]
-        public bool jobSilvGalv { get; set; }
+        public bool? jobSilvGalv { get; set; }
 
         [BsonElement("jobSilvGalvText")]
         public string jobSilvGalvText { get; set; }
@@ -440,16 +508,16 @@
         public string jobSilvGalvType { get; set; }
 
         [BsonElement("jobSilvGalvQty")]
-        public int jobSilvGalvQty { get; set; }
+        public int? jobSilvGalvQty { get; set; }
 
         [BsonElement("jobSilvGalvUnitPrice")]
-        public float jobSilvGalvUnitPrice { get; set; }
+        public float? jobSilvGalvUnitPrice { get; set; }
 
         [BsonElement("jobSilvGalvPrice")]
-        public float jobSilvGalvPrice { get; set; }
+        public float? jobSilvGalvPrice { get; set; }
 
         [BsonElement("jobGoldGalv")]
-        public bool jobGoldGalv { get; set; }
+        public bool? jobGoldGalv { get; set; }
 
         [BsonElement("jobGoldGalvText")]
         public string jobGoldGalvText { get; set; }
@@ -458,16 +526,16 @@
         public string jobGoldGalvType { get; set; }
 
         [BsonElement("jobGoldGalvQty")]
-        public int jobGoldGalvQty { get; set; }
+        public int? jobGoldGalvQty { get; set; }
 
         [BsonElement("jobGoldGalvUnitPrice")]
-        public float jobGoldGalvUnitPrice { get; set; }
+        public float? jobGoldGalvUnitPrice { get; set; }
 
         [BsonElement("jobGoldGalvPrice")]
-        public float jobGoldGalvPrice { get; set; }
+        public float? jobGoldGalvPrice { get; set; }
 
         [BsonElement("jobWheelCrack")]
-        public bool jobWheelCrack { get; set; }
+        public bool? jobWheelCrack { get; set; }
 
         [BsonElement("jobWheelCrackText")]
         public string jobWheelCrackText { get; set; }
@@ -476,16 +544,16 @@
         public string jobWheelCrackType { get; set; }
 
         [BsonElement("jobWheelCrackQty")]
-        public int jobWheelCrackQty { get; set; }
+        public int? jobWheelCrackQty { get; set; }
 
         [BsonElement("jobWheelCrackUnitPrice")]
-        public float jobWheelCrackUnitPrice { get; set; }
+        public float? jobWheelCrackUnitPrice { get; set; }
 
         [BsonElement("jobWheelCrackPrice")]
-        public float jobWheelCrackPrice { get; set; }
+        public float? jobWheelCrackPrice { get; set; }
 
         [BsonElement("jobWheelDent")]
-        public bool jobWheelDent { get; set; }
+        public bool? jobWheelDent { get; set; }
 
         [BsonElement("jobWheelDentText")]
         public string jobWheelDentText { get; set; }
@@ -494,16 +562,16 @@
         public string jobWheelDentType { get; set; }
 
         [BsonElement("jobWheelDentQty")]
-        public int jobWheelDentQty { get; set; }
+        public int? jobWheelDentQty { get; set; }
 
         [BsonElement("jobWheelDentUnitPrice")]
-        public float jobWheelDentUnitPrice { get; set; }
+        public float? jobWheelDentUnitPrice { get; set; }
 
         [BsonElement("jobWheelDentPrice")]
-        public float jobWheelDentPrice { get; set; }
+        public float? jobWheelDentPrice { get; set; }
 
         [BsonElement("jobWheelMachine")]
-        public bool jobWheelMachine { get; set; }
+        public bool? jobWheelMachine { get; set; }
 
         [BsonElement("jobWheelMachineText")]
         public string jobWheelMachineText { get; set; }
@@ -512,16 +580,16 @@
         public string jobWheelMachineType { get; set; }
 
         [BsonElement("jobWheelMachineQty")]
-        public int jobWheelMachineQty { get; set; }
+        public int? jobWheelMachineQty { get; set; }
 
         [BsonElement("jobWheelMachineUnitPrice")]
-        public float jobWheelMachineUnitPrice { get; set; }
+        public float? jobWheelMachineUnitPrice { get; set; }
 
         [BsonElement("jobWheelMachinePrice")]
-        public float jobWheelMachinePrice { get; set; }
+        public float? jobWheelMachinePrice { get; set; }
 
         [BsonElement("jobTyre")]
-        public bool jobTyre { get; set; }
+        public bool? jobTyre { get; set; }
 
         [BsonElement("jobTyreText")]
         public string jobTyreText { get; set; }
@@ -530,31 +598,35 @@
         public string jobTyreType { get; set; }
 
         [BsonElement("jobTyreQty")]
-        public int jobTyreQty { get; set; }
+        public int? jobTyreQty { get; set; }
 
         [BsonElement("jobTyreUnitPrice")]
-        public float jobTyreUnitPrice { get; set; }
+        public float? jobTyreUnitPrice { get; set; }
 
         [BsonElement("jobTyrePrice")]
-        public float jobTyrePrice { get; set; }
+        public float? jobTyrePrice { get; set; }
 
         [BsonElement("jobFreight")]
-        public float jobFreight { get; set; }
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
+        public float? jobFreight { get; set; }
 
         [BsonElement("jobSubTotal")]
-        public float jobSubTotal { get; set; }
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
+        public float? jobSubTotal { get; set; }
 
         [BsonElement("jobGST")]
-        public float jobGST { get; set; }
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
+        public float? jobGST { get; set; }
 
         [BsonElement("jobTOTAL")]
-        public float jobTOTAL { get; set; }
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
+        public float? jobTOTAL { get; set; }
 
         [BsonElement("jobCompleted")]
-        public bool jobCompleted { get; set; }
+        public bool? jobCompleted { get; set; }
 
         [BsonElement("jobCollected")]
-        public bool jobCollected { get; set; }
+        public bool? jobCollected { get; set; }
 
         [BsonElement("jobBusinessName")]
         public string jobBusinessName { get; set; }
@@ -570,7 +642,7 @@
             if (_client == null)
             {
                 try {
-                    _client = new MongoClient("mongodb://192.168.1.177:27017");
+                    _client = new MongoClient("mongodb://TCSP4:27017");
                     string databaseName = "plating";
                     if (JobTypePopup.isWheelApp())
                     {
@@ -633,9 +705,9 @@
         }
         public static async Task<int> GetLastJobIDAsync()
         {
-            var filter = Builders<JobCardDoc>.Filter.Ne("jobID", BsonNull.Value);
-            var sort = new SortDefinitionBuilder<JobCard>();
-            var result = await DataAccess._jobCard.Find(filter).SortByDescending( x => x.jobID)                                     
+            var filter = new BsonDocument(); //Builders<JobCardDoc>.Filter.Ne("jobID", BsonNull.Value);
+            
+            var result = await DataAccess._jobCard.Find(filter).Sort(new BsonDocument("jobID" , -1))                                     
                                             .Limit(1)
                                             .ToListAsync();
             if (result != null && result.Count == 1)
@@ -659,6 +731,13 @@
             }
             if (recs > 0)
             {
+                // PJC REMOVE
+                try {
+                    var deleteMe = DataAccess._jobCard.Find(new BsonDocument() { }).ToList();
+                } catch (Exception err)
+                {
+                    System.Console.WriteLine("Already migrated jobs");
+                }
                 System.Console.WriteLine("Already migrated jobs");
                 return;
             }
@@ -772,7 +851,7 @@
             }
         }
 
-        public static async Task migrateFussyCustomer()
+        public static async Task migrateFussyCustomerAsync()
         {
             long recs = 0;
             try
@@ -1265,29 +1344,48 @@
             if (fields != null && fields.Count > 0)
             {
                 int jobID = 0;
-                var updateBuilder = Builders<JobCardDoc>.Update;
-                UpdateDefinition<JobCardDoc> update = null;
+                var updateList = new List<UpdateDefinition<JobCardDoc>>();
+             
+                
                 fields.ForEach(x =>
                     {
+                        UpdateDefinition<JobCardDoc> update = null;
                         if (x.Key == "jobID")
                         {
                             jobID = x.Value;
                         } else
                         {
-                            update = updateBuilder.Set(x.Key, x.Value);
+                            try {
+                                if (x.Value == null)
+                                {
+                                   update = Builders<JobCardDoc>.Update.Set<System.DBNull>(x.Key, null);
+                                }
+                                else {
+                                   update = Builders<JobCardDoc>.Update.Set(x.Key, x.Value);
+                                }
+                            } catch (Exception err)
+                            {
+                                MessageBox.Show("Invalid field " + x.Key + " value ");
+                            }
+                        }
+                        if (update != null)
+                        {
+                            updateList.Add(update);
                         }
                     }
                 );
-                if (jobID == 0 || update == null)
+                if (jobID == 0)
                 {
                     ShowError("invalid jobID");
                     return false;
                 }
                 var filter = Builders<JobCardDoc>.Filter.Eq("jobID", jobID);
-
-                var result = await DataAccess._jobCard.UpdateOneAsync(filter, update);
-
-                return result.ModifiedCount != 0;
+                UpdateOptions options = new UpdateOptions();
+                //options.BypassDocumentValidation = true;
+                var finalUpdate = Builders<JobCardDoc>.Update.Combine(updateList);
+                var result = await DataAccess._jobCard.UpdateOneAsync(filter, finalUpdate);
+                System.Console.WriteLine("Update result", result);
+                return result.IsAcknowledged;
             } else
             {
                 return false;
