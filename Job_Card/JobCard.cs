@@ -219,6 +219,8 @@
         private string updateSql;
         private List<KeyValuePair<string, dynamic>> updateSqlSetList;
         private Button btnFussy;
+        private Button btnRDAddressSurcharge;
+        private System.Windows.Forms.Timer getLatestTimer;
         private Rectangle workingArea;
 
         static JobCard()
@@ -564,7 +566,7 @@
                 DataGridView datagrid = form.getSearchDataGridView();
                 var filter = Builders<JobCardDoc>.Filter.Ne("jobDateCompleted", BsonNull.Value);
 
-                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDateCompleted");
+                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDateCompleted", true, 0, 50);
                 /* PJC OLD
                 form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPhone, jobDateCompleted," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE NOT ISNULL(jobDateCompleted) ORDER BY jobDateCompleted desc");
                 */
@@ -753,7 +755,7 @@
                 DataGridView datagrid = form.getSearchDataGridView();
                 var filter = Builders<JobCardDoc>.Filter.Eq("jobDateCompleted", BsonNull.Value);
 
-                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDate", false);
+                var result = await DataAccess.findJobByFilterAsync(datagrid, filter, "jobDate", false, 0, 50);
                 /* PJC OLD
                 form.Search("SELECT jobID, jobCustomer, jobBusinessName, jobPaymentBy, jobPhone, jobDate," + this.AllDetails + " FROM " + JobCard.DBTable + " WHERE ISNULL(jobDateCompleted) ORDER BY jobDate");
                 */
@@ -2022,6 +2024,7 @@
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.btnNewJob = new System.Windows.Forms.Button();
             this.btnIncompleteJobs = new System.Windows.Forms.Button();
             this.btnSearchLists = new System.Windows.Forms.Button();
@@ -2112,6 +2115,8 @@
             this.btnReport = new System.Windows.Forms.Button();
             this.SuperSearchField = new System.Windows.Forms.ComboBox();
             this.btnFussy = new System.Windows.Forms.Button();
+            this.btnRDAddressSurcharge = new System.Windows.Forms.Button();
+            this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
@@ -2492,7 +2497,7 @@
             // 
             // jobNotes
             // 
-            this.jobNotes.Font = new System.Drawing.Font("Arial", 12);
+            this.jobNotes.Font = new System.Drawing.Font("Arial", 12F);
             this.jobNotes.Location = new System.Drawing.Point(243, 220);
             this.jobNotes.Multiline = true;
             this.jobNotes.Name = "jobNotes";
@@ -3161,6 +3166,22 @@
             this.btnFussy.Text = "!";
             this.btnFussy.UseVisualStyleBackColor = false;
             this.btnFussy.Click += new System.EventHandler(this.btnFussy_Click);
+            //
+            // btnRDAddressSurcharge
+            //
+            this.btnRDAddressSurcharge.Font = new System.Drawing.Font("Arial", 6, System.Drawing.FontStyle.Regular);
+            this.btnRDAddressSurcharge.Name = "btnRDAddressSurcharge";
+            this.btnRDAddressSurcharge.Text = "RD";
+            this.btnRDAddressSurcharge.UseVisualStyleBackColor = true;
+            this.btnRDAddressSurcharge.Location = new System.Drawing.Point(1000, 500);
+            this.btnRDAddressSurcharge.Size = new System.Drawing.Size(47, 20);
+            this.btnRDAddressSurcharge.Click += new System.EventHandler(this.btnRDAddressSurcharge_Click);
+            // 
+            // getLatestTimer
+            // 
+            this.getLatestTimer.Enabled = true;
+            this.getLatestTimer.Interval = 1000;
+            this.getLatestTimer.Tick += new System.EventHandler(this.getLatestTimer_Tick);
             // 
             // JobCard
             // 
@@ -3170,6 +3191,7 @@
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(1354, 733);
             this.Controls.Add(this.btnFussy);
+            this.Controls.Add(this.btnRDAddressSurcharge);
             this.Controls.Add(this.SuperSearchField);
             this.Controls.Add(this.btnReport);
             this.Controls.Add(this.cboReportProduct);
@@ -3257,14 +3279,7 @@
             this.grpBoxPolish.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
-            var getLatestTimer = new System.Timers.Timer(1000);
-            getLatestTimer.Elapsed += (Object source, ElapsedEventArgs e) =>
-            {
-                this.GetLatestJobAsync();
-            };
-            getLatestTimer.AutoReset = false;
-            getLatestTimer.Enabled = true;
-            
+
         }
 
         private bool IsCompleted() =>
@@ -3862,9 +3877,14 @@
             }
         }
 
-        private void PrintPressed()
+        private async void PrintPressed()
         {
-            DataAccess.Update("UPDATE " + JobCard.DBTable + " SET jobCompleted=true WHERE jobID=" + this.jobID.Text);
+            this.jobCompleted.Checked = true;
+            if (await this.NeedSaveAsync(false, true))
+            {
+                var ok = await DataAccess.UpdateMongoAsync(this.updateSqlSetList);
+                //DataAccess.Update("UPDATE " + JobCard.DBTable + " SET jobCompleted=true WHERE jobID=" + this.jobID.Text);
+            }
         }
 
         private void PromptDatabasePath()
@@ -3936,8 +3956,10 @@
                 for (num = 0; num < list.Count; num++)
                 {
                     int index = list[num];
+
                     this.jobDetail[index].Font = new Font("Arial", emSize);
                     this.jobDetail[index].Location = new Point(this.btnCollapseToggle.Right + num2, this.btnCollapseToggle.Top + (num * (height + num6)));
+
                     if (num >= 0x1d)
                     {
                         num9 = 0.0;
@@ -3988,6 +4010,10 @@
                     }
                     Point point2 = new Point((this.jobPrice[index].Location.X - 5) - this.label[index].Width, this.jobDetail[index].Location.Y);
                     this.label[index].Location = point2;
+                    if (index == this.freightIndex)
+                    {
+                        this.btnRDAddressSurcharge.Location = new Point(point2.X - 40, point2.Y + 3);
+                    }
                     if (index == this.subTotalIndex)
                     {
                         point2.Offset(-140, 0);
@@ -4255,6 +4281,22 @@
                     if (list != null && list.Count > 0)
                     {
                         this.Load(0);
+
+                        int searchRows = list.Count;
+                         if (searchRows == 1)
+                        {
+                            this.panelSearchField.Visible = false;
+                        }
+                        else
+                        {
+                            this.slider.Value = 0;
+                            this.slider.Maximum = searchRows - 1;
+                            this.slider.Visible = true;
+                            this.lblResults.Text = string.Concat(new object[] { "Showing match ", this.slider.Value + 1, " of ", searchRows });
+                        }
+
+
+
                     } else
                     {
                         MessageBox.Show("No results found");
@@ -4423,9 +4465,9 @@
                 r.AppendText(Environment.NewLine);
                 if (customerCopy && (this.jobCompleted.Checked || !string.IsNullOrWhiteSpace(printToPDF)))
                 {
-                    this.AddLine(r, "******************************", "Courier New", 15, FontStyle.Regular, 0);
-                    this.AddLine(r, "*     DUPLICATE RECEIPT      *");
-                    this.AddLine(r, "******************************");
+                    //this.AddLine(r, "******************************", "Courier New", 15, FontStyle.Regular, 0);
+                    //this.AddLine(r, "*     DUPLICATE RECEIPT      *");
+                    //this.AddLine(r, "******************************");
                 }
             }
             this.AddLine(r, "".PadRight(0x4a, '-'));
@@ -4762,6 +4804,24 @@
             {
                 MessageBox.Show("Phone must have at least a 9 digit number");
             }
+        }
+
+        private void btnRDAddressSurcharge_Click(object sender, EventArgs e)
+        {
+            double result = 0.0;
+            double.TryParse(this.jobPrice[this.freightIndex].Text, out result);
+            this.jobPrice[freightIndex].Text = string.Format("{0:N2}", (7.0 + result));
+            this.UpdateAllTotals();
+        }
+
+        private async void getLatestTimer_Tick(object sender, EventArgs e)
+        {
+            if (this.jobID.Text == "" || this.jobID.Text == "000000")
+            {
+                this.jobID.Text = "Loading";
+                await this.GetLatestJobAsync();
+            }
+            
         }
     }
 }

@@ -1167,8 +1167,8 @@
             else
             {
                 this.groupBox4.Text =  "Wheel Tyre Service";
-                this.checkBox20.Text = "Remove Tyre              $6";
-                this.checkBox21.Text = "Fit Tyre                $6";
+                this.checkBox20.Text = "Remove Tyre              $12";
+                this.checkBox21.Text = "Fit Tyre                $12";
 
                 this.groupBox2.Visible = false;
                 this.checkBox4.Visible = false;

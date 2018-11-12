@@ -163,9 +163,11 @@
         public int? jobQty01 { get; set; }
 
         [BsonElement("jobUnitPrice01")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice01 { get; set; }
 
         [BsonElement("jobPrice01")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice01 { get; set; }
 
         [BsonElement("jobDetail02")]
@@ -178,9 +180,11 @@
         public int? jobQty02 { get; set; }
 
         [BsonElement("jobUnitPrice02")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice02 { get; set; }
 
         [BsonElement("jobPrice02")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice02 { get; set; }
 
         [BsonElement("jobDetail03")]
@@ -193,9 +197,11 @@
         public int? jobQty03 { get; set; }
 
         [BsonElement("jobUnitPrice03")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice03 { get; set; }
 
         [BsonElement("jobPrice03")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice03 { get; set; }
 
         [BsonElement("jobDetail04")]
@@ -208,9 +214,11 @@
         public int? jobQty04 { get; set; }
 
         [BsonElement("jobUnitPrice04")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice04 { get; set; }
 
         [BsonElement("jobPrice04")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice04 { get; set; }
 
         [BsonElement("jobDetail05")]
@@ -223,9 +231,11 @@
         public int? jobQty05 { get; set; }
 
         [BsonElement("jobUnitPrice05")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice05 { get; set; }
 
         [BsonElement("jobPrice05")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice05 { get; set; }
 
         [BsonElement("jobDetail06")]
@@ -238,9 +248,11 @@
         public int? jobQty06 { get; set; }
 
         [BsonElement("jobUnitPrice06")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice06 { get; set; }
 
         [BsonElement("jobPrice06")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice06 { get; set; }
 
         [BsonElement("jobDetail07")]
@@ -253,9 +265,11 @@
         public int? jobQty07 { get; set; }
 
         [BsonElement("jobUnitPrice07")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice07 { get; set; }
 
         [BsonElement("jobPrice07")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice07 { get; set; }
 
         [BsonElement("jobDetail08")]
@@ -268,9 +282,11 @@
         public int? jobQty08 { get; set; }
 
         [BsonElement("jobUnitPrice08")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice08 { get; set; }
 
         [BsonElement("jobPrice08")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice08 { get; set; }
 
         [BsonElement("jobDetail09")]
@@ -283,9 +299,11 @@
         public int? jobQty09 { get; set; }
 
         [BsonElement("jobUnitPrice09")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice09 { get; set; }
 
         [BsonElement("jobPrice09")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice09 { get; set; }
 
         [BsonElement("jobDetail10")]
@@ -298,9 +316,11 @@
         public int? jobQty10 { get; set; }
 
         [BsonElement("jobUnitPrice10")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice10 { get; set; }
 
         [BsonElement("jobPrice10")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice10 { get; set; }
 
         [BsonElement("jobDetail11")]
@@ -313,9 +333,11 @@
         public int? jobQty11 { get; set; }
 
         [BsonElement("jobUnitPrice11")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice11 { get; set; }
 
         [BsonElement("jobPrice11")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice11 { get; set; }
 
         [BsonElement("jobDetail12")]
@@ -328,9 +350,11 @@
         public int? jobQty12 { get; set; }
 
         [BsonElement("jobUnitPrice12")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice12 { get; set; }
 
         [BsonElement("jobPrice12")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice12 { get; set; }
 
         [BsonElement("jobDetail13")]
@@ -343,9 +367,11 @@
         public int? jobQty13 { get; set; }
 
         [BsonElement("jobUnitPrice13")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice13 { get; set; }
 
         [BsonElement("jobPrice13")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice13 { get; set; }
 
         [BsonElement("jobDetail14")]
@@ -358,9 +384,11 @@
         public int? jobQty14 { get; set; }
 
         [BsonElement("jobUnitPrice14")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice14 { get; set; }
 
         [BsonElement("jobPrice14")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice14 { get; set; }
 
         [BsonElement("jobDetail15")]
@@ -373,9 +401,11 @@
         public int? jobQty15 { get; set; }
 
         [BsonElement("jobUnitPrice15")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice15 { get; set; }
 
         [BsonElement("jobPrice15")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice15 { get; set; }
 
         [BsonElement("jobDetail16")]
@@ -388,9 +418,11 @@
         public int? jobQty16 { get; set; }
 
         [BsonElement("jobUnitPrice16")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice16 { get; set; }
 
         [BsonElement("jobPrice16")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice16 { get; set; }
 
         [BsonElement("jobDetail17")]
@@ -403,9 +435,11 @@
         public int? jobQty17 { get; set; }
 
         [BsonElement("jobUnitPrice17")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice17 { get; set; }
 
         [BsonElement("jobPrice17")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice17 { get; set; }
 
         [BsonElement("jobRepair")]
@@ -421,9 +455,11 @@
         public int? jobRepairQty { get; set; }
 
         [BsonElement("jobRepairUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobRepairUnitPrice { get; set; }
 
         [BsonElement("jobRepairPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobRepairPrice { get; set; }
 
         [BsonElement("jobStrip")]
@@ -439,9 +475,11 @@
         public int? jobStripQty { get; set; }
 
         [BsonElement("jobStripUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobStripUnitPrice { get; set; }
 
         [BsonElement("jobStripPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobStripPrice { get; set; }
 
         [BsonElement("jobPolish")]
@@ -457,9 +495,11 @@
         public int? jobPolishQty { get; set; }
 
         [BsonElement("jobPolishUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPolishUnitPrice { get; set; }
 
         [BsonElement("jobPolishPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPolishPrice { get; set; }
 
         [BsonElement("jobPlating")]
@@ -475,9 +515,11 @@
         public int? jobPlatingQty { get; set; }
 
         [BsonElement("jobPlatingUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPlatingUnitPrice { get; set; }
 
         [BsonElement("jobPlatingPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPlatingPrice { get; set; }
 
         [BsonElement("jobLaquer")]
@@ -493,9 +535,11 @@
         public int? jobLaquerQty { get; set; }
 
         [BsonElement("jobLaquerUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobLaquerUnitPrice { get; set; }
 
         [BsonElement("jobLaquerPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobLaquerPrice { get; set; }
 
         [BsonElement("jobSilvGalv")]
@@ -511,9 +555,11 @@
         public int? jobSilvGalvQty { get; set; }
 
         [BsonElement("jobSilvGalvUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobSilvGalvUnitPrice { get; set; }
 
         [BsonElement("jobSilvGalvPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobSilvGalvPrice { get; set; }
 
         [BsonElement("jobGoldGalv")]
@@ -529,9 +575,11 @@
         public int? jobGoldGalvQty { get; set; }
 
         [BsonElement("jobGoldGalvUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobGoldGalvUnitPrice { get; set; }
 
         [BsonElement("jobGoldGalvPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobGoldGalvPrice { get; set; }
 
         [BsonElement("jobWheelCrack")]
@@ -547,9 +595,11 @@
         public int? jobWheelCrackQty { get; set; }
 
         [BsonElement("jobWheelCrackUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelCrackUnitPrice { get; set; }
 
         [BsonElement("jobWheelCrackPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelCrackPrice { get; set; }
 
         [BsonElement("jobWheelDent")]
@@ -565,9 +615,11 @@
         public int? jobWheelDentQty { get; set; }
 
         [BsonElement("jobWheelDentUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelDentUnitPrice { get; set; }
 
         [BsonElement("jobWheelDentPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelDentPrice { get; set; }
 
         [BsonElement("jobWheelMachine")]
@@ -583,9 +635,11 @@
         public int? jobWheelMachineQty { get; set; }
 
         [BsonElement("jobWheelMachineUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelMachineUnitPrice { get; set; }
 
         [BsonElement("jobWheelMachinePrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobWheelMachinePrice { get; set; }
 
         [BsonElement("jobTyre")]
@@ -601,9 +655,11 @@
         public int? jobTyreQty { get; set; }
 
         [BsonElement("jobTyreUnitPrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobTyreUnitPrice { get; set; }
 
         [BsonElement("jobTyrePrice")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobTyrePrice { get; set; }
 
         [BsonElement("jobFreight")]
@@ -642,7 +698,13 @@
             if (_client == null)
             {
                 try {
-                    _client = new MongoClient("mongodb://TCSP4:27017");
+                    if (System.Environment.MachineName == "TCSP4PJC")
+                    {
+                        _client = new MongoClient("mongodb://localhost:27017");
+                    }
+                    else {
+                        _client = new MongoClient("mongodb://192.168.1.177:27017");
+                    }
                     string databaseName = "plating";
                     if (JobTypePopup.isWheelApp())
                     {
@@ -693,7 +755,7 @@
         {
 
             var result = await DataAccess._jobCard.Find(filter).Sort(new BsonDocument(sortByField, sortDescending ? -1 : 1))
-                                            .Limit(1)
+                                            .Skip(skip).Limit(limit)
                                             .ToListAsync();
             BindingList<JobCardDoc> doclist = new BindingList<JobCardDoc>();
             foreach (var doc in result)
@@ -1410,7 +1472,7 @@
                 connection.Close();
                 if (num == 0)
                 {
-                    MessageBox.Show("Error No records updated");
+                    //MessageBox.Show("Error No records updated");
                     num = 1;
                     //throw new Exception("Failed to update " + sql);
                 }
@@ -1489,7 +1551,7 @@
                 connection.Close();
                 if (num == 0)
                 {
-                    MessageBox.Show("Error No records updated");
+                    //MessageBox.Show("Error No records updated");
                     num = 1;
                     //throw new Exception("Failed to update " + sql);
                 }

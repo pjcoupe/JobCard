@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anita Job Card", "Anita Job Card.csproj", "{2F738980-E789-4C6B-92F9-A676702FD0A3}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{1E07D227-F382-43D0-8A71-BF78C79070B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -15,6 +17,8 @@ Global
 		{2F738980-E789-4C6B-92F9-A676702FD0A3}.Debug|x86.Build.0 = Debug|x86
 		{2F738980-E789-4C6B-92F9-A676702FD0A3}.Release|x86.ActiveCfg = Release|x86
 		{2F738980-E789-4C6B-92F9-A676702FD0A3}.Release|x86.Build.0 = Release|x86
+		{1E07D227-F382-43D0-8A71-BF78C79070B6}.Debug|x86.ActiveCfg = Debug
+		{1E07D227-F382-43D0-8A71-BF78C79070B6}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
