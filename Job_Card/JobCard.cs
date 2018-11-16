@@ -262,8 +262,8 @@
         public JobCard()
         {
             DataAccess.connectMongoDb();
-            DataAccess.migrateJobCardAsync();
-            DataAccess.migrateFussyCustomerAsync();
+            //DataAccess.migrateJobCardAsync();
+            //DataAccess.migrateFussyCustomerAsync();
             this.fieldNameToControlMapping = new Dictionary<string, Control>();
             this.originalValues = new Dictionary<string, string>();
             this.InitializeComponent();

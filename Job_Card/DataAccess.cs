@@ -148,9 +148,11 @@
         public int? jobQty00 { get; set; }
 
         [BsonElement("jobUnitPrice00")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobUnitPrice00 { get; set; }
 
         [BsonElement("jobPrice00")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
         public float? jobPrice00 { get; set; }
 
         [BsonElement("jobDetail01")]
