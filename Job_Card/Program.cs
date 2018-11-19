@@ -17,7 +17,7 @@
                 var message = err.Message;
                 if (err.InnerException != null)
                 {
-                    message += " INNER: " + err.InnerException.Message;
+                    message += " INNER: " + err.InnerException.Message + " LINE >>>" + err.InnerException.StackTrace;
                 }
                 MessageBox.Show("The Application will exit message:" + message);
             }

@@ -41,6 +41,7 @@
     using CheckBox = System.Windows.Forms.CheckBox;
     using System;
     using System.Timers;
+    using System.Diagnostics;
     public class JobCard : Form
     {
         private MongoClient client;
@@ -651,7 +652,47 @@
             return false;
         }
 
-        private void btnEmail_Click(object sender, EventArgs e)
+        protected virtual bool IsFileLocked(FileInfo file)
+        {
+            FileStream stream = null;
+
+            try
+            {
+                stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+            }
+            catch (IOException)
+            {
+                //the file is unavailable because it is:
+                //still being written to
+                //or being processed by another thread
+                //or does not exist (has already been processed)
+                try
+                {
+                    foreach (Process clsProcess in Process.GetProcessesByName("WINWORD"))
+                    {
+                        if (clsProcess.ProcessName.StartsWith("WINWORD"))
+                        {
+                            // clsProcess.Kill();
+                        }
+                    }
+                }
+                catch (Exception exc)
+                {
+                    System.Console.Out.WriteLine("Failed " + exc.ToString());
+                }
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+
+            //file is not locked
+            return false;
+        }
+
+        private async void btnEmail_Click(object sender, EventArgs e)
         {
             string emailaddress = this.jobEmail.Text.Trim();
             if (!this.IsValid(emailaddress))
@@ -660,11 +701,22 @@
             }
             else
             {
+                SettingsSettingsDoc settings = await DataAccess.findSettings();
                 string str2 = "Your JobID# " + this.jobID.Text;
                 string str3 = string.IsNullOrWhiteSpace(this.jobOrderNumber.Text) ? "" : (" (Your ref Order#" + this.jobOrderNumber.Text.Trim() + ")");
                 string csSubject = str2 + str3;
                 string csBody = "Dear " + this.jobCustomer.Text + "," + Environment.NewLine + Environment.NewLine;
                 string printToPDF = Path.Combine(Path.Combine(Environment.ExpandEnvironmentVariables("%userprofile%"), "Documents"), Environment.UserName + "TempJobToPdf");
+                int failCount = 0;
+                //MessageBox.Show("PJC0");
+                while (IsFileLocked(new FileInfo(printToPDF + ".rtf")))
+                {
+                    failCount++;
+                    if (failCount > 1)
+                    {
+                        return;
+                    }
+                }
                 if (System.IO.File.Exists(printToPDF + ".rtf"))
                 {
                     System.IO.File.Delete(printToPDF + ".rtf");
@@ -743,7 +795,7 @@
                         csBody = csBody + "It has been paid and ready for pickup (or delivery if you specified this).";
                     }
                 }
-                this.SendMail(emailaddress, csSubject, csBody, flag ? printToPDF : null);
+                this.SendMail(settings, emailaddress, csSubject, csBody, flag ? printToPDF : null);
             }
         }
 
@@ -4360,9 +4412,10 @@
             }
         }
 
-        private bool SendMail(string mailTo, string csSubject, string csBody, string attachment)
+        private bool SendMail(SettingsSettingsDoc settings, string mailTo, string csSubject, string csBody, string attachment)
         {
-            MailAddress from = new MailAddress("team@plating.co.nz", "Advanced Chrome Platers");
+            //MessageBox.Show("PJC1 "+settings.emailAddress);
+            MailAddress from = new MailAddress(settings.emailAddress, settings.emailName);
             MailAddress to = new MailAddress(mailTo);
             MailMessage message = new MailMessage(from, to)
             {
@@ -4370,22 +4423,50 @@
                 Body = csBody,
                 IsBodyHtml = false,
                 DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure,
-                ReplyTo = from
+                ReplyTo =from
             };
+
             if (!string.IsNullOrWhiteSpace(attachment))
             {
-                message.Attachments.Add(new Attachment(attachment));
+                try
+                {
+                    //MessageBox.Show("PJC2");
+                    foreach (Process clsProcess in Process.GetProcessesByName("WINWORD"))
+                    {
+                        if (clsProcess.ProcessName.StartsWith("WINWORD"))
+                        {
+                            //clsProcess.Kill();
+                        }
+                    }
+                    //MessageBox.Show("PJC3");
+                    message.Attachments.Add(new Attachment(attachment));
+                    //MessageBox.Show("PJC4");
+                    foreach (Process clsProcess in Process.GetProcessesByName("WINWORD"))
+                    {
+                        if (clsProcess.ProcessName.StartsWith("WINWORD"))
+                        {
+                           // clsProcess.Kill();
+                        }
+                    }
+                }
+                catch (Exception exc)
+                {
+                    System.Console.Out.WriteLine("Failed " + exc.InnerException.Message);
+                }
+                
             }
-
-            SmtpClient client = new SmtpClient("mail.1stdomains.co.nz", 587)
+            //MessageBox.Show("PJC5");
+            SmtpClient client = new SmtpClient(settings.emailDomain, settings.emailPort)
             {
-                Credentials = new NetworkCredential("team@plating.co.nz", "1GeorgeTartan2312621")
+                Credentials = new NetworkCredential(settings.emailAddress, settings.emailPassword)
                 //Credentials = CredentialCache.DefaultNetworkCredentials
             };
             client.EnableSsl = true;
             try
             {
+                //MessageBox.Show("PJC6");
                 client.Send(message);
+                //MessageBox.Show("PJC7");
             }
             catch (Exception exception)
             {

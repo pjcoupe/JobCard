@@ -24,6 +24,24 @@
         public string phoneOrEmail { get; set; }
 
     }
+    public class SettingsSettingsDoc
+    {
+        [BsonId]
+        public ObjectId Id { get; set; }
+        [BsonElement("emailAddress")]
+        public string emailAddress { get; set; }
+        [BsonElement("emailPassword")]
+        public string emailPassword { get; set; }
+        [BsonElement("emailName")]
+        public string emailName { get; set; }
+        [BsonElement("emailPort")]
+        public int emailPort { get; set; }
+        [BsonElement("emailDomain")]
+        public string emailDomain { get; set; }
+
+    }
+
+
     public class JobCardDoc
     {
         [BsonId]
@@ -693,6 +711,9 @@
     {
         private static IMongoClient _client = null;
         private static IMongoDatabase _database = null;
+        private static IMongoDatabase _settingsdatabase = null;
+        private static IMongoCollection<SettingsSettingsDoc> _settings = null;
+
         private static IMongoCollection<JobCardDoc> _jobCard = null;
         private static IMongoCollection<FussyCustomerDoc> _fussyCustomer = null;
         public static void connectMongoDb()
@@ -714,6 +735,7 @@
                     }
 
                     _database = _client.GetDatabase(databaseName);
+                    _settingsdatabase = _client.GetDatabase("settings");
                     bool isMongoLive = _database.RunCommandAsync((Command<BsonDocument>)"{ping:1}").Wait(1000);
 
                     if (!isMongoLive)
@@ -726,6 +748,7 @@
                     }
                     _jobCard = _database.GetCollection<JobCardDoc>("jobCard");
                     _fussyCustomer = _database.GetCollection<FussyCustomerDoc>("fussyCustomer");
+                    _settings = _settingsdatabase.GetCollection<SettingsSettingsDoc>("settings");
                 } catch (Exception err)
                 {
                     ShowError("Cannot connect to mongo " + err.ToString());
@@ -753,6 +776,15 @@
             await DataAccess._jobCard.InsertOneAsync(newDoc);
         }
 
+        public static async Task<SettingsSettingsDoc> findSettings()
+        {
+            var result = await DataAccess._settings.Find(new BsonDocument() { }).ToListAsync();
+            if (result.Count > 0)
+            {
+                return result[0];
+            }
+            return null;
+        }
         public static async Task<List<JobCardDoc>> findJobByFilterAsync(DataGridView datagrid, FilterDefinition<JobCardDoc> filter, string sortByField = "jobID", bool sortDescending = true, int skip = 0, int limit = 1)
         {
 
