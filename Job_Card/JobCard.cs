@@ -784,7 +784,7 @@
                         string subTotalText = "Sub Total";
                         if (incurCreditCardSurcharge())
                         {
-                            subTotalText += " (+2% Card surch)";
+                            subTotalText += " (+3% Card surch)";
                         }
                         str10 = str10 + Environment.NewLine + subTotalText.PadRight(50) + " $" + this.jobPrice[0x19].Text.PadLeft(8);
                         str10 = (str10 + Environment.NewLine + "GST".PadRight(50) + " $" + this.jobPrice[0x1a].Text.PadLeft(8)) + Environment.NewLine + "_".PadRight(70, '_');
@@ -3651,7 +3651,7 @@
             if (incurCreditCardSurcharge())
             {
                 // add credit card surcharge
-                num2 = Math.Round((double)(num2 * 1.02), 2, MidpointRounding.AwayFromZero);
+                num2 = Math.Round((double)(num2 * 1.03), 2, MidpointRounding.AwayFromZero);
             }
             num3 = Math.Round((double)(num2 * 0.15), 2, MidpointRounding.AwayFromZero);
             num4 = Math.Round((double)(num2 + num3), 2, MidpointRounding.AwayFromZero);
@@ -4646,7 +4646,7 @@
         {
             if (this.incurCreditCardSurcharge())
             {
-                this.label[this.subTotalIndex].Text = "Sub Total (+2% card surch)";
+                this.label[this.subTotalIndex].Text = "Sub Total (+3% card surch)";
             }
             else
             {
