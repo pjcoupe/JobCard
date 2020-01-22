@@ -41,17 +41,7 @@
 
         public JobCard jobCard;
         private GroupBox groupBoxRearSkirtDamage;
-        private GroupBox groupBox6;
-        private Button button11;
-        private Button button12;
-        private Button button13;
-        private Button button14;
-        private Button button15;
-        private Button button16;
-        private Button button17;
-        private Button button18;
-        private Button button19;
-        private Button button20;
+       
         private Button button10;
         private Button button6;
         private Button button7;
@@ -63,17 +53,7 @@
         private Button button2;
         private Button button1;
         private GroupBox groupBox7;
-        private GroupBox groupBox8;
-        private Button button21;
-        private Button button22;
-        private Button button23;
-        private Button button24;
-        private Button button25;
-        private Button button26;
-        private Button button27;
-        private Button button28;
-        private Button button29;
-        private Button button30;
+       
         private Button button31;
         private Button button32;
         private Button button33;
@@ -108,23 +88,58 @@
                         {
                             Button box2 = (Button) obj3;
                             string item = new CultureInfo("en-NZ", false).TextInfo.ToTitleCase(box2.Text.ToLowerInvariant());
-                            /*
-                            if (list.Contains(item))
-                            {
-                                box2.Checked = true;
-                                box2.BackColor = Color.Green;
-                            }
-                            else
-                            {
-                                box2.Checked = false;
-                                box2.BackColor = Color.Gray;
-                            }
-                            */
+
                         }
                     }
                 }
             }
             this.startup = false;
+        }
+
+        public async void SetupPricingFromDB()
+        {
+            System.Console.WriteLine("Setting up pricing");
+            SettingsSettingsDoc settings = await DataAccess.findSettings();
+            if (settings.pricing.IsBsonDocument)
+            {
+                foreach (object obj2 in base.Controls)
+                {
+                    string rootName = (obj2 as Control).Name;
+                    System.Console.WriteLine("Control: " + rootName);
+                    if (obj2 is GroupBox)
+                    {
+                        GroupBox box = (GroupBox)obj2;
+                        foreach (object obj3 in box.Controls)
+                        {
+                            if (obj3 is GroupBox)
+                            {
+                                GroupBox box2 = (GroupBox)obj3;
+                                foreach (object obj4 in box2.Controls)
+                                {
+                                    string name = (obj4 as Control).Name;
+                                    string value = (string)settings.pricing.GetValue(name, null);
+
+                                    if (value != null)
+                                    {
+                                        (obj4 as Control).Text = value;
+                                        System.Console.WriteLine("Debug setting " + name + " value " + value);
+                                    }
+                                }
+                            } else {
+                                string name = (obj3 as Control).Name;
+                                string value = (string)settings.pricing.GetValue(name, null);
+
+                                if (value != null)
+                                {
+                                    (obj3 as Control).Text = value;
+                                    System.Console.WriteLine("Debug setting " + name + " value " + value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            System.Console.WriteLine("Setting up pricing COMPLETE");
         }
 
         private void ClearClicked(object sender, EventArgs e)
@@ -314,17 +329,7 @@
             this.button42 = new System.Windows.Forms.Button();
             this.button41 = new System.Windows.Forms.Button();
             this.groupBox7 = new System.Windows.Forms.GroupBox();
-            this.groupBox8 = new System.Windows.Forms.GroupBox();
-            this.button21 = new System.Windows.Forms.Button();
-            this.button22 = new System.Windows.Forms.Button();
-            this.button23 = new System.Windows.Forms.Button();
-            this.button24 = new System.Windows.Forms.Button();
-            this.button25 = new System.Windows.Forms.Button();
-            this.button26 = new System.Windows.Forms.Button();
-            this.button27 = new System.Windows.Forms.Button();
-            this.button28 = new System.Windows.Forms.Button();
-            this.button29 = new System.Windows.Forms.Button();
-            this.button30 = new System.Windows.Forms.Button();
+
             this.button31 = new System.Windows.Forms.Button();
             this.button32 = new System.Windows.Forms.Button();
             this.button33 = new System.Windows.Forms.Button();
@@ -335,17 +340,7 @@
             this.button38 = new System.Windows.Forms.Button();
             this.button39 = new System.Windows.Forms.Button();
             this.groupBoxRearSkirtDamage = new System.Windows.Forms.GroupBox();
-            this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.button11 = new System.Windows.Forms.Button();
-            this.button12 = new System.Windows.Forms.Button();
-            this.button13 = new System.Windows.Forms.Button();
-            this.button14 = new System.Windows.Forms.Button();
-            this.button15 = new System.Windows.Forms.Button();
-            this.button16 = new System.Windows.Forms.Button();
-            this.button17 = new System.Windows.Forms.Button();
-            this.button18 = new System.Windows.Forms.Button();
-            this.button19 = new System.Windows.Forms.Button();
-            this.button20 = new System.Windows.Forms.Button();
+
             this.button10 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
@@ -368,9 +363,9 @@
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox7.SuspendLayout();
-            this.groupBox8.SuspendLayout();
+            //this.groupBox8.SuspendLayout();
             this.groupBoxRearSkirtDamage.SuspendLayout();
-            this.groupBox6.SuspendLayout();
+            //this.groupBox6.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.SuspendLayout();
@@ -595,7 +590,7 @@
             // 
             // groupBox7
             // 
-            this.groupBox7.Controls.Add(this.groupBox8);
+           // this.groupBox7.Controls.Add(this.groupBox8);
             this.groupBox7.Controls.Add(this.button31);
             this.groupBox7.Controls.Add(this.button32);
             this.groupBox7.Controls.Add(this.button33);
@@ -612,115 +607,7 @@
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = "Front skirt damage repair";
             this.groupBox7.Enter += new System.EventHandler(this.groupBox7_Enter);
-            // 
-            // groupBox8
-            // 
-            this.groupBox8.Controls.Add(this.button21);
-            this.groupBox8.Controls.Add(this.button22);
-            this.groupBox8.Controls.Add(this.button23);
-            this.groupBox8.Controls.Add(this.button24);
-            this.groupBox8.Controls.Add(this.button25);
-            this.groupBox8.Controls.Add(this.button26);
-            this.groupBox8.Controls.Add(this.button27);
-            this.groupBox8.Controls.Add(this.button28);
-            this.groupBox8.Controls.Add(this.button29);
-            this.groupBox8.Controls.Add(this.button30);
-            this.groupBox8.Location = new System.Drawing.Point(3, 164);
-            this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(354, 165);
-            this.groupBox8.TabIndex = 24;
-            this.groupBox8.TabStop = false;
-            this.groupBox8.Text = "REAR SKIRT DAMAGE";
-            // 
-            // button21
-            // 
-            this.button21.Location = new System.Drawing.Point(262, 136);
-            this.button21.Name = "button21";
-            this.button21.Size = new System.Drawing.Size(86, 23);
-            this.button21.TabIndex = 27;
-            this.button21.Text = "Crack 31mm >   ";
-            this.button21.UseVisualStyleBackColor = true;
-            // 
-            // button22
-            // 
-            this.button22.Location = new System.Drawing.Point(262, 106);
-            this.button22.Name = "button22";
-            this.button22.Size = new System.Drawing.Size(86, 23);
-            this.button22.TabIndex = 26;
-            this.button22.Text = "Crack 21-30mm  $32";
-            this.button22.UseVisualStyleBackColor = true;
-            // 
-            // button23
-            // 
-            this.button23.Location = new System.Drawing.Point(262, 77);
-            this.button23.Name = "button23";
-            this.button23.Size = new System.Drawing.Size(87, 23);
-            this.button23.TabIndex = 25;
-            this.button23.Text = "Crack 16-20mm   $26";
-            this.button23.UseVisualStyleBackColor = true;
-            // 
-            // button24
-            // 
-            this.button24.Location = new System.Drawing.Point(262, 19);
-            this.button24.Name = "button24";
-            this.button24.Size = new System.Drawing.Size(86, 23);
-            this.button24.TabIndex = 24;
-            this.button24.Text = "Crack 11-15mm   $22";
-            this.button24.UseVisualStyleBackColor = true;
-            // 
-            // button25
-            // 
-            this.button25.Location = new System.Drawing.Point(262, 48);
-            this.button25.Name = "button25";
-            this.button25.Size = new System.Drawing.Size(86, 23);
-            this.button25.TabIndex = 23;
-            this.button25.Text = "Crack 1-10mm   $18";
-            this.button25.UseVisualStyleBackColor = true;
-            // 
-            // button26
-            // 
-            this.button26.Location = new System.Drawing.Point(4, 135);
-            this.button26.Name = "button26";
-            this.button26.Size = new System.Drawing.Size(97, 23);
-            this.button26.TabIndex = 22;
-            this.button26.Text = "Dent 16mm >   ";
-            this.button26.UseVisualStyleBackColor = true;
-            // 
-            // button27
-            // 
-            this.button27.Location = new System.Drawing.Point(4, 106);
-            this.button27.Name = "button27";
-            this.button27.Size = new System.Drawing.Size(97, 23);
-            this.button27.TabIndex = 21;
-            this.button27.Text = "Dent 11-15mm   $46";
-            this.button27.UseVisualStyleBackColor = true;
-            // 
-            // button28
-            // 
-            this.button28.Location = new System.Drawing.Point(4, 77);
-            this.button28.Name = "button28";
-            this.button28.Size = new System.Drawing.Size(97, 23);
-            this.button28.TabIndex = 20;
-            this.button28.Text = "Dent 6-10mm   $38";
-            this.button28.UseVisualStyleBackColor = true;
-            // 
-            // button29
-            // 
-            this.button29.Location = new System.Drawing.Point(4, 48);
-            this.button29.Name = "button29";
-            this.button29.Size = new System.Drawing.Size(97, 23);
-            this.button29.TabIndex = 19;
-            this.button29.Text = "Dent 1-5mm   $26";
-            this.button29.UseVisualStyleBackColor = true;
-            // 
-            // button30
-            // 
-            this.button30.Location = new System.Drawing.Point(6, 19);
-            this.button30.Name = "button30";
-            this.button30.Size = new System.Drawing.Size(201, 23);
-            this.button30.TabIndex = 18;
-            this.button30.Text = "Set up on lathe   $35";
-            this.button30.UseVisualStyleBackColor = true;
+           
             // 
             // button31
             // 
@@ -814,7 +701,7 @@
             // 
             // groupBoxRearSkirtDamage
             // 
-            this.groupBoxRearSkirtDamage.Controls.Add(this.groupBox6);
+            //this.groupBoxRearSkirtDamage.Controls.Add(this.groupBox6);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button10);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button6);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button7);
@@ -830,115 +717,8 @@
             this.groupBoxRearSkirtDamage.TabIndex = 23;
             this.groupBoxRearSkirtDamage.TabStop = false;
             this.groupBoxRearSkirtDamage.Text = "Rear skirt damage repair";
-            // 
-            // groupBox6
-            // 
-            this.groupBox6.Controls.Add(this.button11);
-            this.groupBox6.Controls.Add(this.button12);
-            this.groupBox6.Controls.Add(this.button13);
-            this.groupBox6.Controls.Add(this.button14);
-            this.groupBox6.Controls.Add(this.button15);
-            this.groupBox6.Controls.Add(this.button16);
-            this.groupBox6.Controls.Add(this.button17);
-            this.groupBox6.Controls.Add(this.button18);
-            this.groupBox6.Controls.Add(this.button19);
-            this.groupBox6.Controls.Add(this.button20);
-            this.groupBox6.Location = new System.Drawing.Point(3, 164);
-            this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(354, 165);
-            this.groupBox6.TabIndex = 24;
-            this.groupBox6.TabStop = false;
-            this.groupBox6.Text = "REAR SKIRT DAMAGE";
-            // 
-            // button11
-            // 
-            this.button11.Location = new System.Drawing.Point(262, 136);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(86, 23);
-            this.button11.TabIndex = 27;
-            this.button11.Text = "Crack 31mm >   ";
-            this.button11.UseVisualStyleBackColor = true;
-            // 
-            // button12
-            // 
-            this.button12.Location = new System.Drawing.Point(262, 106);
-            this.button12.Name = "button12";
-            this.button12.Size = new System.Drawing.Size(86, 23);
-            this.button12.TabIndex = 26;
-            this.button12.Text = "Crack 21-30mm  $32";
-            this.button12.UseVisualStyleBackColor = true;
-            // 
-            // button13
-            // 
-            this.button13.Location = new System.Drawing.Point(262, 77);
-            this.button13.Name = "button13";
-            this.button13.Size = new System.Drawing.Size(87, 23);
-            this.button13.TabIndex = 25;
-            this.button13.Text = "Crack 16-20mm   $26";
-            this.button13.UseVisualStyleBackColor = true;
-            // 
-            // button14
-            // 
-            this.button14.Location = new System.Drawing.Point(262, 19);
-            this.button14.Name = "button14";
-            this.button14.Size = new System.Drawing.Size(86, 23);
-            this.button14.TabIndex = 24;
-            this.button14.Text = "Crack 11-15mm   $22";
-            this.button14.UseVisualStyleBackColor = true;
-            // 
-            // button15
-            // 
-            this.button15.Location = new System.Drawing.Point(262, 48);
-            this.button15.Name = "button15";
-            this.button15.Size = new System.Drawing.Size(86, 23);
-            this.button15.TabIndex = 23;
-            this.button15.Text = "Crack 1-10mm   $18";
-            this.button15.UseVisualStyleBackColor = true;
-            // 
-            // button16
-            // 
-            this.button16.Location = new System.Drawing.Point(4, 135);
-            this.button16.Name = "button16";
-            this.button16.Size = new System.Drawing.Size(97, 23);
-            this.button16.TabIndex = 22;
-            this.button16.Text = "Dent 16mm >   ";
-            this.button16.UseVisualStyleBackColor = true;
-            // 
-            // button17
-            // 
-            this.button17.Location = new System.Drawing.Point(4, 106);
-            this.button17.Name = "button17";
-            this.button17.Size = new System.Drawing.Size(97, 23);
-            this.button17.TabIndex = 21;
-            this.button17.Text = "Dent 11-15mm   $46";
-            this.button17.UseVisualStyleBackColor = true;
-            // 
-            // button18
-            // 
-            this.button18.Location = new System.Drawing.Point(4, 77);
-            this.button18.Name = "button18";
-            this.button18.Size = new System.Drawing.Size(97, 23);
-            this.button18.TabIndex = 20;
-            this.button18.Text = "Dent 6-10mm   $38";
-            this.button18.UseVisualStyleBackColor = true;
-            // 
-            // button19
-            // 
-            this.button19.Location = new System.Drawing.Point(4, 48);
-            this.button19.Name = "button19";
-            this.button19.Size = new System.Drawing.Size(97, 23);
-            this.button19.TabIndex = 19;
-            this.button19.Text = "Dent 1-5mm   $26";
-            this.button19.UseVisualStyleBackColor = true;
-            // 
-            // button20
-            // 
-            this.button20.Location = new System.Drawing.Point(6, 19);
-            this.button20.Name = "button20";
-            this.button20.Size = new System.Drawing.Size(201, 23);
-            this.button20.TabIndex = 18;
-            this.button20.Text = "Set up on lathe   $35";
-            this.button20.UseVisualStyleBackColor = true;
+
+           
             // 
             // button10
             // 
@@ -1083,9 +863,9 @@
             // 
             // checkBox22
             // 
-            this.checkBox22.Location = new System.Drawing.Point(24, 19);
+            this.checkBox22.Location = new System.Drawing.Point(14, 19);
             this.checkBox22.Name = "checkBox22";
-            this.checkBox22.Size = new System.Drawing.Size(90, 23);
+            this.checkBox22.Size = new System.Drawing.Size(120, 23);
             this.checkBox22.TabIndex = 18;
             this.checkBox22.Text = "OTHER";
             this.checkBox22.UseVisualStyleBackColor = true;
@@ -1149,9 +929,9 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox7.ResumeLayout(false);
-            this.groupBox8.ResumeLayout(false);
+            //this.groupBox8.ResumeLayout(false);
             this.groupBoxRearSkirtDamage.ResumeLayout(false);
-            this.groupBox6.ResumeLayout(false);
+            //this.groupBox6.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
             this.groupBox5.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -1172,11 +952,17 @@
 
                 this.groupBox2.Visible = false;
                 this.checkBox4.Visible = false;
+                this.SetupPricingFromDB();
             }
+            
         }
         public static bool isWheelApp()
         {
             string appName = Application.ExecutablePath.ToUpper();
+            if (JobCard.isWheel)
+            {
+                return true;
+            }
             return appName.Contains("WHEEL");
         }
 

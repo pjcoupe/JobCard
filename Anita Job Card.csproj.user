@@ -15,4 +15,8 @@
     <StartAction>Program</StartAction>
     <StartProgram>C:\Users\Peter\Documents\JobCard\bin\Georges WHEEL.exe</StartProgram>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <StartArguments>
+    </StartArguments>
+  </PropertyGroup>
 </Project>

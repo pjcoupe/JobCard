@@ -38,6 +38,9 @@
         public int emailPort { get; set; }
         [BsonElement("emailDomain")]
         public string emailDomain { get; set; }
+      
+        public BsonDocument pricing { get; set; }
+
 
     }
 
@@ -84,6 +87,9 @@
 
         [BsonElement("jobOrderNumber")]
         public string jobOrderNumber { get; set; }
+
+        [BsonElement("jobFussyNotes")]
+        public string jobFussyNotes { get; set; }
 
         [BsonElement("jobDelivery")]
         public string jobDelivery { get; set; }
@@ -716,7 +722,7 @@
 
         private static IMongoCollection<JobCardDoc> _jobCard = null;
         private static IMongoCollection<FussyCustomerDoc> _fussyCustomer = null;
-        public static void connectMongoDb()
+        public static void connectMongoDb(string[] args)
         {
             if (_client == null)
             {
@@ -733,22 +739,13 @@
                     {
                         databaseName = "wheel";
                     }
-
+                    //var lists = await _client.ListDatabaseNamesAsync();
                     _database = _client.GetDatabase(databaseName);
                     _settingsdatabase = _client.GetDatabase("settings");
-                    bool isMongoLive = _database.RunCommandAsync((Command<BsonDocument>)"{ping:1}").Wait(1000);
-
-                    if (!isMongoLive)
-                    {
-                        ShowError("Cannot connect to mongo - is it running? Go check the main server");
-                        Application.Exit();
-                        Application.ExitThread();
-
-                        Environment.Exit(0);
-                    }
                     _jobCard = _database.GetCollection<JobCardDoc>("jobCard");
                     _fussyCustomer = _database.GetCollection<FussyCustomerDoc>("fussyCustomer");
                     _settings = _settingsdatabase.GetCollection<SettingsSettingsDoc>("settings");
+                    Application.Run(new JobCard(args));
                 } catch (Exception err)
                 {
                     ShowError("Cannot connect to mongo " + err.ToString());

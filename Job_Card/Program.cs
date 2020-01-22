@@ -6,12 +6,13 @@
     internal static class Program
     {
         [STAThread]
-        private static void Main()
+        private static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             try {
-                Application.Run(new JobCard());
+                 DataAccess.connectMongoDb(args);
+                
             } catch (Exception err)
             {
                 var message = err.Message;

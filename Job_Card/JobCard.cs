@@ -222,6 +222,7 @@
         private Button btnFussy;
         private Button btnRDAddressSurcharge;
         private System.Windows.Forms.Timer getLatestTimer;
+        private TextBox jobFussyNotes;
         private Rectangle workingArea;
 
         static JobCard()
@@ -260,9 +261,14 @@
             b = null;
         }
 
-        public JobCard()
+        public static bool isWheel = false; 
+        public JobCard(string[] args)
         {
-            DataAccess.connectMongoDb();
+            if (args.Length > 0 && args[0].ToUpper() == "WHEEL")
+            {
+                isWheel = true;
+            }
+            //DataAccess.connectMongoDb();
             //DataAccess.migrateJobCardAsync();
             //DataAccess.migrateFussyCustomerAsync();
             this.fieldNameToControlMapping = new Dictionary<string, Control>();
@@ -2169,6 +2175,7 @@
             this.btnFussy = new System.Windows.Forms.Button();
             this.btnRDAddressSurcharge = new System.Windows.Forms.Button();
             this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
+            this.jobFussyNotes = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
@@ -2555,6 +2562,8 @@
             this.jobNotes.Name = "jobNotes";
             this.jobNotes.Size = new System.Drawing.Size(352, 78);
             this.jobNotes.TabIndex = 34;
+            this.jobNotes.Enter += new System.EventHandler(this.OnNotesEnter);
+            this.jobNotes.Leave += new System.EventHandler(this.OnNotesLeave);
             // 
             // label13
             // 
@@ -3218,15 +3227,16 @@
             this.btnFussy.Text = "!";
             this.btnFussy.UseVisualStyleBackColor = false;
             this.btnFussy.Click += new System.EventHandler(this.btnFussy_Click);
-            //
+            // 
             // btnRDAddressSurcharge
-            //
-            this.btnRDAddressSurcharge.Font = new System.Drawing.Font("Arial", 6, System.Drawing.FontStyle.Regular);
+            // 
+            this.btnRDAddressSurcharge.Font = new System.Drawing.Font("Arial", 6F);
+            this.btnRDAddressSurcharge.Location = new System.Drawing.Point(1000, 500);
             this.btnRDAddressSurcharge.Name = "btnRDAddressSurcharge";
+            this.btnRDAddressSurcharge.Size = new System.Drawing.Size(47, 20);
+            this.btnRDAddressSurcharge.TabIndex = 82;
             this.btnRDAddressSurcharge.Text = "RD";
             this.btnRDAddressSurcharge.UseVisualStyleBackColor = true;
-            this.btnRDAddressSurcharge.Location = new System.Drawing.Point(1000, 500);
-            this.btnRDAddressSurcharge.Size = new System.Drawing.Size(47, 20);
             this.btnRDAddressSurcharge.Click += new System.EventHandler(this.btnRDAddressSurcharge_Click);
             // 
             // getLatestTimer
@@ -3235,6 +3245,18 @@
             this.getLatestTimer.Interval = 1000;
             this.getLatestTimer.Tick += new System.EventHandler(this.getLatestTimer_Tick);
             // 
+            // jobFussyNotes
+            // 
+            this.jobFussyNotes.Font = new System.Drawing.Font("Arial", 12F);
+            this.jobFussyNotes.Location = new System.Drawing.Point(187, 244);
+            this.jobFussyNotes.Multiline = true;
+            this.jobFussyNotes.Name = "jobFussyNotes";
+            this.jobFussyNotes.Size = new System.Drawing.Size(50, 55);
+            this.jobFussyNotes.TabIndex = 83;
+            this.jobFussyNotes.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            this.jobFussyNotes.Enter += new System.EventHandler(this.ShowFussyNotes);
+            this.jobFussyNotes.Leave += new System.EventHandler(this.OnFussyNotesLeave);
+            // 
             // JobCard
             // 
             this.AllowDrop = true;
@@ -3242,6 +3264,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(1354, 733);
+            this.Controls.Add(this.jobFussyNotes);
             this.Controls.Add(this.btnFussy);
             this.Controls.Add(this.btnRDAddressSurcharge);
             this.Controls.Add(this.SuperSearchField);
@@ -3317,6 +3340,8 @@
             this.Name = "JobCard";
             this.Text = "JobCard";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckBeforeQuit);
+   
+            this.Click += new System.EventHandler(this.JobCard_Click);
             this.ControlAdded += new System.Windows.Forms.ControlEventHandler(this.ControlAdd);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.DoDragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.DoDragEnter);
@@ -3563,9 +3588,11 @@
             if (isFussy)
             {
                 this.BackColor = Color.LightSalmon;
+                this.jobFussyNotes.Visible = true;
             } else
             {
                 this.BackColor = Color.LightGray;
+                this.jobFussyNotes.Visible = false;
             }
         }
 
@@ -4879,6 +4906,8 @@
                 if (dialogResult == DialogResult.Yes)
                 {
                     DataAccess.InsertFussyCustomer(phone, email);
+                    this.BackColor = Color.LightSalmon;
+                    this.jobFussyNotes.Visible = true;
                 }
                 
             } else
@@ -4903,6 +4932,40 @@
                 await this.GetLatestJobAsync();
             }
             
+        }
+
+        private void OnNotesEnter(object sender, EventArgs e)
+        {
+            this.jobNotes.Size = new Size(1000, 500);
+            this.jobNotes.BringToFront();
+        }
+
+        private void OnNotesLeave(object sender, EventArgs e)
+        {
+            this.jobNotes.Size = new Size(352, 73);
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ShowFussyNotes(object sender, EventArgs e)
+        {
+            this.jobFussyNotes.Size = new Size(1000, 500);
+            this.jobFussyNotes.BringToFront();
+        }
+
+        private void OnFussyNotesLeave(object sender, EventArgs e)
+        {
+            this.jobFussyNotes.Size = new Size(50, 55);
+        }
+
+     
+        private void JobCard_Click(object sender, EventArgs e)
+        {
+            this.OnFussyNotesLeave(sender, e);
+            this.OnNotesLeave(sender, e);
         }
     }
 }
