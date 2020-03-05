@@ -325,11 +325,13 @@
             this.checkBox6 = new System.Windows.Forms.Button();
             this.checkBox5 = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.button45 = new System.Windows.Forms.Button();
+            this.button44 = new System.Windows.Forms.Button();
+            this.button43 = new System.Windows.Forms.Button();
             this.button40 = new System.Windows.Forms.Button();
             this.button42 = new System.Windows.Forms.Button();
             this.button41 = new System.Windows.Forms.Button();
             this.groupBox7 = new System.Windows.Forms.GroupBox();
-
             this.button31 = new System.Windows.Forms.Button();
             this.button32 = new System.Windows.Forms.Button();
             this.button33 = new System.Windows.Forms.Button();
@@ -340,7 +342,6 @@
             this.button38 = new System.Windows.Forms.Button();
             this.button39 = new System.Windows.Forms.Button();
             this.groupBoxRearSkirtDamage = new System.Windows.Forms.GroupBox();
-
             this.button10 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
@@ -356,16 +357,11 @@
             this.checkBox20 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.checkBox22 = new System.Windows.Forms.Button();
-            this.button43 = new System.Windows.Forms.Button();
-            this.button44 = new System.Windows.Forms.Button();
-            this.button45 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox7.SuspendLayout();
-            //this.groupBox8.SuspendLayout();
             this.groupBoxRearSkirtDamage.SuspendLayout();
-            //this.groupBox6.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.SuspendLayout();
@@ -394,9 +390,9 @@
             // 
             // checkBox4
             // 
-            this.checkBox4.Location = new System.Drawing.Point(281, 21);
+            this.checkBox4.Location = new System.Drawing.Point(281, 11);
             this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(71, 23);
+            this.checkBox4.Size = new System.Drawing.Size(71, 38);
             this.checkBox4.TabIndex = 7;
             this.checkBox4.Text = "LAQUER";
             this.checkBox4.UseVisualStyleBackColor = true;
@@ -404,9 +400,9 @@
             // 
             // checkBox3
             // 
-            this.checkBox3.Location = new System.Drawing.Point(191, 21);
+            this.checkBox3.Location = new System.Drawing.Point(191, 11);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(68, 23);
+            this.checkBox3.Size = new System.Drawing.Size(68, 38);
             this.checkBox3.TabIndex = 6;
             this.checkBox3.Text = "POLISH";
             this.checkBox3.UseVisualStyleBackColor = true;
@@ -414,9 +410,9 @@
             // 
             // checkBox2
             // 
-            this.checkBox2.Location = new System.Drawing.Point(104, 21);
+            this.checkBox2.Location = new System.Drawing.Point(104, 11);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(67, 23);
+            this.checkBox2.Size = new System.Drawing.Size(67, 38);
             this.checkBox2.TabIndex = 5;
             this.checkBox2.Text = "REPAIR";
             this.checkBox2.UseVisualStyleBackColor = true;
@@ -558,6 +554,36 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Wheel repair";
             // 
+            // button45
+            // 
+            this.button45.Location = new System.Drawing.Point(198, 45);
+            this.button45.Name = "button45";
+            this.button45.Size = new System.Drawing.Size(92, 23);
+            this.button45.TabIndex = 33;
+            this.button45.Text = "CNC facing #3  $92";
+            this.button45.UseVisualStyleBackColor = true;
+            this.button45.Click += new System.EventHandler(this.CheckedChanged);
+            // 
+            // button44
+            // 
+            this.button44.Location = new System.Drawing.Point(100, 45);
+            this.button44.Name = "button44";
+            this.button44.Size = new System.Drawing.Size(92, 23);
+            this.button44.TabIndex = 32;
+            this.button44.Text = "CNC facing #2  $72";
+            this.button44.UseVisualStyleBackColor = true;
+            this.button44.Click += new System.EventHandler(this.CheckedChanged);
+            // 
+            // button43
+            // 
+            this.button43.Location = new System.Drawing.Point(6, 45);
+            this.button43.Name = "button43";
+            this.button43.Size = new System.Drawing.Size(92, 23);
+            this.button43.TabIndex = 31;
+            this.button43.Text = "CNC facing #1  $55";
+            this.button43.UseVisualStyleBackColor = true;
+            this.button43.Click += new System.EventHandler(this.CheckedChanged);
+            // 
             // button40
             // 
             this.button40.Location = new System.Drawing.Point(310, 16);
@@ -590,7 +616,6 @@
             // 
             // groupBox7
             // 
-           // this.groupBox7.Controls.Add(this.groupBox8);
             this.groupBox7.Controls.Add(this.button31);
             this.groupBox7.Controls.Add(this.button32);
             this.groupBox7.Controls.Add(this.button33);
@@ -607,7 +632,6 @@
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = "Front skirt damage repair";
             this.groupBox7.Enter += new System.EventHandler(this.groupBox7_Enter);
-           
             // 
             // button31
             // 
@@ -701,7 +725,6 @@
             // 
             // groupBoxRearSkirtDamage
             // 
-            //this.groupBoxRearSkirtDamage.Controls.Add(this.groupBox6);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button10);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button6);
             this.groupBoxRearSkirtDamage.Controls.Add(this.button7);
@@ -717,8 +740,6 @@
             this.groupBoxRearSkirtDamage.TabIndex = 23;
             this.groupBoxRearSkirtDamage.TabStop = false;
             this.groupBoxRearSkirtDamage.Text = "Rear skirt damage repair";
-
-           
             // 
             // button10
             // 
@@ -871,36 +892,6 @@
             this.checkBox22.UseVisualStyleBackColor = true;
             this.checkBox22.Click += new System.EventHandler(this.CheckedChanged);
             // 
-            // button43
-            // 
-            this.button43.Location = new System.Drawing.Point(6, 45);
-            this.button43.Name = "button43";
-            this.button43.Size = new System.Drawing.Size(92, 23);
-            this.button43.TabIndex = 31;
-            this.button43.Text = "CNC facing #1  $55";
-            this.button43.UseVisualStyleBackColor = true;
-            this.button43.Click += new System.EventHandler(this.CheckedChanged);
-            // 
-            // button44
-            // 
-            this.button44.Location = new System.Drawing.Point(100, 45);
-            this.button44.Name = "button44";
-            this.button44.Size = new System.Drawing.Size(92, 23);
-            this.button44.TabIndex = 32;
-            this.button44.Text = "CNC facing #2  $72";
-            this.button44.UseVisualStyleBackColor = true;
-            this.button44.Click += new System.EventHandler(this.CheckedChanged);
-            // 
-            // button45
-            // 
-            this.button45.Location = new System.Drawing.Point(198, 45);
-            this.button45.Name = "button45";
-            this.button45.Size = new System.Drawing.Size(92, 23);
-            this.button45.TabIndex = 33;
-            this.button45.Text = "CNC facing #3  $92";
-            this.button45.UseVisualStyleBackColor = true;
-            this.button45.Click += new System.EventHandler(this.CheckedChanged);
-            // 
             // JobTypePopup
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -929,9 +920,7 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox7.ResumeLayout(false);
-            //this.groupBox8.ResumeLayout(false);
             this.groupBoxRearSkirtDamage.ResumeLayout(false);
-            //this.groupBox6.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
             this.groupBox5.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -951,7 +940,9 @@
                 this.checkBox21.Text = "Fit Tyre                $12";
 
                 this.groupBox2.Visible = false;
-                this.checkBox4.Visible = false;
+                this.checkBox2.Text = "Bent Spoke            $26";
+                this.checkBox4.Text = "Wheel Balance              $16";
+                //this.checkBox4.Visible = true;
                 this.SetupPricingFromDB();
             }
             
