@@ -223,6 +223,7 @@
         private Button btnRDAddressSurcharge;
         private System.Windows.Forms.Timer getLatestTimer;
         private TextBox jobFussyNotes;
+        private CheckBox jobGoodReserved;
         private Rectangle workingArea;
 
         static JobCard()
@@ -2176,6 +2177,7 @@
             this.btnRDAddressSurcharge = new System.Windows.Forms.Button();
             this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
             this.jobFussyNotes = new System.Windows.Forms.TextBox();
+            this.jobGoodReserved = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
@@ -2190,7 +2192,7 @@
             this.btnNewJob.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
             this.btnNewJob.Location = new System.Drawing.Point(12, 53);
             this.btnNewJob.Name = "btnNewJob";
-            this.btnNewJob.Size = new System.Drawing.Size(162, 42);
+            this.btnNewJob.Size = new System.Drawing.Size(162, 73);
             this.btnNewJob.TabIndex = 0;
             this.btnNewJob.Text = "New Job";
             this.btnNewJob.UseVisualStyleBackColor = true;
@@ -2198,10 +2200,10 @@
             // 
             // btnIncompleteJobs
             // 
-            this.btnIncompleteJobs.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.btnIncompleteJobs.Location = new System.Drawing.Point(12, 105);
+            this.btnIncompleteJobs.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
+            this.btnIncompleteJobs.Location = new System.Drawing.Point(12, 132);
             this.btnIncompleteJobs.Name = "btnIncompleteJobs";
-            this.btnIncompleteJobs.Size = new System.Drawing.Size(162, 42);
+            this.btnIncompleteJobs.Size = new System.Drawing.Size(160, 32);
             this.btnIncompleteJobs.TabIndex = 1;
             this.btnIncompleteJobs.Text = "Incomplete Jobs";
             this.btnIncompleteJobs.UseVisualStyleBackColor = true;
@@ -2210,9 +2212,9 @@
             // btnSearchLists
             // 
             this.btnSearchLists.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
-            this.btnSearchLists.Location = new System.Drawing.Point(13, 153);
+            this.btnSearchLists.Location = new System.Drawing.Point(13, 213);
             this.btnSearchLists.Name = "btnSearchLists";
-            this.btnSearchLists.Size = new System.Drawing.Size(162, 42);
+            this.btnSearchLists.Size = new System.Drawing.Size(162, 31);
             this.btnSearchLists.TabIndex = 2;
             this.btnSearchLists.Text = "Search Lists";
             this.btnSearchLists.UseVisualStyleBackColor = true;
@@ -2221,9 +2223,9 @@
             // btnUnpaidCustomers
             // 
             this.btnUnpaidCustomers.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.btnUnpaidCustomers.Location = new System.Drawing.Point(13, 202);
+            this.btnUnpaidCustomers.Location = new System.Drawing.Point(13, 246);
             this.btnUnpaidCustomers.Name = "btnUnpaidCustomers";
-            this.btnUnpaidCustomers.Size = new System.Drawing.Size(162, 42);
+            this.btnUnpaidCustomers.Size = new System.Drawing.Size(162, 31);
             this.btnUnpaidCustomers.TabIndex = 3;
             this.btnUnpaidCustomers.Text = "Unpaid Customers";
             this.btnUnpaidCustomers.UseVisualStyleBackColor = true;
@@ -2932,9 +2934,9 @@
             // btnLatestJob
             // 
             this.btnLatestJob.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.btnLatestJob.Location = new System.Drawing.Point(12, 250);
+            this.btnLatestJob.Location = new System.Drawing.Point(12, 279);
             this.btnLatestJob.Name = "btnLatestJob";
-            this.btnLatestJob.Size = new System.Drawing.Size(162, 42);
+            this.btnLatestJob.Size = new System.Drawing.Size(162, 26);
             this.btnLatestJob.TabIndex = 62;
             this.btnLatestJob.Text = "Latest Job";
             this.btnLatestJob.UseVisualStyleBackColor = true;
@@ -3257,6 +3259,17 @@
             this.jobFussyNotes.Enter += new System.EventHandler(this.ShowFussyNotes);
             this.jobFussyNotes.Leave += new System.EventHandler(this.OnFussyNotesLeave);
             // 
+            // jobGoodReserved
+            // 
+            this.jobGoodReserved.BackColor = System.Drawing.SystemColors.Control;
+            this.jobGoodReserved.Location = new System.Drawing.Point(13, 170);
+            this.jobGoodReserved.Name = "jobGoodReserved";
+            this.jobGoodReserved.Size = new System.Drawing.Size(160, 37);
+            this.jobGoodReserved.TabIndex = 84;
+            this.jobGoodReserved.Text = "Reserved / Good Customer";
+            this.jobGoodReserved.UseVisualStyleBackColor = false;
+            this.jobGoodReserved.CheckedChanged += new System.EventHandler(this.jobGoodReserved_CheckedChanged);
+            // 
             // JobCard
             // 
             this.AllowDrop = true;
@@ -3264,6 +3277,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(1354, 733);
+            this.Controls.Add(this.jobGoodReserved);
             this.Controls.Add(this.jobFussyNotes);
             this.Controls.Add(this.btnFussy);
             this.Controls.Add(this.btnRDAddressSurcharge);
@@ -3340,7 +3354,6 @@
             this.Name = "JobCard";
             this.Text = "JobCard";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckBeforeQuit);
-   
             this.Click += new System.EventHandler(this.JobCard_Click);
             this.ControlAdded += new System.Windows.Forms.ControlEventHandler(this.ControlAdd);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.DoDragDrop);
@@ -3558,7 +3571,7 @@
                             CheckBox item = (CheckBox)control;
                             item.BackColor = whiteSmoke;
                             item.Checked = flag3;
-                            if (name != "jobCompleted")
+                            if (name != "jobCompleted" && name != "jobGoodReserved")
                             {
                                 flag2 |= flag3;
                                 item.Enabled = false;
@@ -3591,8 +3604,13 @@
                 this.jobFussyNotes.Visible = true;
             } else
             {
-                this.BackColor = Color.LightGray;
+                this.BackColor = DefaultBackColor;
                 this.jobFussyNotes.Visible = false;
+
+                if (this.jobGoodReserved.Checked)
+                {
+                    this.BackColor = Color.LightGreen;
+                } 
             }
         }
 
@@ -4896,6 +4914,7 @@
             return control;
         }
 
+        
         private void btnFussy_Click(object sender, EventArgs e)
         {
             string phone = this.jobPhone.Text;
@@ -4966,6 +4985,18 @@
         {
             this.OnFussyNotesLeave(sender, e);
             this.OnNotesLeave(sender, e);
+        }
+
+        private void jobGoodReserved_CheckedChanged(object sender, EventArgs e)
+        {
+            if (this.jobGoodReserved.Checked)
+            {
+                this.BackColor = Color.LightGreen;
+            }
+            else
+            {
+                this.BackColor = DefaultBackColor;
+            }
         }
     }
 }

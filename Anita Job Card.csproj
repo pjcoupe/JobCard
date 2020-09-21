@@ -6,7 +6,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{2F738980-E789-4C6B-92F9-A676702FD0A3}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <AssemblyName>MongoGeorgesWheel</AssemblyName>
+    <AssemblyName>MongoAnitasJobCard</AssemblyName>
     <OutputType>WinExe</OutputType>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>

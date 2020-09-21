@@ -712,6 +712,9 @@
 
         [BsonElement("jobBusinessName")]
         public string jobBusinessName { get; set; }
+
+        [BsonElement("jobGoodReserved")]
+        public bool? jobGoodReserved { get; set; }
     }
     public class DataAccess
     {
