@@ -735,7 +735,7 @@
                         _client = new MongoClient("mongodb://localhost:27017");
                     }
                     else {
-                        _client = new MongoClient("mongodb://192.168.1.177:27017");
+                        _client = new MongoClient("mongodb://192.168.1.9:27017"); 
                     }
                     string databaseName = "plating";
                     if (JobTypePopup.isWheelApp())
