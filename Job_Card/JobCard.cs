@@ -4533,14 +4533,15 @@
         {
             //MessageBox.Show("PJC1 "+settings.emailAddress);
             MailAddress from = new MailAddress(settings.emailAddress, settings.emailName);
-            MailAddress to = new MailAddress(mailTo);
-            MailMessage message = new MailMessage(from, to)
+
+            MailAddressCollection to = new MailAddressCollection();
+            to.Add(new MailAddress(mailTo));
+            MailAddressCollection replyToList = new MailAddressCollection();
+            replyToList.Add(from);
+            MailMessage message = new MailMessage(settings.emailAddress, mailTo, csSubject, csBody)
             {
-                Subject = csSubject,
-                Body = csBody,
                 IsBodyHtml = false,
-                DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure,
-                ReplyTo =from
+                DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure
             };
 
             if (!string.IsNullOrWhiteSpace(attachment))
