@@ -42,8 +42,13 @@
     using System;
     using System.Timers;
     using System.Diagnostics;
+    using AForge.Video;
+    using AForge.Video.DirectShow;
+
     public class JobCard : Form
     {
+        FilterInfoCollection filterInfoCollection;
+        VideoCaptureDevice videoCaptureDevice;
         private MongoClient client;
         private IMongoDatabase db;
         
@@ -224,6 +229,8 @@
         private System.Windows.Forms.Timer getLatestTimer;
         private TextBox jobFussyNotes;
         private CheckBox jobGoodReserved;
+        private ComboBox cboCamera;
+        internal PictureBox pictureBox2;
         private Rectangle workingArea;
 
         static JobCard()
@@ -322,7 +329,13 @@
                     this.originalValues[name] = null;
                 }
             }
-
+            this.filterInfoCollection = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+            foreach (FilterInfo filterInfo in filterInfoCollection)
+            {
+                this.cboCamera.Items.Add(filterInfo.Name);
+            }
+            this.cboCamera.SelectedIndex = 0;
+           
         }
 
 
@@ -595,6 +608,7 @@
         {
             if (!(await this.NeedSaveAsync(true, false)))
             {
+                this.stopVideoCapture();
                 this.lastID = await DataAccess.GetLastJobIDAsync();
                 this.lastID++;
                 JobCardDoc newDoc = new JobCardDoc();
@@ -875,18 +889,33 @@
 
         private async void btnNavigateBack_Click(object sender, EventArgs e)
         {
+            this.stopVideoCapture();
             await this.GetPreviousJobAsync();
         }
 
         private async void btnNavigateForward_Click(object sender, EventArgs e)
         {
+            this.stopVideoCapture();
             await this.GetNextJobAsync();
+        }
+
+        private void stopVideoCapture()
+        {
+            if (this.videoCaptureDevice != null && this.videoCaptureDevice.IsRunning)
+            {
+                this.videoCaptureDevice.SignalToStop();
+                this.pictureBox1.Visible = true;
+                this.pictureBox2.Visible = false;
+                this.btnCam1.Text = "Toggle ON Cam";
+                this.pictureBox2.BackgroundImage = null;
+            }
         }
 
         private async void btnNewJob_Click(object sender, EventArgs e)
         {
             if (!(await this.NeedSaveAsync(true, false)))
             {
+                
                 this.lastID = await DataAccess.GetLastJobIDAsync();
                 this.lastID++;
                 JobCardDoc newDoc = new JobCardDoc();
@@ -1184,42 +1213,49 @@
 
         private void btnCam1_Click(object sender, EventArgs e)
         {
-
-            Form1.useMediaPlayer = false;
-            Form1.VIDEODEVICE = 1;
-            if (JobCard.popup != null && !(JobCard.popup.IsDisposed))
+            // on
+            if (this.videoCaptureDevice == null)
             {
-                JobCard.popup.Close();
+                this.videoCaptureDevice = new VideoCaptureDevice(this.filterInfoCollection[this.cboCamera.SelectedIndex].MonikerString);
             }
-            Form1 form = new Form1();
-
+            if (this.videoCaptureDevice.IsRunning) {
+                this.stopVideoCapture();
+                return;
+            }
             try
             {
-                form.ShowDialog();
-                form.TopMost = true;
-                SaveWebCamPhoto();
+                if (this.videoCaptureDevice.VideoCapabilities.Length > 0)
+                {
+                    string highestSolution = "0;0";
+                    for (int i=0; i < this.videoCaptureDevice.VideoCapabilities.Length; i++)
+                    {
+                        if (this.videoCaptureDevice.VideoCapabilities[i].FrameSize.Width > Convert.ToInt32(highestSolution.Split(';')[0]))
+                        {
+                            highestSolution = this.videoCaptureDevice.VideoCapabilities[i].FrameSize.Width.ToString() + ";" + i.ToString();
+                        }
+                    }
+                    System.Console.Out.WriteLine("Chose resolution " + highestSolution);
+                    this.videoCaptureDevice.VideoResolution = this.videoCaptureDevice.VideoCapabilities[Convert.ToInt32(highestSolution.Split(';')[1])];
+                }
+            }catch (Exception Err)
+            {
+                System.Console.Out.WriteLine("Error getting capabilities ", Err);
             }
-            catch (Exception err)
-            { }
+            this.videoCaptureDevice.NewFrame += this.VideoCaptureDevice_NewFrame;
+            this.videoCaptureDevice.Start();
+            this.pictureBox1.Visible = false;
+            this.pictureBox2.Visible = true;
+            this.btnCam1.Text = "Toggle OFF Cam";
+
         }
-        private void btnCam2_Click(object sender, EventArgs e)
+        private void VideoCaptureDevice_NewFrame(object sender, NewFrameEventArgs eventArgs)
         {
-            Form1.useMediaPlayer = false;
-            Form1.VIDEODEVICE = 2;
-            Form1 form = new Form1();
-            if (JobCard.popup != null && !(JobCard.popup.IsDisposed))
-            {
-                JobCard.popup.Close();
-            }
-            try
-            {
-                form.ShowDialog();
-                form.TopMost = true;
-                SaveWebCamPhoto();
-            }
-            catch (Exception err)
-            { }
+            this.pictureBox2.BackgroundImageLayout = ImageLayout.Zoom;
+            this.pictureBox2.BackgroundImage = (Bitmap)eventArgs.Frame.Clone();
         }
+
+
+     
         private async void btnSave_Click(object sender, EventArgs e)
         {
             if (await this.NeedSaveAsync(false, true))
@@ -1350,6 +1386,10 @@
 
         private async void CheckBeforeQuit(object sender, FormClosingEventArgs e)
         {
+            if (this.videoCaptureDevice != null && this.videoCaptureDevice.IsRunning)
+            {
+                this.videoCaptureDevice.Stop();
+            }
             if (await this.NeedSaveAsync(true, false))
             {
                 e.Cancel = true;
@@ -2178,6 +2218,8 @@
             this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
             this.jobFussyNotes = new System.Windows.Forms.TextBox();
             this.jobGoodReserved = new System.Windows.Forms.CheckBox();
+            this.cboCamera = new System.Windows.Forms.ComboBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
@@ -2185,6 +2227,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.grpBoxPlating.SuspendLayout();
             this.grpBoxPolish.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.SuspendLayout();
             // 
             // btnNewJob
@@ -2785,11 +2828,11 @@
             // btnCam1
             // 
             this.btnCam1.Font = new System.Drawing.Font("Arial", 13F);
-            this.btnCam1.Location = new System.Drawing.Point(835, 194);
+            this.btnCam1.Location = new System.Drawing.Point(875, 194);
             this.btnCam1.Name = "btnCam1";
-            this.btnCam1.Size = new System.Drawing.Size(137, 50);
+            this.btnCam1.Size = new System.Drawing.Size(167, 40);
             this.btnCam1.TabIndex = 56;
-            this.btnCam1.Text = "Snap Cam1";
+            this.btnCam1.Text = "Toggle ON Cam";
             this.btnCam1.UseVisualStyleBackColor = true;
             this.btnCam1.Click += new System.EventHandler(this.btnCam1_Click);
             // 
@@ -2800,7 +2843,7 @@
             this.btnCam2.Name = "btnCam2";
             this.btnCam2.Size = new System.Drawing.Size(137, 50);
             this.btnCam2.TabIndex = 56;
-            this.btnCam2.Text = "Snap Cam2";
+            this.btnCam2.Text = "Snap Cam";
             this.btnCam2.UseVisualStyleBackColor = true;
             this.btnCam2.Click += new System.EventHandler(this.btnCam2_Click);
             // 
@@ -2999,9 +3042,9 @@
             // pictureBox1
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            this.pictureBox1.Location = new System.Drawing.Point(1061, 3);
+            this.pictureBox1.Location = new System.Drawing.Point(1061, 28);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(295, 290);
+            this.pictureBox1.Size = new System.Drawing.Size(295, 265);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 8;
             this.pictureBox1.TabStop = false;
@@ -3270,6 +3313,26 @@
             this.jobGoodReserved.UseVisualStyleBackColor = false;
             this.jobGoodReserved.CheckedChanged += new System.EventHandler(this.jobGoodReserved_CheckedChanged);
             // 
+            // cboCamera
+            // 
+            this.cboCamera.FormattingEnabled = true;
+            this.cboCamera.Location = new System.Drawing.Point(1061, 3);
+            this.cboCamera.Name = "cboCamera";
+            this.cboCamera.Size = new System.Drawing.Size(281, 21);
+            this.cboCamera.TabIndex = 85;
+            this.cboCamera.SelectedIndexChanged += new System.EventHandler(this.cboCamera_SelectedIndexChanged);
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.pictureBox2.Location = new System.Drawing.Point(1059, 27);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(295, 265);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox2.TabIndex = 86;
+            this.pictureBox2.TabStop = false;
+            this.pictureBox2.Visible = false;
+            // 
             // JobCard
             // 
             this.AllowDrop = true;
@@ -3277,6 +3340,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(1354, 733);
+            this.Controls.Add(this.pictureBox2);
+            this.Controls.Add(this.cboCamera);
             this.Controls.Add(this.jobGoodReserved);
             this.Controls.Add(this.jobFussyNotes);
             this.Controls.Add(this.btnFussy);
@@ -3367,6 +3432,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.grpBoxPlating.ResumeLayout(false);
             this.grpBoxPolish.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -3488,6 +3554,8 @@
         private void Load(int selectedRow = 0)
         {
             this.Loading = true;
+             this.stopVideoCapture();
+            
             UpdatePictureBox(this.pictureBox1, null);
             currentPictureIndex = 0;
             if ((this.datagrid.Rows != null) && (this.datagrid.Rows.Count != 0))
@@ -3880,6 +3948,7 @@
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
+
             MouseEventArgs me = (MouseEventArgs)e;
             if (me.Button == MouseButtons.Left)
             {
@@ -4167,10 +4236,13 @@
             return b;
         }
 
-        private void SaveWebCamPhoto()
+        private void SaveWebCamPhoto(List<System.Drawing.Image> images = null)
         {
-            List<System.Drawing.Image> images = Job_Card.Form1.selectedImages;
-            if (images.Count > 0)
+            if (images == null)
+            {
+             images = Job_Card.Form1.selectedImages;
+            }
+            if (images != null && images.Count > 0)
             {
                 string path = "";
                 string str2 = ".jpg";
@@ -4996,6 +5068,28 @@
             else
             {
                 this.BackColor = DefaultBackColor;
+            }
+        }
+
+  
+        private void cboCamera_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnCam2_Click(object sender, EventArgs e)
+        {
+            
+            if (this.videoCaptureDevice != null && this.videoCaptureDevice.IsRunning)
+            {
+                List<Image> images = new List<Image>();
+
+                images.Add(this.pictureBox2.BackgroundImage);
+                this.SaveWebCamPhoto(images);
+                return;
+            } else
+            {
+                MessageBox.Show("Please Toggle ON Cam first");
             }
         }
     }
