@@ -24,6 +24,21 @@
         public string phoneOrEmail { get; set; }
 
     }
+    public class PricingDoc
+    {
+        [BsonId]
+        public ObjectId Id { get; set; }
+        [BsonElement("isWheel")]
+        public bool isWheel { get; set; }
+        [BsonElement("controlName")]
+        public string controlName { get; set; }
+        [BsonElement("controlText")]
+        public string controlText { get; set; }
+        [BsonElement("stringPrice")]
+        public string stringPrice { get; set; }
+
+
+    }
     public class SettingsSettingsDoc
     {
         [BsonId]
@@ -715,6 +730,9 @@
 
         [BsonElement("jobGoodReserved")]
         public bool? jobGoodReserved { get; set; }
+
+        [BsonElement("jobQuotation")]
+        public bool? jobQuotation { get; set; }
     }
     public class DataAccess
     {
@@ -722,7 +740,7 @@
         private static IMongoDatabase _database = null;
         private static IMongoDatabase _settingsdatabase = null;
         private static IMongoCollection<SettingsSettingsDoc> _settings = null;
-
+        private static IMongoCollection<PricingDoc> _pricing = null;
         private static IMongoCollection<JobCardDoc> _jobCard = null;
         private static IMongoCollection<FussyCustomerDoc> _fussyCustomer = null;
         public static void connectMongoDb(string[] args)
@@ -746,6 +764,7 @@
                     _database = _client.GetDatabase(databaseName);
                     _settingsdatabase = _client.GetDatabase("settings");
                     _jobCard = _database.GetCollection<JobCardDoc>("jobCard");
+                    _pricing = _database.GetCollection<PricingDoc>("pricing");
                     _fussyCustomer = _database.GetCollection<FussyCustomerDoc>("fussyCustomer");
                     _settings = _settingsdatabase.GetCollection<SettingsSettingsDoc>("settings");
                     Application.Run(new JobCard(args));
@@ -785,6 +804,76 @@
             }
             return null;
         }
+        public static int increment = 1;
+        public static async Task<string> findOrUpdatePrice(Control control, TextBox overridePrice, TextBox overrideControlText)
+        {
+            string controlName = control.Name;
+            string controlText = control.Text.Trim();
+            int dollarIndex = controlText.LastIndexOf('$');
+            bool needUpdateOrInsert = (overridePrice != null && overridePrice.Text.Trim() != "") || (overrideControlText != null && overrideControlText.Text.Trim() != "");
+            string amount = "$0";
+            if (dollarIndex > 0)
+            {
+                amount = controlText.Substring(dollarIndex).Trim();
+                controlText = controlText.Substring(0, dollarIndex).Trim();
+            }
+            PricingDoc found = null;
+            var filters = new List<FilterDefinition<PricingDoc>>();
+            filters.Add(Builders<PricingDoc>.Filter.Eq("controlName", controlName));
+            filters.Add(Builders<PricingDoc>.Filter.Eq("isWheel", JobTypePopup.isWheelApp()));
+            var builder = Builders<PricingDoc>.Filter;
+            var finalFilter = builder.And(filters);
+            var result = await DataAccess._pricing.Find(finalFilter).ToListAsync();
+            if (result.Count == 1)
+            {
+                found = result[0];
+                amount = found.stringPrice;
+            } 
+
+            if (found == null)
+            {
+                needUpdateOrInsert = true;
+                found = new PricingDoc();
+                found.isWheel = JobTypePopup.isWheelApp();
+                found.Id = new ObjectId(DateTime.Now, 12345, 0, increment++);
+                if (increment > 998)
+                {
+                    increment = 0;
+                }
+                found.stringPrice = (overridePrice == null || overridePrice.Text.Trim() == "") ? amount : overridePrice.Text.Trim();
+                found.controlName = controlName;
+                found.controlText = controlText; 
+            }
+            if (needUpdateOrInsert)
+            {
+                found.stringPrice = (overridePrice != null && overridePrice.Text.Trim() != "") ? overridePrice.Text.Trim() : amount;
+                found.controlText = (overrideControlText != null && overrideControlText.Text.Trim() != "") ? overrideControlText.Text.Trim() : controlText;
+                UpdateOptions updateOptions = new UpdateOptions();
+                updateOptions.IsUpsert = true;
+                var updateResult = await DataAccess._pricing.ReplaceOneAsync(finalFilter, found, updateOptions);
+                if ((updateResult.IsModifiedCountAvailable && updateResult.ModifiedCount > 0) || (updateResult.IsAcknowledged && updateResult.UpsertedId != null))
+                {
+                    //System.Console.Out.WriteLine("updated text "+found.controlText);
+                }
+            }
+            if (overrideControlText != null)
+            {
+
+                overrideControlText.Text = "";
+            }
+            if (overridePrice != null)
+            {
+                overridePrice.Text = "";
+            }
+            control.Text = found.controlText;
+            //System.Console.Out.WriteLine(found.controlName + " = " + found.controlText);
+            if (found.stringPrice.StartsWith("$"))
+            {
+                found.stringPrice = found.stringPrice.Substring(1);
+            }
+            return found.stringPrice;
+        }
+
         public static async Task<List<JobCardDoc>> findJobByFilterAsync(DataGridView datagrid, FilterDefinition<JobCardDoc> filter, string sortByField = "jobID", bool sortDescending = true, int skip = 0, int limit = 1)
         {
 
@@ -1081,7 +1170,7 @@
                 DataSet dataSet = new DataSet();
                 selectConnection.Open();
                 adapter.Fill(dataSet, tableName + "_table");
-                selectConnection.Close();
+                selectConnection9();
                 DataColumnCollection columns = dataSet.Tables[0].Columns;
                 */
                 Type type = typeof(JobCardDoc);

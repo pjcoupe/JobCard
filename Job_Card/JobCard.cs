@@ -78,12 +78,10 @@
         private Button btnNewJob;
         private Button btnNextPhoto;
         private Button btnNickle;
-        private Button btnPrintAll;
         private Button btnPrintBusiness;
         private Button btnPrintCustomerCopy;
         private Button btnPrintForWork;
         private Button btnRakesh;
-        private Button btnReport;
         private Button btnSatin;
         private Button btnSave;
         private Button btnSearchField;
@@ -96,10 +94,6 @@
         private Button btnUnpaidCustomers;
         private Button btnCam1;
         private Button btnCam2;
-        private ComboBox cboReportEndMonth;
-        private ComboBox cboReportProduct;
-        private ComboBox cboReportStartMonth;
-        private ComboBox cboReportYear;
         private CheckBox[] checkBox;
         private IContainer components = null;
         private bool compress = true;
@@ -151,7 +145,6 @@
         private bool isLocked = true;
         private TextBox jobAddress;
         private CheckBox jobCompleted;
-        private CheckBox fastPrint;
         private TextBox jobCustomer;
         private TextBox jobBusinessName;
         private TextBox jobDate;
@@ -160,7 +153,7 @@
         private TextBox jobDateRequired;
         private DateTime jobDateValForPhoto;
         private TextBox jobDelivery;
-        private TextBox[] jobDetail;
+
         private TextBox jobEmail;
         private Label jobID;
         private TextBox jobNotes;
@@ -168,11 +161,13 @@
         private ComboBox jobPaymentBy;
         private TextBox jobPhone;
         private List<string> jobPhotos = null;
-        private TextBox[] jobPrice;
-        private TextBox[] jobQty;
+
         private ComboBox jobReceivedFrom;
-        private TextBox[] jobType;
-        private TextBox[] jobUnitPrice;
+        public TextBox[] jobPrice;
+        public TextBox[] jobQty;
+        public TextBox[] jobDetail;
+        public TextBox[] jobType;
+        public TextBox[] jobUnitPrice;
         private Label[] label;
         private Label label1;
         private Label label10;
@@ -216,7 +211,6 @@
         private TrackBar slider;
         private Color stripe = Color.FromArgb(0xff, 0xeb, 0xeb, 0xeb);
         private int subTotalIndex = 30;
-        private ComboBox SuperSearchField;
         private static bool temporarilyDisableNewLineAtEnd;
         private int totalIndex = 0x20;
         private TextBox txtSearchField;
@@ -231,6 +225,7 @@
         private CheckBox jobGoodReserved;
         private ComboBox cboCamera;
         internal PictureBox pictureBox2;
+        private CheckBox jobQuotation;
         private Rectangle workingArea;
 
         static JobCard()
@@ -330,11 +325,17 @@
                 }
             }
             this.filterInfoCollection = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            foreach (FilterInfo filterInfo in filterInfoCollection)
+            if (cboCamera != null)
             {
-                this.cboCamera.Items.Add(filterInfo.Name);
+                foreach (FilterInfo filterInfo in filterInfoCollection)
+                {
+                    this.cboCamera.Items.Add(filterInfo.Name);
+                }
+                if (this.filterInfoCollection.Count > 0)
+                {
+                    this.cboCamera.SelectedIndex = 0;
+                }
             }
-            this.cboCamera.SelectedIndex = 0;
            
         }
 
@@ -657,7 +658,7 @@
                 bool is2017AndBeyond = new DateTime(_year, _month, _day, 0, 0, 0, 0) >= new DateTime(2016, 12, 31, 0, 0, 0, 0);
                 if (is2017AndBeyond && this.jobPaymentBy.Text.Length <= 1)
                 {
-                    return true;
+                    return false;
                 }
                 if (this.jobPaymentBy.Text.Length > 1 && "VISAMasterCard".Contains(this.jobPaymentBy.Text))
                 {
@@ -911,6 +912,7 @@
             }
         }
 
+        private bool gotAllPrices = false;
         private async void btnNewJob_Click(object sender, EventArgs e)
         {
             if (!(await this.NeedSaveAsync(true, false)))
@@ -930,6 +932,25 @@
                     await this.GetLatestJobAsync();
                 
                 this.jobCustomer.Focus();
+                if (JobTypePopup.isWheelApp())
+                {
+
+                    if (JobCard.popup == null || JobCard.popup.IsDisposed)
+                    {
+                        JobCard.popup = new JobTypePopup();
+                    }
+                    if (JobTypePopup.jobType == null)
+                    {
+                        JobTypePopup.jobType = this.jobType[0];
+                        JobTypePopup.jobQty = this.jobQty[0];
+                        JobTypePopup.jobUnitPrice = this.jobUnitPrice[0];
+                        JobTypePopup.jobPrice = this.jobPrice[0];
+                        JobTypePopup.jobDetail = this.jobDetail[0];
+                    }
+                    JobCard.popup.jobCard = this;
+
+                    JobCard.popup.Show();
+                }
             }
         }
 
@@ -964,257 +985,11 @@
         {
             this.PrintForWork(false);
         }
-
-        private void btnReport_Click(object sender, EventArgs e)
-        {
-            int month = DateTime.Now.AddMonths(-1).Month;
-            int num2 = month;
-            int year = ((DateTime.Now.Month == 1) ? -1 : 0) + DateTime.Now.Year;
-            int result = 0;
-            int num5 = 0;
-            int num6 = 0;
-            if (int.TryParse(this.cboReportStartMonth.Text, out result))
-            {
-                month = result;
-            }
-            if (int.TryParse(this.cboReportEndMonth.Text, out num5))
-            {
-                num2 = num5;
-            }
-            num2 = Math.Max(month, num2);
-            if (int.TryParse(this.cboReportYear.Text, out num6))
-            {
-                year = num6;
-            }
-            DateTime time = new DateTime(year, month, 1);
-            DateTime time2 = new DateTime(year, num2, 1).AddMonths(1);
-            int num7 = time2.Year;
-            bool flag = true;
-            if (this.cboReportProduct.Text.Contains("Select"))
-            {
-                flag = false;
-            }
-            int num8 = 0;
-            double num9 = 0.0;
-            int num10 = 0;
-            double num11 = 0.0;
-            int num12 = 0;
-            double num13 = 0.0;
-            int num14 = 0;
-            double num15 = 0.0;
-            int num16 = 0;
-            double num17 = 0.0;
-            int num18 = 0;
-            double num19 = 0.0;
-            int num20 = 0;
-            double num21 = 0.0;
-            int num22 = 0;
-            double num23 = 0.0;
-            int num24 = 0;
-            double num25 = 0.0;
-            int num26 = 0;
-            double num27 = 0.0;
-            int num28 = 0;
-            double num29 = 0.0;
-            int num30 = 0;
-            double num31 = 0.0;
-            string str = string.Concat(new object[] { "#", month, "/1/", year, "#" });
-            string str2 = string.Concat(new object[] { "#", time2.Month, "/1/", num7, "#" });
-            string str3 = "";
-            int num32 = 12;
-            int num33 = 1;
-            Progress progress = new Progress
-            {
-                progressBar1 = { Maximum = num32 },
-                label1 = { Text = "For " + (flag ? ("Work item CONTAINING " + this.cboReportProduct.Text) : " all items") + " Between " + time.ToShortDateString() + " and " + time2.ToShortDateString() },
-                chart1 = { Visible = false }
-            };
-            progress.Show();
-            for (int i = 1; i <= 12; i++)
-            {
-                string str6;
-                System.Windows.Forms.Application.DoEvents();
-                if (progress.IsDisposed)
-                {
-                    return;
-                }
-                progress.progressBar1.Value = num33;
-                progress.Refresh();
-                num33++;
-                int num35 = 0;
-                double num36 = 0.0;
-                string str4 = "";
-                if (flag)
-                {
-                    str3 = str3 + "(";
-                }
-                int num37 = 0;
-                while (num37 < 0x12)
-                {
-                    if (flag)
-                    {
-                        str6 = str3;
-                        str3 = str6 + "jobType" + num37.ToString("D2") + " Like \"%" + this.cboReportProduct.Text + "%\"" + ((num37 < 0x11) ? " or " : ") and ");
-                    }
-                    str4 = str4 + ",SUM(jobPrice" + num37.ToString("D2") + ")";
-                    num37++;
-                }
-                string sql = "SELECT COUNT(*) as jobsCount" + str4 + " from " + JobCard.DBTable + " WHERE " + str3;
-                switch (i)
-                {
-                    case 1:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2 + " and ISNULL(jobDateCompleted) and ISNULL(jobDatePaid)";
-                        break;
-
-                    case 2:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2 + " and jobDateCompleted >=" + str + " and jobDateCompleted < " + str2 + " and ISNULL(jobDatePaid)";
-                        break;
-
-                    case 3:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2 + " and NOT (jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + ") and NOT (jobDatePaid >= " + str + " and jobDatePaid < " + str2 + ")";
-                        break;
-
-                    case 4:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2 + " and jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + " and NOT (jobDatePaid >= " + str + " and jobDatePaid < " + str2 + ")";
-                        break;
-
-                    case 5:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2 + " and jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + " and jobDatePaid >= " + str + " and jobDatePaid < " + str2;
-                        break;
-
-                    case 6:
-                        str6 = sql;
-                        sql = str6 + "jobDate < " + str + " and jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + " and NOT (jobDatePaid >= " + str + " and jobDatePaid < " + str2 + ")";
-                        break;
-
-                    case 7:
-                        str6 = sql;
-                        sql = str6 + "jobDate < " + str + " and jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + " and jobDatePaid >= " + str + " and jobDatePaid < " + str2;
-                        break;
-
-                    case 8:
-                        str6 = sql;
-                        sql = str6 + "jobDate < " + str + "and jobDateCompleted < " + str + " and jobDatePaid >= " + str + " and jobDatePaid < " + str2;
-                        break;
-
-                    case 9:
-                        str6 = sql;
-                        sql = str6 + "jobDate < " + str + " and jobDateCompleted >= " + str + " and jobDateCompleted < " + str2 + " and ISNULL(jobDatePaid)";
-                        break;
-
-                    case 10:
-                        str6 = sql;
-                        sql = str6 + "jobDate >=" + str + " and jobDate < " + str2;
-                        break;
-
-                    case 11:
-                        str6 = sql;
-                        sql = str6 + "jobDateCompleted >=" + str + " and jobDateCompleted < " + str2;
-                        break;
-
-                    case 12:
-                        str6 = sql;
-                        sql = str6 + "jobDatePaid >=" + str + " and jobDatePaid < " + str2;
-                        break;
-                }
-                DataRowCollection rows = DataAccess.ReadRecords(sql);
-                if ((rows != null) && (rows.Count > 0))
-                {
-                    object obj2 = rows[0][0];
-                    if ((obj2 != null) && (obj2.GetType() != typeof(DBNull)))
-                    {
-                        num35 = (int)obj2;
-                    }
-                    for (num37 = 1; num37 <= 0x12; num37++)
-                    {
-                        object obj3 = rows[0][num37];
-                        System.Type type = obj3.GetType();
-                        if ((obj3 != null) && (type != typeof(DBNull)))
-                        {
-                            num36 += ((double)((int)(((double)obj3) * 100.0))) / 100.0;
-                        }
-                    }
-                }
-                switch (i)
-                {
-                    case 1:
-                        num8 += num35;
-                        num9 += num36;
-                        break;
-
-                    case 2:
-                        num10 += num35;
-                        num11 += num36;
-                        break;
-
-                    case 3:
-                        num12 += num35;
-                        num13 += num36;
-                        break;
-
-                    case 4:
-                        num14 += num35;
-                        num15 += num36;
-                        break;
-
-                    case 5:
-                        num16 += num35;
-                        num17 += num36;
-                        break;
-
-                    case 6:
-                        num18 += num35;
-                        num19 += num36;
-                        break;
-
-                    case 7:
-                        num20 += num35;
-                        num21 += num36;
-                        break;
-
-                    case 8:
-                        num22 += num35;
-                        num23 += num36;
-                        break;
-
-                    case 9:
-                        num24 += num35;
-                        num25 += num36;
-                        break;
-
-                    case 10:
-                        num26 += num35;
-                        num27 += num36;
-                        break;
-
-                    case 11:
-                        num28 += num35;
-                        num29 += num36;
-                        break;
-
-                    case 12:
-                        num30 += num35;
-                        num31 += num36;
-                        break;
-                }
-            }
-            progress.richTextBox1.Text = string.Concat(new object[] {
-                "Created here but NOT Completed and NOT paid #", num8, " Total ", num9.ToString("C2"), Environment.NewLine, "Created and completed here but NOT paid #", num10, " Total ", num11.ToString("C2"), Environment.NewLine, "Created here but Completed and paid elsewhere #", num12, " Total ", num13.ToString("C2"), Environment.NewLine, "Created and completed here but paid elsewhere #",
-                num14, " Total ", num15.ToString("C2"), Environment.NewLine, "Created, completed and paid here #", num16, " Total ", num17.ToString("C2"), Environment.NewLine, "Created and paid elsewhere but completed here #", num18, " Total ", num19.ToString("C2"), Environment.NewLine, "Created elsewhere but completed and paid here #", num20,
-                " Total ", num21.ToString("C2"), Environment.NewLine, "Created and completed elsewhere but paid here #", num22, " Total ", num23.ToString("C2"), Environment.NewLine, "Created elsewhere but completed here and NOT paid #", num24, " Total ", num25.ToString("C2"), Environment.NewLine, "CREATED HERE #", num26, " TOTAL ",
-                num27.ToString("C2"), Environment.NewLine, "COMPLETED HERE #", num28, " TOTAL ", num29.ToString("C2"), Environment.NewLine, "PAID HERE #", num30, " TOTAL", num31.ToString("C2")
-            });
-        }
-
+        
         private void btnCam1_Click(object sender, EventArgs e)
         {
             // on
-            if (this.videoCaptureDevice == null)
+            if (this.videoCaptureDevice == null && this.filterInfoCollection.Count > 0 && this.cboCamera.SelectedIndex >= 0)
             {
                 this.videoCaptureDevice = new VideoCaptureDevice(this.filterInfoCollection[this.cboCamera.SelectedIndex].MonikerString);
             }
@@ -1882,7 +1657,7 @@
             {
                 this.jobDetail[i] = new TextBox();
                 this.jobType[i] = new TextBox();
-                this.jobType[i].ReadOnly = true;
+               // this.jobType[i].ReadOnly = true;
                 this.jobType[i].Click += new EventHandler(this.JobTypeClick);
                 this.jobQty[i] = new TextBox();
                 this.jobUnitPrice[i] = new TextBox();
@@ -2185,7 +1960,6 @@
             this.btnPrintCustomerCopy = new System.Windows.Forms.Button();
             this.btnPrintBusiness = new System.Windows.Forms.Button();
             this.jobCompleted = new System.Windows.Forms.CheckBox();
-            this.fastPrint = new System.Windows.Forms.CheckBox();
             this.panelSearchField = new System.Windows.Forms.Panel();
             this.lblResults = new System.Windows.Forms.Label();
             this.slider = new System.Windows.Forms.TrackBar();
@@ -2200,19 +1974,12 @@
             this.btnUndo = new System.Windows.Forms.Button();
             this.picPaid = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.btnPrintAll = new System.Windows.Forms.Button();
             this.btnTodayForDateCompleted = new System.Windows.Forms.Button();
             this.btnAddWeek = new System.Windows.Forms.Button();
             this.btnDuplicate = new System.Windows.Forms.Button();
             this.grpBoxPlating = new System.Windows.Forms.GroupBox();
             this.grpBoxPolish = new System.Windows.Forms.GroupBox();
             this.btnCollapseToggle = new System.Windows.Forms.Button();
-            this.cboReportStartMonth = new System.Windows.Forms.ComboBox();
-            this.cboReportEndMonth = new System.Windows.Forms.ComboBox();
-            this.cboReportYear = new System.Windows.Forms.ComboBox();
-            this.cboReportProduct = new System.Windows.Forms.ComboBox();
-            this.btnReport = new System.Windows.Forms.Button();
-            this.SuperSearchField = new System.Windows.Forms.ComboBox();
             this.btnFussy = new System.Windows.Forms.Button();
             this.btnRDAddressSurcharge = new System.Windows.Forms.Button();
             this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
@@ -2220,6 +1987,7 @@
             this.jobGoodReserved = new System.Windows.Forms.CheckBox();
             this.cboCamera = new System.Windows.Forms.ComboBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.jobQuotation = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.datagrid)).BeginInit();
             this.panelSearchField.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.slider)).BeginInit();
@@ -2404,16 +2172,16 @@
             // jobPhone
             // 
             this.jobPhone.Font = new System.Drawing.Font("Arial", 11F);
-            this.jobPhone.Location = new System.Drawing.Point(660, 42);
+            this.jobPhone.Location = new System.Drawing.Point(724, 42);
             this.jobPhone.Name = "jobPhone";
-            this.jobPhone.Size = new System.Drawing.Size(313, 24);
+            this.jobPhone.Size = new System.Drawing.Size(249, 24);
             this.jobPhone.TabIndex = 16;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Arial", 11F);
-            this.label5.Location = new System.Drawing.Point(604, 45);
+            this.label5.Location = new System.Drawing.Point(674, 45);
             this.label5.Name = "label5";
             this.label5.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.label5.Size = new System.Drawing.Size(50, 17);
@@ -2452,7 +2220,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Arial", 11F);
-            this.label7.Location = new System.Drawing.Point(601, 13);
+            this.label7.Location = new System.Drawing.Point(624, 16);
             this.label7.Name = "label7";
             this.label7.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.label7.Size = new System.Drawing.Size(102, 17);
@@ -2577,7 +2345,6 @@
             this.jobPaymentBy.Items.AddRange(new object[] {
             "",
             "Cash",
-            "Cheque",
             "Eftpos",
             "VISA",
             "MasterCard"});
@@ -2882,20 +2649,6 @@
             this.jobCompleted.UseVisualStyleBackColor = true;
             this.jobCompleted.CheckedChanged += new System.EventHandler(this.jobCompleted_CheckedChanged);
             // 
-            // fastPrint
-            // 
-            this.fastPrint.AutoSize = true;
-            this.fastPrint.Checked = true;
-            this.fastPrint.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.fastPrint.Font = new System.Drawing.Font("Arial", 12F);
-            this.fastPrint.Location = new System.Drawing.Point(12, 717);
-            this.fastPrint.Name = "fastPrint";
-            this.fastPrint.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.fastPrint.Size = new System.Drawing.Size(94, 22);
-            this.fastPrint.TabIndex = 60;
-            this.fastPrint.Text = "Fast Print";
-            this.fastPrint.UseVisualStyleBackColor = true;
-            // 
             // panelSearchField
             // 
             this.panelSearchField.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
@@ -3050,17 +2803,6 @@
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
-            // btnPrintAll
-            // 
-            this.btnPrintAll.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
-            this.btnPrintAll.Location = new System.Drawing.Point(13, 717);
-            this.btnPrintAll.Name = "btnPrintAll";
-            this.btnPrintAll.Size = new System.Drawing.Size(161, 42);
-            this.btnPrintAll.TabIndex = 67;
-            this.btnPrintAll.Text = "Print 3 Copies";
-            this.btnPrintAll.UseVisualStyleBackColor = true;
-            this.btnPrintAll.Click += new System.EventHandler(this.btnPrintAll_Click);
-            // 
             // btnTodayForDateCompleted
             // 
             this.btnTodayForDateCompleted.Location = new System.Drawing.Point(798, 131);
@@ -3137,131 +2879,6 @@
             this.btnCollapseToggle.UseVisualStyleBackColor = true;
             this.btnCollapseToggle.Click += new System.EventHandler(this.btnCollapseToggle_Click);
             // 
-            // cboReportStartMonth
-            // 
-            this.cboReportStartMonth.DropDownHeight = 250;
-            this.cboReportStartMonth.FormattingEnabled = true;
-            this.cboReportStartMonth.IntegralHeight = false;
-            this.cboReportStartMonth.Items.AddRange(new object[] {
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12"});
-            this.cboReportStartMonth.Location = new System.Drawing.Point(189, 754);
-            this.cboReportStartMonth.Name = "cboReportStartMonth";
-            this.cboReportStartMonth.Size = new System.Drawing.Size(163, 21);
-            this.cboReportStartMonth.TabIndex = 74;
-            this.cboReportStartMonth.Text = "<Select Report Start Month>";
-            // 
-            // cboReportEndMonth
-            // 
-            this.cboReportEndMonth.DropDownHeight = 250;
-            this.cboReportEndMonth.FormattingEnabled = true;
-            this.cboReportEndMonth.IntegralHeight = false;
-            this.cboReportEndMonth.Items.AddRange(new object[] {
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12"});
-            this.cboReportEndMonth.Location = new System.Drawing.Point(189, 781);
-            this.cboReportEndMonth.Name = "cboReportEndMonth";
-            this.cboReportEndMonth.Size = new System.Drawing.Size(163, 21);
-            this.cboReportEndMonth.TabIndex = 75;
-            this.cboReportEndMonth.Text = "<Select Report End Month>";
-            // 
-            // cboReportYear
-            // 
-            this.cboReportYear.DropDownHeight = 250;
-            this.cboReportYear.FormattingEnabled = true;
-            this.cboReportYear.IntegralHeight = false;
-            this.cboReportYear.Items.AddRange(new object[] {
-            "2015",
-            "2016",
-            "2017",
-            "2018",
-            "2019",
-            "2020"});
-            this.cboReportYear.Location = new System.Drawing.Point(189, 808);
-            this.cboReportYear.Name = "cboReportYear";
-            this.cboReportYear.Size = new System.Drawing.Size(163, 21);
-            this.cboReportYear.TabIndex = 76;
-            this.cboReportYear.Text = "<Select Report Year>";
-            // 
-            // cboReportProduct
-            // 
-            this.cboReportProduct.DropDownHeight = 250;
-            this.cboReportProduct.FormattingEnabled = true;
-            this.cboReportProduct.IntegralHeight = false;
-            this.cboReportProduct.Items.AddRange(new object[] {
-            "Strip",
-            "Repair",
-            "Polish",
-            "Laquer",
-            "Copper",
-            "Nickle",
-            "Chrome",
-            "Brass",
-            "Bronze",
-            "Tin",
-            "Satin",
-            "Silver",
-            "Gold",
-            "Tyre",
-            "Small Crack",
-            "Large Crack",
-            "Small Dent",
-            "Large Dent",
-            "Machine",
-            "Silver Galv",
-            "Gold Galv",
-            "Other"});
-            this.cboReportProduct.Location = new System.Drawing.Point(360, 754);
-            this.cboReportProduct.Name = "cboReportProduct";
-            this.cboReportProduct.Size = new System.Drawing.Size(163, 21);
-            this.cboReportProduct.TabIndex = 77;
-            this.cboReportProduct.Text = "<Select Report Product>";
-            this.cboReportProduct.SelectedIndexChanged += new System.EventHandler(this.cboReportProduct_SelectedIndexChanged);
-            // 
-            // btnReport
-            // 
-            this.btnReport.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
-            this.btnReport.Location = new System.Drawing.Point(360, 781);
-            this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new System.Drawing.Size(163, 48);
-            this.btnReport.TabIndex = 78;
-            this.btnReport.Text = "Report";
-            this.btnReport.UseVisualStyleBackColor = true;
-            this.btnReport.Click += new System.EventHandler(this.btnReport_Click);
-            // 
-            // SuperSearchField
-            // 
-            this.SuperSearchField.DropDownHeight = 250;
-            this.SuperSearchField.DropDownStyle = System.Windows.Forms.ComboBoxStyle.Simple;
-            this.SuperSearchField.FormattingEnabled = true;
-            this.SuperSearchField.IntegralHeight = false;
-            this.SuperSearchField.Location = new System.Drawing.Point(189, 727);
-            this.SuperSearchField.Name = "SuperSearchField";
-            this.SuperSearchField.Size = new System.Drawing.Size(784, 21);
-            this.SuperSearchField.TabIndex = 80;
-            this.SuperSearchField.Text = "Enter super SQL search (advanced users only!)";
-            this.SuperSearchField.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnSuperSearchEnterKey);
-            // 
             // btnFussy
             // 
             this.btnFussy.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
@@ -3333,25 +2950,31 @@
             this.pictureBox2.TabStop = false;
             this.pictureBox2.Visible = false;
             // 
+            // jobQuotation
+            // 
+            this.jobQuotation.BackColor = System.Drawing.SystemColors.Control;
+            this.jobQuotation.Location = new System.Drawing.Point(604, 36);
+            this.jobQuotation.Name = "jobQuotation";
+            this.jobQuotation.Size = new System.Drawing.Size(74, 36);
+            this.jobQuotation.TabIndex = 87;
+            this.jobQuotation.Text = "Quotation";
+            this.jobQuotation.UseVisualStyleBackColor = false;
+            this.jobQuotation.CheckedChanged += new System.EventHandler(this.jobQuotation_CheckedChanged);
+            // 
             // JobCard
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(1354, 733);
+            this.ClientSize = new System.Drawing.Size(1361, 722);
+            this.Controls.Add(this.jobQuotation);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.cboCamera);
             this.Controls.Add(this.jobGoodReserved);
             this.Controls.Add(this.jobFussyNotes);
             this.Controls.Add(this.btnFussy);
             this.Controls.Add(this.btnRDAddressSurcharge);
-            this.Controls.Add(this.SuperSearchField);
-            this.Controls.Add(this.btnReport);
-            this.Controls.Add(this.cboReportProduct);
-            this.Controls.Add(this.cboReportYear);
-            this.Controls.Add(this.cboReportEndMonth);
-            this.Controls.Add(this.cboReportStartMonth);
             this.Controls.Add(this.btnCollapseToggle);
             this.Controls.Add(this.grpBoxPolish);
             this.Controls.Add(this.grpBoxPlating);
@@ -3359,7 +2982,6 @@
             this.Controls.Add(this.btnDuplicate);
             this.Controls.Add(this.btnAddWeek);
             this.Controls.Add(this.btnTodayForDateCompleted);
-            this.Controls.Add(this.btnPrintAll);
             this.Controls.Add(this.btnUndo);
             this.Controls.Add(this.btnLockUnlock);
             this.Controls.Add(this.btnPrintForWork);
@@ -3375,7 +2997,6 @@
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.datagrid);
             this.Controls.Add(this.picPaid);
-            this.Controls.Add(this.fastPrint);
             this.Controls.Add(this.btnToday);
             this.Controls.Add(this.jobDatePaid);
             this.Controls.Add(this.label14);
@@ -3543,9 +3164,18 @@
                         JobCard.popup = new JobTypePopup();
 
                     }
+
+                    if (JobTypePopup.jobType == null)
+                    {
+                        JobTypePopup.jobType = this.jobType[0];
+                        JobTypePopup.jobQty = this.jobQty[0];
+                        JobTypePopup.jobUnitPrice = this.jobUnitPrice[0];
+                        JobTypePopup.jobPrice = this.jobPrice[0];
+                        JobTypePopup.jobDetail = this.jobDetail[0];
+                    }
                     JobCard.popup.jobCard = this;
+
                     JobCard.popup.Show();
-                    
 
                 }
             }
@@ -3639,7 +3269,7 @@
                             CheckBox item = (CheckBox)control;
                             item.BackColor = whiteSmoke;
                             item.Checked = flag3;
-                            if (name != "jobCompleted" && name != "jobGoodReserved")
+                            if (name != "jobCompleted" && name != "jobGoodReserved" && name != "jobQuotation") 
                             {
                                 flag2 |= flag3;
                                 item.Enabled = false;
@@ -3679,6 +3309,10 @@
                 {
                     this.BackColor = Color.LightGreen;
                 } 
+                if (this.jobQuotation.Checked)
+                {
+                    this.BackColor = Color.Purple;
+                }
             }
         }
 
@@ -3861,7 +3495,13 @@
                         this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToInt32(stringValue)));
                     } else if (isFloat)
                     {
-                        this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToDouble(stringValue)));
+                        try {
+                            this.updateSqlSetList.Add(new KeyValuePair<string, dynamic>(name, System.Convert.ToDouble(stringValue)));
+                        }
+                        catch (Exception err)
+                        {
+                            System.Console.Out.WriteLine(err);
+                        }
                     } else
                     {
                         MessageBox.Show("Unknown type for field " + name + " type was: " + type.ToString());
@@ -3883,34 +3523,6 @@
             return !flag;
         }
 
-        private async void OnSuperSearchEnterKey(object sender, KeyEventArgs e)
-        {
-            MessageBox.Show("This is now deprecated talk to Peter");
-            return;
-            if ((!this.panelSearchField.Visible && (e.KeyCode == Keys.Enter)) && !(await this.NeedSaveAsync(true, false)))
-            {
-                if (this.panelSetLocation)
-                {
-                    this.panelSearchField.Location = this.panelFinalLocation;
-                }
-                else
-                {
-                    this.panelSearchField.Location = new Point((int)(((float)base.Width) / 3f), (int)(((float)base.Height) / 2.5f));
-                }
-                this.txtSearchField.Text = this.SuperSearchField.Text;
-                this.searchFieldName = "";
-                this.slider.Visible = false;
-                this.slider.Value = 0;
-                this.slider.Maximum = 0;
-                this.lblResults.Text = "";
-                this.lblSearchOnField.Text = "SUPER SEARCH ON SQL";
-                this.txtSearchField.Focus();
-                this.btnSearchField.Visible = false;
-                this.panelSearchField.Visible = true;
-                this.txtSearchField.Enabled = false;
-                this.SearchSQL(this.SuperSearchField.Text);
-            }
-        }
 
         private void PanelMouseDown(object sender, MouseEventArgs e)
         {
@@ -4011,7 +3623,7 @@
             lastFontName = null;
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
-            CustomerCopy.autoPrint = fastPrint.Checked;
+            CustomerCopy.autoPrint = false;
             CustomerCopy copy = new CustomerCopy
             {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
@@ -4113,7 +3725,7 @@
                 int num2 = 10;
                 int num3 = this.pictureBox1.Right - (this.btnCollapseToggle.Right + num2);
 
-                int num4 = this.btnPrintAll.Bottom - this.btnCollapseToggle.Top;
+                int num4 = this.btnPrintForWork.Bottom - this.btnCollapseToggle.Top;
                 int num5 = list[0];
                 int num6 = 3;
                 int height = ((int)(((float)num4) / ((float)list.Count))) - num6;
@@ -4604,7 +4216,7 @@
             lastFontName = null;
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
-            CustomerCopy.autoPrint = fastPrint.Checked;
+            CustomerCopy.autoPrint = false;
             CustomerCopy copy = new CustomerCopy
             {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
@@ -5072,7 +4684,19 @@
             }
         }
 
-  
+        private void jobQuotation_CheckedChanged(object sender, EventArgs e)
+        {
+            if (this.jobQuotation.Checked)
+            {
+                this.BackColor = Color.Purple;
+            }
+            else
+            {
+                this.BackColor = DefaultBackColor;
+            }
+        }
+
+
         private void cboCamera_SelectedIndexChanged(object sender, EventArgs e)
         {
 
