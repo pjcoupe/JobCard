@@ -4216,7 +4216,7 @@
             lastFontName = null;
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
-            CustomerCopy.autoPrint = false;
+            CustomerCopy.autoPrint = true;
             CustomerCopy copy = new CustomerCopy
             {
                 OnPrintPressed = new CustomerCopy.PrintHandler(this.PrintPressed)
