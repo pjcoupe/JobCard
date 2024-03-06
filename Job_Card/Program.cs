@@ -11,8 +11,7 @@
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             try {
-                 DataAccess.connectMongoDb(args);
-                
+               DataAccess.connectMongoDb(args);           
             } catch (Exception err)
             {
                 var message = err.Message;

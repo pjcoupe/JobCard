@@ -25,9 +25,19 @@
 
         private void AutoPrintEvent(object sender, EventArgs e)
         {
-            this.printDocument1.Print();
             Timer timer = (Timer)sender;
             timer.Stop();
+            try
+            {
+                this.printDocument1.Print();
+                
+            } catch (Exception err)
+            {
+                MessageBox.Show("An error occured printing - is the printer setup and on? " + err.Message);
+            } finally
+            {
+                
+            }
         }
         public CustomerCopy(bool allowAutoPrint = true)
         {
@@ -35,6 +45,7 @@
             if (allowAutoPrint && CustomerCopy.autoPrint)
             {
                 Timer autoPrintTimer = new Timer();
+                
                 autoPrintTimer.Interval = 500;
                 autoPrintTimer.Tick += new EventHandler(AutoPrintEvent);
                 

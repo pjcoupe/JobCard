@@ -13,6 +13,7 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
+using WMPLib;
 namespace Job_Card
 {
 	/// <summary>
@@ -38,7 +39,7 @@ namespace Job_Card
         public static string url = "";
         public static int VIDEODEVICE = 0;
         public static List<Image> selectedImages = new List<Image>();
-        private AxWMPLib.AxWindowsMediaPlayer axWindowsMediaPlayer1;
+        private WMPLib.WindowsMediaPlayer axWindowsMediaPlayer1;
         private Button button2;
         private Timer timer1;
         private int picNumber = 0;
@@ -49,7 +50,7 @@ namespace Job_Card
             // Required for Windows Form Designer support
             //
             InitializeComponent();
-            axWindowsMediaPlayer1.Visible = useMediaPlayer;
+            axWindowsMediaPlayer1.uiMode = useMediaPlayer?"Mini":"none";
             selectedImages.Clear();
             if (useMediaPlayer)
                 axWindowsMediaPlayer1.URL = Form1.url;
@@ -112,7 +113,7 @@ namespace Job_Card
             this.pictureBox9 = new System.Windows.Forms.PictureBox();
             this.pictureBox10 = new System.Windows.Forms.PictureBox();
             this.pictureBox11 = new System.Windows.Forms.PictureBox();
-            this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
+            this.axWindowsMediaPlayer1 = new WMPLib.WindowsMediaPlayer();
             this.button2 = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -249,12 +250,7 @@ namespace Job_Card
             // 
             // axWindowsMediaPlayer1
             // 
-            this.axWindowsMediaPlayer1.Enabled = true;
-            this.axWindowsMediaPlayer1.Location = new System.Drawing.Point(2, -1);
-            this.axWindowsMediaPlayer1.Name = "axWindowsMediaPlayer1";
-            this.axWindowsMediaPlayer1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axWindowsMediaPlayer1.OcxState")));
-            this.axWindowsMediaPlayer1.Size = new System.Drawing.Size(827, 782);
-            this.axWindowsMediaPlayer1.TabIndex = 12;
+            this.axWindowsMediaPlayer1.uiMode = "Mini";
             // 
             // button2
             // 
@@ -274,7 +270,6 @@ namespace Job_Card
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.ClientSize = new System.Drawing.Size(828, 741);
             this.Controls.Add(this.button2);
-            this.Controls.Add(this.axWindowsMediaPlayer1);
             this.Controls.Add(this.pictureBox11);
             this.Controls.Add(this.pictureBox10);
             this.Controls.Add(this.pictureBox9);

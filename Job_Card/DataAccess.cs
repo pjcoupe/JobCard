@@ -16,6 +16,97 @@
     using System.Threading.Tasks;
     using System.ComponentModel;
     using System.Runtime.Remoting;
+
+    public static class MongoIPAddressInputDialog
+    {
+        const string ConfigFilePath = "./mongoIP.txt"; // Path to the config file
+        public static bool userCancelled = false;
+        public static string ReadLastIpValue()
+        {
+            try
+            {
+                if (File.Exists(ConfigFilePath))
+                {
+                    return File.ReadAllText(ConfigFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading config file: {ex.Message}");
+            }
+
+            return "localhost"; // Default value if config file doesn't exist
+        }
+
+        public static void SaveLastIpValue(string ipAddress)
+        {
+            try
+            {
+                File.WriteAllText(ConfigFilePath, ipAddress);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving config file: {ex.Message}");
+            }
+        }
+    
+        public static void InterceptFormClose(object sender, FormClosingEventArgs e) 
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                MongoIPAddressInputDialog.userCancelled = true;
+            }
+        }
+
+    public static string ShowInputDialog(string prompt, string title)
+        {
+            Form inputForm = new Form
+            {
+                Width = 600,
+                Height = 150,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Text = title,
+                StartPosition = FormStartPosition.CenterScreen
+            };
+             // Read the last IP value from the config file
+            string defaultValue = MongoIPAddressInputDialog.ReadLastIpValue();
+            if (defaultValue == "")
+            {
+                defaultValue = "localhost";
+            }
+            Label label = new Label { Left = 20, Top = 20, Width = 450, Text = prompt };
+            
+            TextBox textBox = new TextBox { Left = 20, Top = 50, Width = 450, Text = defaultValue };
+            Button okButton = new Button { Text = "OK", Left = 200, Width = 60, Top = 80, DialogResult = DialogResult.OK };
+
+            okButton.Click += (sender, e) =>
+            {
+                inputForm.Close();
+                MongoIPAddressInputDialog.userCancelled = false;
+            };
+            inputForm.FormClosing += MongoIPAddressInputDialog.InterceptFormClose;
+            inputForm.Controls.Add(label);
+            inputForm.Controls.Add(textBox);
+            inputForm.Controls.Add(okButton);
+
+            DialogResult result = inputForm.ShowDialog();
+            if (MongoIPAddressInputDialog.userCancelled)
+            {
+                Application.Exit();
+                Application.ExitThread();
+
+                Environment.Exit(0);
+            }
+            inputForm.FormClosing -= MongoIPAddressInputDialog.InterceptFormClose;
+            if (result == DialogResult.OK && textBox.Text.Length > 8 && textBox.Text != defaultValue)
+            {
+
+               MongoIPAddressInputDialog.SaveLastIpValue(textBox.Text);
+            }
+            return result == DialogResult.OK ? textBox.Text : defaultValue;
+        }
+    }
+
     public class FussyCustomerDoc
     {
         [BsonId]
@@ -745,15 +836,24 @@
         private static IMongoCollection<FussyCustomerDoc> _fussyCustomer = null;
         public static void connectMongoDb(string[] args)
         {
+           
             if (_client == null)
             {
+
                 try {
-                    if (System.Environment.MachineName == "TCSP4PJC")
+                    string prompt = "Please enter dB IP address (your country is: " + (JobTypePopup.isCanada() ? "Canada" : "New Zealand") + ")";
+                    string ip = MongoIPAddressInputDialog.ShowInputDialog(prompt, "Database Connection");
+
+                    MongoClientSettings settings = MongoClientSettings.FromConnectionString("mongodb://" + ip + ":27017");
+                    settings.ConnectTimeout = TimeSpan.FromSeconds(5);
+                    settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+                    _client = new MongoClient(settings);
+
+                    var databaseNames = _client.ListDatabaseNames().ToList();
+
+                    if (databaseNames.Count == 0)
                     {
-                        _client = new MongoClient("mongodb://localhost:27017");
-                    }
-                    else {
-                        _client = new MongoClient("mongodb://192.168.1.9:27017"); 
+                        throw new Exception("Invalid ip address or server not running!");
                     }
                     string databaseName = "plating";
                     if (JobTypePopup.isWheelApp())
@@ -770,7 +870,7 @@
                     Application.Run(new JobCard(args));
                 } catch (Exception err)
                 {
-                    ShowError("Cannot connect to mongo " + err.ToString());
+                    ShowError("Cannot connect to dB. IP address wrong or firewalled");
                     Application.Exit();
                     Application.ExitThread();
 
@@ -797,12 +897,18 @@
 
         public static async Task<SettingsSettingsDoc> findSettings()
         {
-            var result = await DataAccess._settings.Find(new BsonDocument() { }).ToListAsync();
-            if (result.Count > 0)
+            try
             {
-                return result[0];
+                var result = await DataAccess._settings.Find(new BsonDocument() { }).ToListAsync();
+                if (result.Count > 0)
+                {
+                    return result[0];
+                }
+            } catch (Exception err)
+            {
+                ShowError("Failed to find settings.settings");
             }
-            return null;
+                return null;
         }
         public static int increment = 1;
         public static async Task<string> findOrUpdatePrice(Control control, TextBox overridePrice, TextBox overrideControlText)
@@ -1286,38 +1392,25 @@
         public static bool isFussyCustomers(string phone, string email)
         {
             int count = 0;
-            OleDbConnection myConnection = new OleDbConnection(ConnectionString);
-            myConnection.Open();
-            try {
-                OleDbCommand myCommand = new OleDbCommand();
-                myCommand.Connection = myConnection;
-                myCommand.CommandText = "CREATE TABLE fussyCustomer(phoneOrEmail TEXT(50))";
-                int result1 = myCommand.ExecuteNonQuery();
-
-                myCommand.CommandText = "CREATE INDEX idxFussyPhoneOrEmail ON fussyCustomer(phoneOrEmail)";
-                int result2 = myCommand.ExecuteNonQuery();                
-            }
-            catch (Exception err)
-            {
-
-            };
             try
             {
-                OleDbCommand myCommand = new OleDbCommand();
-                myCommand.Connection = myConnection;
-                string data = StripPhoneAndEmailToSqlSuitable(phone, email);
-                if (data != "")
+                FilterDefinitionBuilder<FussyCustomerDoc> filter = Builders<FussyCustomerDoc>.Filter;
+                var filterIn = filter.In(c => c.phoneOrEmail, new[] { StripPhoneAndEmailToSqlSuitable(phone, email) });
+
+                // Now you can use this filter in your MongoDB queries
+                var matchingCustomers = DataAccess._fussyCustomer.Count(filterIn);
+                if (matchingCustomers > 0)
                 {
-                    string t = "SELECT COUNT(phoneOrEmail) FROM fussyCustomer WHERE phoneOrEmail IN (" + data + ")";
-                    myCommand.CommandText = t;
-                    count = (int)myCommand.ExecuteScalar();
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             } catch (Exception err)
             {
-                //MessageBox.Show("PJC REMOVE err " + err);   
-            };
-            myConnection.Close();
-            return count > 0;
+                return false;
+            }
         }
 
         public static DataRowCollection ReadRecords(string sql)

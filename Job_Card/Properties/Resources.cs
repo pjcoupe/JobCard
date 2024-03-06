@@ -39,6 +39,9 @@
         internal static Bitmap logoHalfSize =>
             ((Bitmap) ResourceManager.GetObject("logoHalfSize", resourceCulture));
 
+        internal static Bitmap wheel_tec_logo =>
+            ((Bitmap)ResourceManager.GetObject("wheel_tec_logo", resourceCulture));
+
         internal static Bitmap paid_stamp =>
             ((Bitmap) ResourceManager.GetObject("paid_stamp", resourceCulture));
 

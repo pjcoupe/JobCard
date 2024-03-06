@@ -44,6 +44,9 @@
     using System.Diagnostics;
     using AForge.Video;
     using AForge.Video.DirectShow;
+    using MailKit.Net.Smtp;
+    using MailKit;
+    using MimeKit;
 
     public class JobCard : Form
     {
@@ -259,15 +262,25 @@
             lastFontSize = -1;
             lastFontStyle = FontStyle.Regular;
             temporarilyDisableNewLineAtEnd = false;
-            Disclaimer = "All work not collected within 3 months of completion will be sold to defer costs.  At Advanced Chrome Platers Ltd we have a combined electroplating and polishing" + Environment.NewLine + "history of over 60 years. Advanced Chrome Platers Ltd treat all jobs with the utmost care and attention, however we take no responsibility for any adverse" + Environment.NewLine + "changes in the condition of items during stripping, polishing and/or plating processes.  Please also note that items held at our premises are not covered by our" + Environment.NewLine + "insurance for theft, fire etc, and you may wish to contact your insurance agent regarding cover for any valuable items during the time they are held on our" + Environment.NewLine + "premises.";
+            Disclaimer = "All work not collected within 3 months of completion will be sold to defer costs.  At "+JobCard.getBusinessName()+" we have a combined electroplating and polishing" + Environment.NewLine + "history of over 60 years. Advanced Chrome Platers Ltd treat all jobs with the utmost care and attention, however we take no responsibility for any adverse" + Environment.NewLine + "changes in the condition of items during stripping, polishing and/or plating processes.  Please also note that items held at our premises are not covered by our" + Environment.NewLine + "insurance for theft, fire etc, and you may wish to contact your insurance agent regarding cover for any valuable items during the time they are held on our" + Environment.NewLine + "premises.";
             searchRows = 0;
             b = null;
+        }
+
+        public static string getBusinessName()
+        {
+            if (JobTypePopup.isCanada())
+            {
+                return "WheelTec Alloy Wheel Repair";
+            } else {
+                return "Advanced Chrome Platers Ltd";
+            }
         }
 
         public static bool isWheel = false; 
         public JobCard(string[] args)
         {
-            if (args.Length > 0 && args[0].ToUpper() == "WHEEL")
+            if (args.Length > 0 && args[0].ToUpper().Contains("WHEEL"))
             {
                 isWheel = true;
             }
@@ -682,8 +695,12 @@
             {
                 stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None);
             }
-            catch (IOException)
+            catch (IOException err)
             {
+                if (err.Message.StartsWith("Could not find file"))
+                {
+                    return false;
+                }
                 //the file is unavailable because it is:
                 //still being written to
                 //or being processed by another thread
@@ -809,7 +826,7 @@
                             subTotalText += " (+3% Card surch)";
                         }
                         str10 = str10 + Environment.NewLine + subTotalText.PadRight(50) + " $" + this.jobPrice[0x19].Text.PadLeft(8);
-                        str10 = (str10 + Environment.NewLine + "GST".PadRight(50) + " $" + this.jobPrice[0x1a].Text.PadLeft(8)) + Environment.NewLine + "_".PadRight(70, '_');
+                        str10 = (str10 + Environment.NewLine + JobCard.GSTText().PadRight(50) + " $" + this.jobPrice[0x1a].Text.PadLeft(8)) + Environment.NewLine + "_".PadRight(70, '_');
                         csBody = str10 + Environment.NewLine + "Total Due".PadRight(50) + " $" + this.jobPrice[0x1b].Text.PadLeft(8);
                     }
                     else
@@ -818,6 +835,17 @@
                     }
                 }
                 this.SendMail(settings, emailaddress, csSubject, csBody, flag ? printToPDF : null);
+            }
+        }
+
+        public static string GSTText()
+        {
+            if (JobTypePopup.isCanada())
+            {
+                return "HST";
+            } else
+            {
+                return "GST";
             }
         }
 
@@ -1840,6 +1868,10 @@
                 if ((i >= this.freightIndex) && (str6 == ""))
                 {
                     str6 = str.Substring(3);
+                    if (str6 == "GST")
+                    {
+                        str6 = JobCard.GSTText();
+                    }
                 }
                 this.label[i].Name = "label" + i.ToString();
                 this.label[i].RightToLeft = RightToLeft.No;
@@ -1879,9 +1911,9 @@
                     
                     this.jobNotes.Text += "DISCLAIMER NOTICE:\n" +
         "When Aluminium wheels have cracks or are damaged in any way the stresses caused by the impact cannot be truly identified without getting the wheel tested." +
-        "We at Advanced Chrome Platers weld the cracks and push out dents with a specific wheel repair machine designed and built in Europe." +
+        "We at "+JobCard.getBusinessName()+" weld the cracks and push out dents with a specific wheel repair machine designed and built in Europe." +
         "This does not in any way certify the wheel for further use on a Vehicle." +
-        "We do not test wheels at Advanced Chrome Platers, and take no responsibility if the wheel is used on a vehicle without the wheel being certified." +
+        "We do not test wheels at "+JobCard.getBusinessName()+", and take no responsibility if the wheel is used on a vehicle without the wheel being certified." +
         "It is up to the owner or customer to get the wheel certified and tested for air leaks at their own cost if they feel it is necessary." +
         "We do not paint wheels.\nCUSTOMER SIGNATURE:   x\n";
                     if (await this.NeedSaveAsync(false, true))
@@ -3665,39 +3697,7 @@
             }
         }
 
-        private void PromptDatabasePath()
-        {
-            DialogResult result = MessageBox.Show("Initial Setup requires you to point to the " + JobCard.DBPath + " database" + Environment.NewLine + " Would you like to auto search for it (will take time to search your entire computer), or would you rather search manually?)" + Environment.NewLine + "Yes - to auto search" + Environment.NewLine + "No - to manual search (via dialog)", "Find JobCard.mdb", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            string path = "";
-            if (result == DialogResult.Yes)
-            {
-                path = this.SearchFile(@"D:\JobCard", "jobCard.mdb");
-            }
-            if (!System.IO.File.Exists(path))
-            {
-                OpenFileDialog dialog = new OpenFileDialog
-                {
-                    InitialDirectory = @"D:\",
-                    Filter = "MS Access database files (*.mdb)|*.mdb",
-                    FilterIndex = 1,
-                    RestoreDirectory = true,
-                    CheckFileExists = true
-                };
-                while (!System.IO.File.Exists(path))
-                {
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        path = dialog.FileName;
-                    }
-                    if (!System.IO.File.Exists(path))
-                    {
-                        MessageBox.Show("File: '" + path + "' is invalid!" + Environment.NewLine + "YOU MUST COMPLETE THIS FIRST STEP OF POINTING TO jobCard.mdb");
-                    }
-                }
-            }
-            Settings.Default.JobCardDatabasePath = path;
-            Settings.Default.Save();
-        }
+     
 
         private void RedrawArrayComponent()
         {
@@ -3758,6 +3758,7 @@
                         this.jobUnitPrice[index].Visible = false;
                         this.jobUnitPrice[index].Enabled = false;
                     }
+                    
                     this.jobPrice[index].Font = new Font("Arial", emSize);
                     this.jobPrice[index].Size = new Size((int)(num3 * 0.07), this.jobDetail[index].Height);
                     this.jobPrice[index].Location = new Point(this.pictureBox1.Right - this.jobPrice[index].Width, this.jobDetail[index].Location.Y);
@@ -4141,8 +4142,10 @@
             }
         }
 
+    
         private bool SendMail(SettingsSettingsDoc settings, string mailTo, string csSubject, string csBody, string attachment)
         {
+           
             //MessageBox.Show("PJC1 "+settings.emailAddress);
             MailAddress from = new MailAddress(settings.emailAddress, settings.emailName);
 
@@ -4186,7 +4189,7 @@
                 
             }
             //MessageBox.Show("PJC5");
-            SmtpClient client = new SmtpClient(settings.emailDomain, settings.emailPort)
+            System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient(settings.emailDomain, settings.emailPort)
             {
                 Credentials = new NetworkCredential(settings.emailAddress, settings.emailPassword)
                 //Credentials = CredentialCache.DefaultNetworkCredentials
@@ -4211,6 +4214,14 @@
         private DialogResult ShowError(string errMsg, string title, bool yesNoCancel = false) =>
             MessageBox.Show(errMsg, title, yesNoCancel ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.OK, MessageBoxIcon.Hand);
 
+        public static Image Base64StringToImage(string base64String)
+        {
+            byte[] imageBytes = Convert.FromBase64String(base64String);
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                return Image.FromStream(ms);
+            }
+        }
         private bool ShowPrintForm(bool customerCopy = true, bool isPrintAll = false, string printToPDF = null)
         {
             lastFontName = null;
@@ -4225,9 +4236,18 @@
             RichTextBox r = copy.richTextBox1;
             this.AddLine(r, "");
             Resources.logo.MakeTransparent();
+           
             if (customerCopy)
             {
-                Clipboard.SetImage(Resources.logoHalfSize);
+                if (JobTypePopup.isCanada())
+                {
+                    Image wheelTec = JobCard.Base64StringToImage("iVBORw0KGgoAAAANSUhEUgAAAZAAAABfCAMAAADxqGErAAACClBMVEVHcExtXFVaW11bXF5bW11aW11kXlxmXVhTTUtbXF5ZWVtcW1xcW1xbXF5bW10EBwdbXF1aW11ZWVsBBQZiXlxZWlxgXV1aWlxbXF4CBgdZWlxYWFpbXF5bXF4DBgZbXF5bW11bXF5bW11YWVtYWFpbXF5bXF5bXF4DBgZbXF5ZWlxbXF5bXF4DBgZbW101IRYBBQZYWFpaWlxbXF5ZWVtYWFoEBwdaWlxYWFoEBwgBBgdYWFpaW11ZWlxaWlwAAwUbEw5ZWlxYWFoABAUBBAVcXF5aW11YWFpjYF8ODQtcXF1aW10BBQZ9bGFYWFoCBgZjYF8EBwbmdDVbXF4HCQhYWFp / bGDzcStYWFpDJhZbW11dXF30cSrzcStyZmApGxKmb09YWFoRDgsBBQV4aWBYWFprZGBrY1 + fdVvxcS3wcSzzcSv0cSvzcSu6cEd8a2Hwci3zcSuIcWJwY13xcSzzcSvzcSv0cSv0cSvzcSv0cSsDBweMcWBuZWB3Z10CBQcBBgaQaFGJbVwDBwcCBgekbk + scE + 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");
+                    Clipboard.SetImage(wheelTec);
+                }
+                else
+                {
+                    Clipboard.SetImage(Resources.logoHalfSize);
+                }
             }
             else if (this.pictureBox1.Image != null)
             {
@@ -4291,11 +4311,18 @@
             if (customerCopy)
             {
                 this.AddLine(r, "CUSTOMER COPY - " + (this.IsCompleted() ? " ** TAX INVOICE **" : "PRICING ABOVE AN ESTIMATE ONLY"), FontStyle.Bold);
-                this.AddLine(r, "Our bank details are: 031557013897600 , use job#" + this.jobID.Text + " as reference");
+                if (JobTypePopup.isCanada())
+                {
+                    this.AddLine(r, "Our phone is: (709) 330-9832, use job#" + this.jobID.Text + " as reference");
+                }
+                else
+                {
+                    this.AddLine(r, "Our bank details are: 031557013897600 , use job#" + this.jobID.Text + " as reference");
+                }
             }
             else
             {
-                this.AddLine(r, "Advanced Chrome Platers copy", FontStyle.Bold);
+                this.AddLine(r, JobCard.getBusinessName()+" copy", FontStyle.Bold);
             }
             if (string.IsNullOrWhiteSpace(printToPDF))
             {
