@@ -8,8 +8,11 @@
     using System.Linq;
     using System.Windows.Forms;
 
-    public class JobTypePopup : Form
-    {
+    public class JobTypePopup : Form {
+
+        private static string surchargeJobID = "";
+        private double surchargeMultiplier = 1.0;
+        private Button smiley;
         private Button clearButton;
         private Button checkBox1;
         private Button checkBox10;
@@ -262,6 +265,27 @@
                 jobDetail.Text = "";
             }
         }
+
+        private void SurchargeClicked(object sender, EventArgs e)
+        {
+            var id = this.jobCard.Controls.Find("jobID", false);
+            if (id.Length == 1)
+            {
+                JobTypePopup.surchargeJobID = id[0].Text;
+            }
+        }
+        private float getSurchargeMultiplier()
+        {
+            var id = this.jobCard.Controls.Find("jobID", false);
+            if (id.Length == 1)
+            {
+                if (JobTypePopup.surchargeJobID == id[0].Text)
+                {
+                    return 1.2f;
+                }
+            }
+            return 1f;
+        }
         private async void CheckedChanged(object sender, EventArgs e)
         {
             await doCheckChange(sender);
@@ -284,6 +308,12 @@
                         {
                             price += ".00";
                         }
+                        float unitPriceFloat = 0;
+                        float.TryParse(price, out unitPriceFloat);
+                        surchargeMultiplier = getSurchargeMultiplier();
+                        unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier, 2);
+                        price = "" + unitPriceFloat;
+
                         this.currentPrice.Text = "$"+price;
                     }
                      
@@ -365,11 +395,14 @@
                     }
                     JobTypePopup.jobQty.Text = counter.ToString();
                     dict[item] = counter;
-                    JobTypePopup.jobUnitPrice.Text = unitPrice;
+                    
                     JobTypePopup.jobType.Text = item;
                     float unitPriceFloat = 0;
                     float.TryParse(unitPrice, out unitPriceFloat);
-                    float price = counter * unitPriceFloat;
+                    surchargeMultiplier = getSurchargeMultiplier();
+                    unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier,2);
+                    JobTypePopup.jobUnitPrice.Text = "" +unitPriceFloat;
+                    float price = (float)Math.Round((double)counter * (double)unitPriceFloat, 2);
                     string priceText = price.ToString();
                     if (!priceText.Contains("."))
                     {
@@ -467,6 +500,7 @@
         {
             this.components = new System.ComponentModel.Container();
             this.clearButton = new System.Windows.Forms.Button();
+            this.smiley = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.checkBox4 = new System.Windows.Forms.Button();
             this.checkBox3 = new System.Windows.Forms.Button();
@@ -596,6 +630,14 @@
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             this.SuspendLayout();
+            this.smiley.Location = new System.Drawing.Point(680, 5);
+            this.smiley.Name = "smiley";
+            this.smiley.Size = new System.Drawing.Size(30, 30);
+            this.smiley.TabIndex = 1;
+            this.smiley.Font = new System.Drawing.Font("Segoe MDL2 Assets", 12);
+            string smileEmoji = "\uD83D\uDE04";
+            this.smiley.Text = smileEmoji;
+            this.smiley.Click += new System.EventHandler(this.SurchargeClicked);
             // 
             // clearButton
             // 
@@ -2090,6 +2132,7 @@
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.clearButton);
+            this.Controls.Add(this.smiley);
             this.Controls.Add(this.overrideControlTextLabel);
             this.Controls.Add(this.overridePrice);
             this.Controls.Add(this.label1);

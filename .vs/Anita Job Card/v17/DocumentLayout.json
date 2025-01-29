@@ -1,0 +1,190 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Admin\\Documents\\JobCard\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|c:\\users\\admin\\documents\\jobcard\\job_card\\dataaccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\dataaccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\job_card\\jobtypepopup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\jobtypepopup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\job_card\\jobcard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\jobcard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|c:\\users\\admin\\documents\\jobcard\\job_card\\jobtypepopup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\jobtypepopup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|Anita Job Card||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\job_card\\jobqueryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\jobqueryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\job_card\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\job_card\\properties\\resources.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:job_card\\properties\\resources.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|C:\\Users\\Admin\\Documents\\JobCard\\properties\\settings.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|solutionrelative:properties\\settings.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2F738980-E789-4C6B-92F9-A676702FD0A3}|Anita Job Card.csproj|c:\\users\\admin\\documents\\jobcard\\||{B270807C-D8C6-49EB-8EBE-8E8D566637A1}|6185191f-1008-4fb2-a715-3a4e4f27e610"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "JobTypePopup.cs [Design]",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobTypePopup.cs",
+              "RelativeDocumentMoniker": "Job_Card\\JobTypePopup.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobTypePopup.cs [Design]",
+              "RelativeToolTip": "Job_Card\\JobTypePopup.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-08-26T23:39:50.143Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "DataAccess.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\DataAccess.cs",
+              "RelativeDocumentMoniker": "Job_Card\\DataAccess.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\DataAccess.cs",
+              "RelativeToolTip": "Job_Card\\DataAccess.cs",
+              "ViewState": "AQIAAEEDAAAAAAAAAAAmwGgDAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:20.702Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "JobQueryForm.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobQueryForm.cs",
+              "RelativeDocumentMoniker": "Job_Card\\JobQueryForm.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobQueryForm.cs",
+              "RelativeToolTip": "Job_Card\\JobQueryForm.cs",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAAOkAAAAPAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-10T00:29:02.718Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "JobCard.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobCard.cs",
+              "RelativeDocumentMoniker": "Job_Card\\JobCard.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobCard.cs",
+              "RelativeToolTip": "Job_Card\\JobCard.cs",
+              "ViewState": "AQIAAIgAAAAAAAAAAAAAAIgAAAAYAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:19.317Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Anita Job Card",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Anita Job Card.csproj",
+              "RelativeDocumentMoniker": "Anita Job Card.csproj",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Anita Job Card.csproj",
+              "RelativeToolTip": "Anita Job Card.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-03-29T02:15:44.557Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "app.config",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\app.config",
+              "RelativeDocumentMoniker": "app.config",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\app.config",
+              "RelativeToolTip": "app.config",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABwAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2024-03-29T02:11:20.676Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "JobTypePopup.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobTypePopup.cs",
+              "RelativeDocumentMoniker": "Job_Card\\JobTypePopup.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\JobTypePopup.cs",
+              "RelativeToolTip": "Job_Card\\JobTypePopup.cs",
+              "ViewState": "AQIAAPgAAAAAAAAAAAAQwBcBAAAfAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:20.695Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\Program.cs",
+              "RelativeDocumentMoniker": "Job_Card\\Program.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\Program.cs",
+              "RelativeToolTip": "Job_Card\\Program.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAgwA0AAAAxAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:20.699Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Resources.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\Properties\\Resources.cs",
+              "RelativeDocumentMoniker": "Job_Card\\Properties\\Resources.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Job_Card\\Properties\\Resources.cs",
+              "RelativeToolTip": "Job_Card\\Properties\\Resources.cs",
+              "ViewState": "AQIAABUAAAAAAAAAAAAgwBsAAAAOAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:20.708Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Settings.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\JobCard\\Properties\\Settings.Designer.cs",
+              "RelativeDocumentMoniker": "Properties\\Settings.Designer.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\JobCard\\Properties\\Settings.Designer.cs",
+              "RelativeToolTip": "Properties\\Settings.Designer.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAewBwAAAAjAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-29T02:11:20.714Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

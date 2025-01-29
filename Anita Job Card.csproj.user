@@ -13,7 +13,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <StartAction>Program</StartAction>
-    <StartProgram>C:\Users\OEM\Downloads\github\JobCard\bin\MongoGeorgesWHEEL.exe</StartProgram>
+    <StartProgram>C:\Users\Admin\Documents\JobCard\bin\MongoGeorgesWHEEL.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <StartArguments>

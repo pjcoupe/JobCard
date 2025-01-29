@@ -845,8 +845,8 @@
                     string ip = MongoIPAddressInputDialog.ShowInputDialog(prompt, "Database Connection");
 
                     MongoClientSettings settings = MongoClientSettings.FromConnectionString("mongodb://" + ip + ":27017");
-                    settings.ConnectTimeout = TimeSpan.FromSeconds(5);
-                    settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+                    settings.ConnectTimeout = TimeSpan.FromSeconds(15);
+                    settings.ServerSelectionTimeout = TimeSpan.FromSeconds(15);
                     _client = new MongoClient(settings);
 
                     var databaseNames = _client.ListDatabaseNames().ToList();
