@@ -149,12 +149,18 @@
             this.startup = true;
             this.InitializeComponent();
 
-
-            this.startup = false;
+            // Only run database operations if not in design mode
+            if (!DesignMode)
+            {
+                this.startup = false;
+            }
         }
 
         public void getGroupBoxPrices(GroupBox box)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             foreach (object obj3 in box.Controls)
             {
                 if (obj3 is Button)
@@ -171,6 +177,9 @@
         }
         public async System.Threading.Tasks.Task getAllPrices()
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             if (JobTypePopup.jobType == null && jobCard != null && jobCard.jobType != null && jobCard.jobType.Length > 0)
             {
                 JobTypePopup.jobDetail = jobCard.jobDetail[0];
@@ -179,6 +188,10 @@
                 JobTypePopup.jobPrice = jobCard.jobPrice[0];
                 JobTypePopup.jobUnitPrice = jobCard.jobUnitPrice[0];
             }
+            
+            // Add null check for jobType
+            if (jobType == null) return;
+            
             List<string> list = jobType.Text.Split(new string[] { ", " }, StringSplitOptions.None).ToList<string>();
             foreach (object obj2 in base.Controls)
             {
@@ -198,6 +211,9 @@
 
         public async void SetupPricingFromDB()
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             System.Console.WriteLine("Setting up pricing");
             SettingsSettingsDoc settings = await DataAccess.findSettings();
             if (settings.pricing.IsBsonDocument)
@@ -294,6 +310,9 @@
         private Button hoveringButton = null;
         private async void hoverPrice(object sender, EventArgs e)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             if (sender.GetType() == typeof(Button))
             {
                 Button button = (Button)sender;
@@ -311,7 +330,7 @@
                         float unitPriceFloat = 0;
                         float.TryParse(price, out unitPriceFloat);
                         surchargeMultiplier = getSurchargeMultiplier();
-                        unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier, 2);
+                        unitPriceFloat = (float)Math.Round(1.15*unitPriceFloat * surchargeMultiplier, 2);
                         price = "" + unitPriceFloat;
 
                         this.currentPrice.Text = "$"+price;
@@ -327,6 +346,9 @@
         }
 
         private async System.Threading.Tasks.Task doCheckChange(object sender) { 
+
+            // Skip if in design mode
+            if (DesignMode) return;
 
             if (!this.startup)
             {
@@ -400,7 +422,8 @@
                     float unitPriceFloat = 0;
                     float.TryParse(unitPrice, out unitPriceFloat);
                     surchargeMultiplier = getSurchargeMultiplier();
-                    unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier,2);
+                    unitPriceFloat = (float)Math.Round(1.15 * unitPriceFloat * surchargeMultiplier,2);
+
                     JobTypePopup.jobUnitPrice.Text = "" +unitPriceFloat;
                     float price = (float)Math.Round((double)counter * (double)unitPriceFloat, 2);
                     string priceText = price.ToString();

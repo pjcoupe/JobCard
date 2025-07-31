@@ -870,7 +870,7 @@
                     Application.Run(new JobCard(args));
                 } catch (Exception err)
                 {
-                    ShowError("Cannot connect to dB. IP address wrong or firewalled");
+                    ShowError(err.Message);
                     Application.Exit();
                     Application.ExitThread();
 
@@ -923,6 +923,18 @@
                 amount = controlText.Substring(dollarIndex).Trim();
                 controlText = controlText.Substring(0, dollarIndex).Trim();
             }
+            // make sure the controlText is 2 decimal places
+            if (controlText.Contains("."))
+            {
+                string[] parts = controlText.Split('.');
+                if (parts.Length > 1)
+                {
+                    if (parts[1].Length < 2)
+                    {
+                        controlText = controlText + "0";
+                    }
+                }
+            }
             PricingDoc found = null;
             var filters = new List<FilterDefinition<PricingDoc>>();
             filters.Add(Builders<PricingDoc>.Filter.Eq("controlName", controlName));
@@ -933,7 +945,18 @@
             if (result.Count == 1)
             {
                 found = result[0];
+            
                 amount = found.stringPrice;
+                // this is tricky as amount is a string... but we need to turn it back into a decimal and add  GST of 15 %. To do that we need to multiplay the decimal amount by 1.15 and then put back as 2dp string
+                // first if amount starts with '$' remove that
+                if (amount.StartsWith("$"))
+                {
+                    amount = amount.Substring(1);
+                }
+                decimal decimalAmount = decimal.Parse(amount);
+                decimalAmount = decimalAmount * 1.15m;
+                amount = decimalAmount.ToString("F2");
+
             } 
 
             if (found == null)

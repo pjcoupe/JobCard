@@ -42,16 +42,20 @@
     using System;
     using System.Timers;
     using System.Diagnostics;
-    using AForge.Video;
-    using AForge.Video.DirectShow;
+    using Accord.Video;
+    using Accord.Video.DirectShow;
+    using Accord.Video.DirectShow.Internals;
+    //using AForge.Video;
+    //using AForge.Video.DirectShow;
+
     using MailKit.Net.Smtp;
     using MailKit;
     using MimeKit;
 
     public class JobCard : Form
     {
-        FilterInfoCollection filterInfoCollection;
-        VideoCaptureDevice videoCaptureDevice;
+        Accord.Video.DirectShow.FilterInfoCollection filterInfoCollection;
+        Accord.Video.DirectShow.VideoCaptureDevice videoCaptureDevice;
         private MongoClient client;
         private IMongoDatabase db;
         
@@ -213,9 +217,10 @@
         private static int searchRows;
         private TrackBar slider;
         private Color stripe = Color.FromArgb(0xff, 0xeb, 0xeb, 0xeb);
-        private int subTotalIndex = 30;
+        private int totalIncludingGSTIndex = 30;
+        private int amountToPayIndex = 33;
         private static bool temporarilyDisableNewLineAtEnd;
-        private int totalIndex = 0x20;
+        private int totalExcludingGSTIndex = 0x20;
         private TextBox txtSearchField;
         private Dictionary<string, System.Type> types;
         private List<Control> undoList = new List<Control>();
@@ -247,7 +252,7 @@
             {
                 if (Directory.Exists("K:"))
                 {
-                    PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
+                    PicturePath = @"K:\";//@"\\tcsp4\Kodak Pictures\";
                 } else
                 {
                     PicturePath = @"D:\Kodak Pictures\";
@@ -255,7 +260,7 @@
                 
             }
             else {
-                PicturePath = @"K:";//@"\\tcsp4\Kodak Pictures\";
+                PicturePath = @"K:\";//@"\\tcsp4\Kodak Pictures\";
             }
             currentPictureIndex = 0;
             lastFontName = null;
@@ -337,7 +342,7 @@
                     this.originalValues[name] = null;
                 }
             }
-            this.filterInfoCollection = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+            this.filterInfoCollection = new Accord.Video.DirectShow.FilterInfoCollection(FilterCategory.VideoInputDevice);
             if (cboCamera != null)
             {
                 foreach (FilterInfo filterInfo in filterInfoCollection)
@@ -653,6 +658,7 @@
 
         private bool incurCreditCardSurcharge()
         {
+            /*
             try {
                 int jobYear = 0;
                 int lastSlash = this.jobDate.Text.LastIndexOf('/');
@@ -684,6 +690,7 @@
             {
 
             }
+            */
             return false;
         }
 
@@ -820,14 +827,18 @@
                             }
                         }
                         str10 = csBody;
-                        string subTotalText = "Sub Total";
+                        string subTotalText = "Grand Total (inc GST) due";
                         if (incurCreditCardSurcharge())
                         {
                             subTotalText += " (+3% Card surch)";
                         }
-                        str10 = str10 + Environment.NewLine + subTotalText.PadRight(50) + " $" + this.jobPrice[0x19].Text.PadLeft(8);
-                        str10 = (str10 + Environment.NewLine + JobCard.GSTText().PadRight(50) + " $" + this.jobPrice[0x1a].Text.PadLeft(8)) + Environment.NewLine + "_".PadRight(70, '_');
-                        csBody = str10 + Environment.NewLine + "Total Due".PadRight(50) + " $" + this.jobPrice[0x1b].Text.PadLeft(8);
+                        string totalToPay = "TOTAL INVOICE".PadRight(50) + " $" + this.jobPrice[this.amountToPayIndex].Text.PadLeft(8);
+                        str10 = str10 + Environment.NewLine + subTotalText.PadRight(50) + " $" + this.jobPrice[this.totalIncludingGSTIndex].Text.PadLeft(8);
+                        str10 = (str10 + Environment.NewLine + JobCard.GSTText().PadRight(50) + " $" + this.jobPrice[this.gstIndex].Text.PadLeft(8));
+                        csBody = str10 + Environment.NewLine + "Total Excluding GST".PadRight(50) + " $" + this.jobPrice[this.totalExcludingGSTIndex].Text.PadLeft(8);
+                        csBody = csBody +Environment.NewLine + "_".PadRight(70, '_');
+                        csBody = csBody + Environment.NewLine + totalToPay;
+                        csBody = csBody + Environment.NewLine + "_".PadRight(70, '_') + Environment.NewLine;
                     }
                     else
                     {
@@ -918,25 +929,48 @@
 
         private async void btnNavigateBack_Click(object sender, EventArgs e)
         {
-            this.stopVideoCapture();
+            //this.stopVideoCapture();
             await this.GetPreviousJobAsync();
         }
 
         private async void btnNavigateForward_Click(object sender, EventArgs e)
         {
-            this.stopVideoCapture();
+           // this.stopVideoCapture();
             await this.GetNextJobAsync();
         }
 
         private void stopVideoCapture()
         {
+
+       
+        
             if (this.videoCaptureDevice != null && this.videoCaptureDevice.IsRunning)
             {
-                this.videoCaptureDevice.SignalToStop();
-                this.pictureBox1.Visible = true;
-                this.pictureBox2.Visible = false;
+                try
+                {
+
+                    this.videoCaptureDevice.SignalToStop();
+
+
+                    this.videoCaptureDevice.NewFrame -= this.VideoCaptureDevice_NewFrame;
+                    this.videoCaptureDevice = null;
+                    this.pictureBox1.Image = null;
+                    this.pictureBox2.Image = null;
+                    this.pictureBox1.Visible = true;
+
+                    this.pictureBox2.Visible = false;
+                    if (currentPhotoPaths.Count > 0)
+                    {
+                        currentPictureIndex = (currentPictureIndex + 0) % currentPhotoPaths.Count;
+                        Image image = FromFile(currentPhotoPaths[currentPictureIndex]);
+                        UpdatePictureBox(this.pictureBox1, image);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Console.Out.WriteLine("Failed to stop video " + ex.Message);
+                }
                 this.btnCam1.Text = "Toggle ON Cam";
-                this.pictureBox2.BackgroundImage = null;
             }
         }
 
@@ -1019,7 +1053,8 @@
             // on
             if (this.videoCaptureDevice == null && this.filterInfoCollection.Count > 0 && this.cboCamera.SelectedIndex >= 0)
             {
-                this.videoCaptureDevice = new VideoCaptureDevice(this.filterInfoCollection[this.cboCamera.SelectedIndex].MonikerString);
+                var moniker = this.filterInfoCollection[this.cboCamera.SelectedIndex].MonikerString;
+                this.videoCaptureDevice = new Accord.Video.DirectShow.VideoCaptureDevice(moniker);
             }
             if (this.videoCaptureDevice.IsRunning) {
                 this.stopVideoCapture();
@@ -1051,10 +1086,42 @@
             this.btnCam1.Text = "Toggle OFF Cam";
 
         }
+
+        // 1. Define the delegate (usually outside your class, or at least at the class level)
+        private delegate void MethodDelegate();
         private void VideoCaptureDevice_NewFrame(object sender, NewFrameEventArgs eventArgs)
         {
             this.pictureBox2.BackgroundImageLayout = ImageLayout.Zoom;
-            this.pictureBox2.BackgroundImage = (Bitmap)eventArgs.Frame.Clone();
+            try
+            {
+               var _currentFrame = (Bitmap)eventArgs.Frame.Clone();
+
+                if (pictureBox2.InvokeRequired)
+                {
+                    pictureBox2.Invoke(new MethodDelegate(delegate { // Use the delegate with 'new'
+                        if (pictureBox2.Image != null)
+                        {
+                           pictureBox2.Image.Dispose();
+                        }
+                        pictureBox2.Image = _currentFrame;
+                    }));
+                }
+                else
+                {
+                    if (pictureBox2.Image != null)
+                    {
+                        pictureBox2.Image.Dispose();
+                    }
+                    pictureBox2.Image = _currentFrame;
+                }
+                //_currentFrame.Dispose(); // Dispose of the newFrame after it has been set to the picturebox.
+
+            }
+            catch (Exception ex)
+            {
+                // ... error handling as above ...
+                System.Console.WriteLine("Webcam video frame err " + ex.Message);
+            }
         }
 
 
@@ -1674,15 +1741,17 @@
 
         private void InitializeArrayComponent()
         {
-            this.jobDetail = new TextBox[0x21];
-            this.jobType = new TextBox[0x21];
-            this.jobQty = new TextBox[0x21];
-            this.jobUnitPrice = new TextBox[0x21];
-            this.jobPrice = new TextBox[0x21];
-            this.checkBox = new CheckBox[0x21];
-            this.label = new Label[0x21];
-            for (int i = 0; i < 0x21; i++)
+            this.jobDetail = new TextBox[0x22];
+            this.jobType = new TextBox[0x22];
+            this.jobQty = new TextBox[0x22];
+            this.jobUnitPrice = new TextBox[0x22];
+            this.jobPrice = new TextBox[0x22];
+            this.checkBox = new CheckBox[0x22];
+            this.label = new Label[0x22];
+            
+            for (int i = 0; i < 0x22; i++)
             {
+                int shiftLeft = 0;
                 this.jobDetail[i] = new TextBox();
                 this.jobType[i] = new TextBox();
                // this.jobType[i].ReadOnly = true;
@@ -1811,23 +1880,32 @@
                         break;
 
                     case 30:
-                        this.subTotalIndex = i;
+                        this.totalIncludingGSTIndex = i;
                         str = "txtSubTotal";
                         str8 = "jobSubTotal";
-                        str6 = "Sub Total";
+                        str6 = "Grand Total (inc GST)";
                         break;
 
                     case 0x1f:
                         this.gstIndex = i;
                         str = "txtGST";
                         str8 = "jobGST";
+                        str6 = "GST";
                         break;
 
                     case 0x20:
-                        this.totalIndex = i;
+                        this.totalExcludingGSTIndex = i;
                         str = "txtTOTAL";
                         str8 = "jobTOTAL";
-                        str6 = "TOTAL";
+                        str6 = "Excl GST";
+                        shiftLeft = 50;
+                        break;
+
+                    case 33:
+                        this.amountToPayIndex = i;
+                        str = "txtToPay";
+                        str8 = "jobToPay";
+                        str6 = "AMOUNT TO PAY";
                         break;
                 }
                 this.jobDetail[i].Name = str;
@@ -1873,10 +1951,14 @@
                         str6 = JobCard.GSTText();
                     }
                 }
+                if (shiftLeft > 0)
+                {
+                    this.label[i].Left -= shiftLeft;
+                }
                 this.label[i].Name = "label" + i.ToString();
                 this.label[i].RightToLeft = RightToLeft.No;
                 this.label[i].Text = str6;
-                this.label[i].TextAlign = ContentAlignment.BottomRight;
+                this.label[i].TextAlign = ContentAlignment.MiddleRight;
                 this.label[i].Enabled = str6 != "";
                 this.label[i].Visible = str6 != "";
                 if ((i % 2) == 0)
@@ -3416,44 +3498,30 @@
         public void UpdateAllTotals()
         {
 
-            double num2 = 0.0;
-            double num3 = 0.0;
-            double num4 = 0.0;
+            double totalIncludingGST = 0.0;
+            double gst = 0.0;
+            double totalExcludingGST = 0.0;
             for (int i = 0; i <= this.freightIndex; i++)
             {
-                double num6 = 0.0;
-                if (double.TryParse(this.jobPrice[i].Text, out num6))
+                double priceIncGST = 0.0;
+                if (double.TryParse(this.jobPrice[i].Text, out priceIncGST))
                 {
-                    num2 += num6;
+                    totalIncludingGST += priceIncGST;
                 }
             }
             if (incurCreditCardSurcharge())
             {
                 // add credit card surcharge
-                num2 = Math.Round((double)(num2 * 1.03), 2, MidpointRounding.AwayFromZero);
+                //num2 = Math.Round((double)(num2 * 1.03), 2, MidpointRounding.AwayFromZero);
             }
-            num3 = Math.Round((double)(num2 * 0.15), 2, MidpointRounding.AwayFromZero);
-            num4 = Math.Round((double)(num2 + num3), 2, MidpointRounding.AwayFromZero);
-            double result = 0.0;
-            double num8 = 0.0;
-            double num9 = 0.0;
-            double.TryParse(this.jobPrice[this.subTotalIndex].Text, out result);
-            double.TryParse(this.jobPrice[this.gstIndex].Text, out num8);
-            double.TryParse(this.jobPrice[this.totalIndex].Text, out num9);
-            if (!(result == num2))
-            {
-                result = num2;
-                num9 = num4;
-                num8 = num3;
-                this.jobPrice[this.subTotalIndex].Text = num2.ToString("F2");
-                this.jobPrice[this.gstIndex].Text = num3.ToString("F2");
-                this.jobPrice[this.totalIndex].Text = num4.ToString("F2");
-            }
-            if (!(num9 == (result + num8)))
-            {
-                this.jobPrice[this.totalIndex].Text = (result + num8).ToString("F2");
-                num9 = result + num8;
-            }
+            gst = Math.Round((double)(totalIncludingGST * 15.0 / 115.0), 2, MidpointRounding.AwayFromZero);
+            totalExcludingGST = Math.Round((double)(totalIncludingGST - gst), 2, MidpointRounding.AwayFromZero);
+
+                this.jobPrice[this.totalIncludingGSTIndex].Text = totalIncludingGST.ToString("F2");
+                this.jobPrice[this.gstIndex].Text = gst.ToString("F2");
+                this.jobPrice[this.totalExcludingGSTIndex].Text = totalExcludingGST.ToString("F2");
+            this.jobPrice[this.amountToPayIndex].Text = totalIncludingGST.ToString("F2");
+
         }
         private async System.Threading.Tasks.Task<bool> NeedSaveAsync(bool promptIfChanged = true, bool fromSaveButton = false)
         {
@@ -3705,7 +3773,7 @@
             {
                 int num;
                 List<int> list = new List<int>();
-                for (num = 0; num < 0x21; num++)
+                for (num = 0; num < 0x22; num++)
                 {
                     bool flag = false;
                     if (!((((num >= 5) && (num < 0x12)) && (this.compress && string.IsNullOrWhiteSpace(this.jobDetail[num].Text))) && string.IsNullOrWhiteSpace(this.jobPrice[num].Text)))
@@ -3779,26 +3847,28 @@
                     this.checkBox[index].Location = point;
                     this.checkBox[index].TabIndex = 0x29 + (num * 3);
                     this.label[index].Size = new Size(90, this.jobDetail[index].Height);
-                    if (this.label[index].Name == "TOTAL")
-                    {
-                        this.label[index].Font = new Font("Arial", emSize, FontStyle.Bold, GraphicsUnit.Point, 0);
-                    }
-                    else
-                    {
-                        this.label[index].Font = new Font("Arial", emSize);
-                    }
+                    this.label[index].Font = new Font("Arial", emSize);
+                    
                     Point point2 = new Point((this.jobPrice[index].Location.X - 5) - this.label[index].Width, this.jobDetail[index].Location.Y);
                     this.label[index].Location = point2;
                     if (index == this.freightIndex)
                     {
                         this.btnRDAddressSurcharge.Location = new Point(point2.X - 40, point2.Y + 3);
                     }
-                    if (index == this.subTotalIndex)
+                    if (index == this.totalIncludingGSTIndex)
                     {
                         point2.Offset(-140, 0);
                         this.label[index].Location = point2;
                         this.label[index].Size = new Size(this.label[index].Size.Width + 140, this.label[index].Size.Height);
-
+                        
+                    }
+                    if (index == this.amountToPayIndex)
+                    {
+                        point2.Offset(-140, 0);
+                        this.label[index].Location = point2;
+                        this.label[index].Size = new Size(this.label[index].Size.Width + 140, this.label[index].Size.Height);
+                        this.label[index].Font = new Font(this.label[index].Font, FontStyle.Bold);
+                        this.jobPrice[index].Font = new Font(this.jobPrice[index].Font, FontStyle.Bold);
                     }
 
                     Color whiteSmoke = Color.WhiteSmoke;
@@ -4317,7 +4387,8 @@
                 }
                 else
                 {
-                    this.AddLine(r, "Our bank details are: 031557013897600 , use job#" + this.jobID.Text + " as reference");
+                    this.AddLine(r, "BANK ACCOUNT NAME: Advanced Plating and Polishing Services Limited");
+                    this.AddLine(r,"BANK ACCOUNT #: 03-15570138976-00 (use 'job#" + this.jobID.Text + "' in Reference)");
                 }
             }
             else
@@ -4403,11 +4474,11 @@
         {
             if (this.incurCreditCardSurcharge())
             {
-                this.label[this.subTotalIndex].Text = "Sub Total (+3% card surch)";
+                this.label[this.totalIncludingGSTIndex].Text = "Grand Total (inc GST)(+3% card surch)";
             }
             else
             {
-                this.label[this.subTotalIndex].Text = "Sub Total";
+                this.label[this.totalIncludingGSTIndex].Text = "Grand Total (inc GST)";
             }
             this.UpdateAllTotals();
         }
@@ -4732,11 +4803,11 @@
         private void btnCam2_Click(object sender, EventArgs e)
         {
             
-            if (this.videoCaptureDevice != null && this.videoCaptureDevice.IsRunning)
+            if (this.pictureBox2.Image != null)
             {
                 List<Image> images = new List<Image>();
 
-                images.Add(this.pictureBox2.BackgroundImage);
+                images.Add(this.pictureBox2.Image);
                 this.SaveWebCamPhoto(images);
                 return;
             } else

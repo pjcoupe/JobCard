@@ -50,6 +50,10 @@ namespace Job_Card
             // Required for Windows Form Designer support
             //
             InitializeComponent();
+            
+            // Skip runtime operations if in design mode
+            if (DesignMode) return;
+            
             axWindowsMediaPlayer1.uiMode = useMediaPlayer?"Mini":"none";
             selectedImages.Clear();
             if (useMediaPlayer)
@@ -305,6 +309,9 @@ namespace Job_Card
 
         private void PicClicked(object sender, EventArgs e)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             PictureBox p = (PictureBox)sender;
 
             Image i = p.Image;
@@ -327,6 +334,9 @@ namespace Job_Card
 
         private void button1_Click(object sender, System.EventArgs e)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             Cursor.Current = Cursors.WaitCursor;
 
             // Release any previous buffer
@@ -401,6 +411,9 @@ namespace Job_Card
         private int autoSnapCount = 0;
         private void button2_Click(object sender, EventArgs e)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             timer1.Interval = 5000;
             timer1.Enabled = true;
             timer1.Start();
@@ -408,6 +421,9 @@ namespace Job_Card
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            // Skip if in design mode
+            if (DesignMode) return;
+            
             autoSnapCount++;
             if (autoSnapCount >= 10)
             {
