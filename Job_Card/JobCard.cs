@@ -101,6 +101,7 @@
         private Button btnUnpaidCustomers;
         private Button btnCam1;
         private Button btnCam2;
+        private Button btnXero;
         private CheckBox[] checkBox;
         private IContainer components = null;
         private bool compress = true;
@@ -235,6 +236,7 @@
         internal PictureBox pictureBox2;
         private CheckBox jobQuotation;
         private Rectangle workingArea;
+        private System.Windows.Forms.Timer xeroSyncTimer;
 
         static JobCard()
         {
@@ -301,6 +303,12 @@
             base.Top = this.workingArea.Top;
             base.Height = this.workingArea.Height;
             this.InitializeArrayComponent();
+            this.btnXero.Enabled = !string.IsNullOrWhiteSpace(this.jobBusinessName.Text);
+            this.jobBusinessName.TextChanged += this.jobBusinessName_TextChanged;
+            this.xeroSyncTimer = new System.Windows.Forms.Timer();
+            this.xeroSyncTimer.Interval = 300000;
+            this.xeroSyncTimer.Tick += this.xeroSyncTimer_Tick;
+            this.xeroSyncTimer.Start();
             this.txtSearchField.KeyDown += new KeyEventHandler(this.tb_KeyDown);
             this.datagrid.AllowUserToAddRows = false;
             this.jobReceivedFrom.SelectedIndex = 0;
@@ -1287,7 +1295,7 @@
         private string CombinedDetailText(bool forPrint = false)
         {
             string str = "";
-            for (int i = 0; i < 0x21; i++)
+            for (int i = 0; i < 0x22; i++)
             {
                 string str2 = this.jobDetail[i].Text.Trim();
                 string str3 = this.checkBox[i].Checked ? (this.checkBox[i].Text + ": ") : "";
@@ -2071,6 +2079,7 @@
             this.btnEmail = new System.Windows.Forms.Button();
             this.btnCam1 = new System.Windows.Forms.Button();
             this.btnCam2 = new System.Windows.Forms.Button();
+            this.btnXero = new System.Windows.Forms.Button();
             this.btnPrintCustomerCopy = new System.Windows.Forms.Button();
             this.btnPrintBusiness = new System.Windows.Forms.Button();
             this.jobCompleted = new System.Windows.Forms.CheckBox();
@@ -2728,6 +2737,17 @@
             this.btnCam2.UseVisualStyleBackColor = true;
             this.btnCam2.Click += new System.EventHandler(this.btnCam2_Click);
             // 
+            // btnXero
+            // 
+            this.btnXero.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
+            this.btnXero.Location = new System.Drawing.Point(759, 224);
+            this.btnXero.Name = "btnXero";
+            this.btnXero.Size = new System.Drawing.Size(137, 68);
+            this.btnXero.TabIndex = 56;
+            this.btnXero.Text = "Xero";
+            this.btnXero.UseVisualStyleBackColor = true;
+            this.btnXero.Click += new System.EventHandler(this.btnXero_Click);
+            // 
             // btnPrintCustomerCopy
             // 
             this.btnPrintCustomerCopy.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Bold);
@@ -3106,6 +3126,7 @@
             this.Controls.Add(this.btnPrintCustomerCopy);
             this.Controls.Add(this.btnEmail);
             this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnXero);
             this.Controls.Add(this.btnCam1);
             this.Controls.Add(this.btnCam2);
             this.Controls.Add(this.btnExit);
@@ -3175,6 +3196,148 @@
 
         private bool IsCompleted() =>
             !string.IsNullOrWhiteSpace(this.jobDateCompleted.Text);
+
+        private async void btnXero_Click(object sender, EventArgs e)
+        {
+            using (var form = new XeroManagementForm(this))
+            {
+                form.ShowDialog(this);
+            }
+            await this.RefreshXeroPaidStatusAsync();
+        }
+
+        private void jobBusinessName_TextChanged(object sender, EventArgs e)
+        {
+            if (this.btnXero != null)
+            {
+                this.btnXero.Enabled = !string.IsNullOrWhiteSpace(this.jobBusinessName.Text);
+            }
+        }
+
+        private async void xeroSyncTimer_Tick(object sender, EventArgs e)
+        {
+            await this.RefreshXeroPaidStatusAsync();
+        }
+
+        private async System.Threading.Tasks.Task RefreshXeroPaidStatusAsync()
+        {
+            int jid = this.GetCurrentJobId();
+            if (jid <= 0)
+            {
+                return;
+            }
+            SettingsSettingsDoc settings = await DataAccess.findSettings();
+            if (settings == null || string.IsNullOrWhiteSpace(settings.xeroTenantId))
+            {
+                return;
+            }
+            SentInvoiceDoc sent = await DataAccess.FindSentInvoiceByJobAsync(jid, settings.xeroTenantId);
+            if (sent == null || string.IsNullOrWhiteSpace(sent.xeroInvoiceId))
+            {
+                return;
+            }
+            bool ok = await XeroService.EnsureValidTokenAsync(settings);
+            if (!ok)
+            {
+                return;
+            }
+            var invoiceRoot = await XeroService.GetInvoiceAsync(settings, sent.xeroTenantId, sent.xeroInvoiceId);
+            if (invoiceRoot == null || !invoiceRoot.ContainsKey("Invoices"))
+            {
+                return;
+            }
+            var arr = invoiceRoot["Invoices"] as System.Collections.ArrayList;
+            if (arr == null || arr.Count == 0)
+            {
+                return;
+            }
+            var invoice = arr[0] as Dictionary<string, object>;
+            if (invoice == null)
+            {
+                return;
+            }
+            if (invoice.ContainsKey("Status"))
+            {
+                sent.status = Convert.ToString(invoice["Status"]);
+            }
+            if (invoice.ContainsKey("FullyPaidOnDate") && invoice["FullyPaidOnDate"] != null)
+            {
+                DateTime paidDate;
+                if (DateTime.TryParse(Convert.ToString(invoice["FullyPaidOnDate"]), out paidDate))
+                {
+                    sent.datePaidUtc = paidDate.ToUniversalTime();
+                    await DataAccess.UpdateJobPaidStatusAsync(jid, paidDate);
+                    this.SetPaidDateText(paidDate);
+                }
+            }
+            await DataAccess.UpsertSentInvoiceAsync(sent);
+        }
+
+        public int GetCurrentJobId()
+        {
+            int id;
+            if (int.TryParse(this.jobID.Text, out id))
+            {
+                return id;
+            }
+            return 0;
+        }
+
+        public string GetCurrentBusinessName()
+        {
+            return this.jobBusinessName.Text != null ? this.jobBusinessName.Text.Trim() : "";
+        }
+
+        public double GetCurrentTotal()
+        {
+            this.UpdateAllTotals();
+            double total;
+            if (double.TryParse(this.jobPrice[this.totalIncludingGSTIndex].Text, out total))
+            {
+                return total;
+            }
+            return 0.0;
+        }
+
+        public List<Dictionary<string, object>> BuildXeroLineItems(string accountCode, string taxType)
+        {
+            var lines = new List<Dictionary<string, object>>();
+            for (int i = 0; i <= this.freightIndex; i++)
+            {
+                string desc = this.jobDetail[i].Text == null ? "" : this.jobDetail[i].Text.Trim();
+                if (string.IsNullOrWhiteSpace(desc))
+                {
+                    continue;
+                }
+                int qty = 1;
+                int.TryParse(this.jobQty[i].Text, out qty);
+                if (qty <= 0)
+                {
+                    qty = 1;
+                }
+                double unitAmount = 0.0;
+                double.TryParse(this.jobUnitPrice[i].Text, out unitAmount);
+                if (unitAmount <= 0.0)
+                {
+                    double lineAmount = 0.0;
+                    double.TryParse(this.jobPrice[i].Text, out lineAmount);
+                    unitAmount = lineAmount;
+                }
+                var line = new Dictionary<string, object>();
+                line["Description"] = desc;
+                line["Quantity"] = qty;
+                line["UnitAmount"] = unitAmount;
+                line["AccountCode"] = accountCode;
+                line["TaxType"] = taxType;
+                lines.Add(line);
+            }
+            return lines;
+        }
+
+        public void SetPaidDateText(DateTime paidDate)
+        {
+            this.jobDatePaid.Text = paidDate.ToString("d/M/yy");
+        }
 
         private bool IsPaid() =>
             !string.IsNullOrWhiteSpace(this.jobDatePaid.Text);

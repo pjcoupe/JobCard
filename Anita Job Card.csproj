@@ -163,6 +163,7 @@
       <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Data" />
@@ -199,6 +200,10 @@
     <Compile Include="Job_Card\JobCard.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Job_Card\XeroManagementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Job_Card\XeroService.cs" />
     <Compile Include="Job_Card\Properties\Settings.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

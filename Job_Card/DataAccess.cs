@@ -144,7 +144,30 @@
         public int emailPort { get; set; }
         [BsonElement("emailDomain")]
         public string emailDomain { get; set; }
-      
+        [BsonElement("xeroClientId")]
+        public string xeroClientId { get; set; }
+        [BsonElement("xeroClientSecret")]
+        public string xeroClientSecret { get; set; }
+        [BsonElement("xeroRedirectUri")]
+        public string xeroRedirectUri { get; set; }
+        [BsonElement("xeroAccessToken")]
+        public string xeroAccessToken { get; set; }
+        [BsonElement("xeroRefreshToken")]
+        public string xeroRefreshToken { get; set; }
+        [BsonElement("xeroTokenExpiresAtUtc")]
+        public DateTime? xeroTokenExpiresAtUtc { get; set; }
+        [BsonElement("xeroTenantId")]
+        public string xeroTenantId { get; set; }
+        [BsonElement("xeroTenantName")]
+        public string xeroTenantName { get; set; }
+        [BsonElement("xeroLastTenant")]
+        public string xeroLastTenant { get; set; }
+        [BsonElement("xeroInvoiceMode")]
+        public string xeroInvoiceMode { get; set; }
+        [BsonElement("xeroDefaultSalesAccountCode")]
+        public string xeroDefaultSalesAccountCode { get; set; }
+        [BsonElement("xeroDefaultTaxType")]
+        public string xeroDefaultTaxType { get; set; }
         public BsonDocument pricing { get; set; }
 
 
@@ -825,6 +848,40 @@
         [BsonElement("jobQuotation")]
         public bool? jobQuotation { get; set; }
     }
+    public class SentInvoiceDoc
+    {
+        [BsonId]
+        public ObjectId Id { get; set; }
+        [BsonElement("jobId")]
+        public int jobId { get; set; }
+        [BsonElement("jobBusinessName")]
+        public string jobBusinessName { get; set; }
+        [BsonElement("xeroTenantId")]
+        public string xeroTenantId { get; set; }
+        [BsonElement("xeroContactId")]
+        public string xeroContactId { get; set; }
+        [BsonElement("xeroInvoiceId")]
+        public string xeroInvoiceId { get; set; }
+        [BsonElement("invoiceNumber")]
+        public string invoiceNumber { get; set; }
+        [BsonElement("invoiceMode")]
+        public string invoiceMode { get; set; }
+        [BsonElement("amountTotal")]
+        [BsonRepresentation(BsonType.Double, AllowTruncation = true)]
+        public double amountTotal { get; set; }
+        [BsonElement("currency")]
+        public string currency { get; set; }
+        [BsonElement("dateSentUtc")]
+        public DateTime dateSentUtc { get; set; }
+        [BsonElement("datePaidUtc")]
+        public DateTime? datePaidUtc { get; set; }
+        [BsonElement("status")]
+        public string status { get; set; }
+        [BsonElement("lineItemsSnapshot")]
+        public BsonArray lineItemsSnapshot { get; set; }
+        [BsonElement("rawResponseSnippet")]
+        public string rawResponseSnippet { get; set; }
+    }
     public class DataAccess
     {
         private static IMongoClient _client = null;
@@ -834,6 +891,7 @@
         private static IMongoCollection<PricingDoc> _pricing = null;
         private static IMongoCollection<JobCardDoc> _jobCard = null;
         private static IMongoCollection<FussyCustomerDoc> _fussyCustomer = null;
+        private static IMongoCollection<SentInvoiceDoc> _sentInvoices = null;
         public static void connectMongoDb(string[] args)
         {
            
@@ -867,6 +925,7 @@
                     _pricing = _database.GetCollection<PricingDoc>("pricing");
                     _fussyCustomer = _database.GetCollection<FussyCustomerDoc>("fussyCustomer");
                     _settings = _settingsdatabase.GetCollection<SettingsSettingsDoc>("settings");
+                    _sentInvoices = _settingsdatabase.GetCollection<SentInvoiceDoc>("sentInvoices");
                     Application.Run(new JobCard(args));
                 } catch (Exception err)
                 {
@@ -902,6 +961,15 @@
                 var result = await DataAccess._settings.Find(new BsonDocument() { }).ToListAsync();
                 if (result.Count > 0)
                 {
+                    foreach (var doc in result)
+                    {
+                        if (!string.IsNullOrWhiteSpace(doc.xeroClientId) &&
+                            !string.IsNullOrWhiteSpace(doc.xeroClientSecret) &&
+                            !string.IsNullOrWhiteSpace(doc.xeroRedirectUri))
+                        {
+                            return doc;
+                        }
+                    }
                     return result[0];
                 }
             } catch (Exception err)
@@ -909,6 +977,90 @@
                 ShowError("Failed to find settings.settings");
             }
                 return null;
+        }
+        public static async Task<bool> UpdateSettingsFieldsAsync(List<KeyValuePair<string, dynamic>> fields)
+        {
+            if (fields == null || fields.Count == 0)
+            {
+                return false;
+            }
+            SettingsSettingsDoc settingsDoc = await findSettings();
+            FilterDefinition<SettingsSettingsDoc> filter;
+            if (settingsDoc == null)
+            {
+                settingsDoc = new SettingsSettingsDoc();
+                settingsDoc.Id = ObjectId.GenerateNewId();
+                filter = Builders<SettingsSettingsDoc>.Filter.Eq(x => x.Id, settingsDoc.Id);
+            }
+            else
+            {
+                filter = Builders<SettingsSettingsDoc>.Filter.Eq(x => x.Id, settingsDoc.Id);
+            }
+            var updateList = new List<UpdateDefinition<SettingsSettingsDoc>>();
+            fields.ForEach(x =>
+            {
+                if (x.Value == null)
+                {
+                    updateList.Add(Builders<SettingsSettingsDoc>.Update.Set(x.Key, BsonNull.Value));
+                }
+                else
+                {
+                    updateList.Add(Builders<SettingsSettingsDoc>.Update.Set(x.Key, BsonValue.Create(x.Value)));
+                }
+            });
+            UpdateOptions options = new UpdateOptions { IsUpsert = true };
+            var result = await _settings.UpdateOneAsync(filter, Builders<SettingsSettingsDoc>.Update.Combine(updateList), options);
+            return result.IsAcknowledged;
+        }
+
+        public static async Task<SentInvoiceDoc> FindSentInvoiceByJobAsync(int jobId, string tenantId)
+        {
+            var filters = new List<FilterDefinition<SentInvoiceDoc>>
+            {
+                Builders<SentInvoiceDoc>.Filter.Eq(x => x.jobId, jobId)
+            };
+            if (!string.IsNullOrWhiteSpace(tenantId))
+            {
+                filters.Add(Builders<SentInvoiceDoc>.Filter.Eq(x => x.xeroTenantId, tenantId));
+            }
+            var filter = Builders<SentInvoiceDoc>.Filter.And(filters);
+            var result = await _sentInvoices.Find(filter).SortByDescending(x => x.dateSentUtc).Limit(1).ToListAsync();
+            return result.Count > 0 ? result[0] : null;
+        }
+
+        public static async Task<bool> UpsertSentInvoiceAsync(SentInvoiceDoc doc)
+        {
+            if (doc == null)
+            {
+                return false;
+            }
+            var filter = Builders<SentInvoiceDoc>.Filter.Eq(x => x.jobId, doc.jobId) &
+                         Builders<SentInvoiceDoc>.Filter.Eq(x => x.xeroTenantId, doc.xeroTenantId);
+            if (doc.Id == ObjectId.Empty)
+            {
+                doc.Id = ObjectId.GenerateNewId();
+            }
+            UpdateOptions options = new UpdateOptions { IsUpsert = true };
+            var result = await _sentInvoices.ReplaceOneAsync(filter, doc, options);
+            return result.IsAcknowledged;
+        }
+
+        public static async Task<bool> DeleteSentInvoiceAsync(int jobId, string tenantId)
+        {
+            var filter = Builders<SentInvoiceDoc>.Filter.Eq(x => x.jobId, jobId) &
+                         Builders<SentInvoiceDoc>.Filter.Eq(x => x.xeroTenantId, tenantId);
+            var result = await _sentInvoices.DeleteOneAsync(filter);
+            return result.DeletedCount > 0;
+        }
+
+        public static async Task<bool> UpdateJobPaidStatusAsync(int jobId, DateTime paidDate)
+        {
+            var filter = Builders<JobCardDoc>.Filter.Eq("jobID", jobId);
+            var update = Builders<JobCardDoc>.Update
+                .Set("jobDatePaid", paidDate)
+                .Set("jobPaymentBy", "Xero");
+            var result = await _jobCard.UpdateOneAsync(filter, update);
+            return result.IsAcknowledged;
         }
         public static int increment = 1;
         public static async Task<string> findOrUpdatePrice(Control control, TextBox overridePrice, TextBox overrideControlText)
