@@ -1028,6 +1028,17 @@
             return result.Count > 0 ? result[0] : null;
         }
 
+        public static async Task<List<SentInvoiceDoc>> FindUnpaidSentInvoicesForTenantAsync(string tenantId)
+        {
+            if (string.IsNullOrWhiteSpace(tenantId))
+            {
+                return new List<SentInvoiceDoc>();
+            }
+            var filter = Builders<SentInvoiceDoc>.Filter.Eq(x => x.xeroTenantId, tenantId) &
+                         Builders<SentInvoiceDoc>.Filter.Eq(x => x.datePaidUtc, (DateTime?)null);
+            return await DataAccess._sentInvoices.Find(filter).ToListAsync();
+        }
+
         public static async Task<bool> UpsertSentInvoiceAsync(SentInvoiceDoc doc)
         {
             if (doc == null)

@@ -23,8 +23,10 @@ namespace Job_Card
         private Button btnCheckCustomer;
         private Button btnSendInvoice;
         private Button btnDeleteInvoice;
+        private Button btnSyncAllUnpaid;
         private Label lblHistory;
         private Label lblStatus;
+        private bool syncAllUnpaidRunning;
         private string selectedContactId;
         private string selectedContactName;
         private SentInvoiceDoc currentSentInvoice;
@@ -47,6 +49,16 @@ namespace Job_Card
             this.Text = "Xero Management";
             this.Size = new Size(760, 460);
             this.StartPosition = FormStartPosition.CenterParent;
+
+            this.btnSyncAllUnpaid = new Button
+            {
+                Text = "Sync All Unpaid",
+                Size = new Size(150, 28),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Enabled = false
+            };
+            this.btnSyncAllUnpaid.Click += this.btnSyncAllUnpaid_Click;
+            this.btnSyncAllUnpaid.Location = new Point(this.ClientSize.Width - this.btnSyncAllUnpaid.Width - 16, 16);
 
             var lblMode = new Label { Text = "Invoice Mode", Location = new Point(20, 20), AutoSize = true };
             this.cboMode = new ComboBox { Location = new Point(130, 16), Width = 180, DropDownStyle = ComboBoxStyle.DropDownList };
@@ -87,6 +99,8 @@ namespace Job_Card
             this.Controls.Add(this.btnDeleteInvoice);
             this.Controls.Add(this.lblHistory);
             this.Controls.Add(this.lblStatus);
+            this.Controls.Add(this.btnSyncAllUnpaid);
+            this.btnSyncAllUnpaid.BringToFront();
             this.Load += this.XeroManagementForm_Load;
             this.FormClosing += this.XeroManagementForm_FormClosing;
         }
@@ -124,6 +138,7 @@ namespace Job_Card
             await this.RefreshHistoryAsync();
             this.RefreshActionStates();
             await this.RefreshPaidStatusFromXeroAsync();
+            this.UpdateSyncAllUnpaidButtonEnabled();
         }
 
         private async Task RefreshHistoryAsync()
@@ -152,6 +167,12 @@ namespace Job_Card
             bool hasTenant = this.settings != null && !string.IsNullOrWhiteSpace(this.settings.xeroTenantId);
             bool alreadySent = this.currentSentInvoice != null;
             this.btnSendInvoice.Enabled = hasBusiness && hasContact && totalNonZero && hasTenant && !alreadySent;
+        }
+
+        private void UpdateSyncAllUnpaidButtonEnabled()
+        {
+            bool connected = string.Equals(this.lblConnection.Text, "Connected", StringComparison.Ordinal);
+            this.btnSyncAllUnpaid.Enabled = connected && !this.syncAllUnpaidRunning;
         }
 
         private async void cboMode_SelectedIndexChanged(object sender, EventArgs e)
@@ -260,6 +281,8 @@ namespace Job_Card
                     this.connectCancellation.Dispose();
                     this.connectCancellation = null;
                 }
+                this.settings = await DataAccess.findSettings();
+                this.UpdateSyncAllUnpaidButtonEnabled();
             }
         }
 
@@ -271,6 +294,7 @@ namespace Job_Card
             {
                 this.cboTenants.Items.Clear();
                 this.lblConnection.Text = "Disconnected";
+                this.UpdateSyncAllUnpaidButtonEnabled();
                 return;
             }
             var tenants = await XeroService.GetTenantsAsync(this.settings);
@@ -301,6 +325,8 @@ namespace Job_Card
                 await this.PersistTenantSelectionFromComboAsync(false);
             }
             this.settings = await DataAccess.findSettings();
+            this.lblConnection.Text = "Connected";
+            this.UpdateSyncAllUnpaidButtonEnabled();
         }
 
         private bool TrySelectTenantComboById(string tenantId)
@@ -461,11 +487,17 @@ namespace Job_Card
                 this.lblStatus.Text = "Xero token is invalid. Reconnect.";
                 return;
             }
+            string orderNumber = this.jobCard.GetCurrentOrderNumber();
+            if (string.IsNullOrWhiteSpace(orderNumber))
+            {
+                MessageBox.Show(this, "Order Number cannot be blank!", "Xero", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             var lines = this.jobCard.BuildXeroLineItems(
                 string.IsNullOrWhiteSpace(this.settings.xeroDefaultSalesAccountCode) ? "200" : this.settings.xeroDefaultSalesAccountCode,
                 string.IsNullOrWhiteSpace(this.settings.xeroDefaultTaxType) ? "OUTPUT2" : this.settings.xeroDefaultTaxType);
             string mode = XeroService.GetDefaultMode(this.settings.xeroInvoiceMode);
-            var result = await XeroService.CreateInvoiceAsync(this.settings, this.settings.xeroTenantId, this.selectedContactId, mode, "Job " + this.jobCard.GetCurrentJobId(), lines);
+            var result = await XeroService.CreateInvoiceAsync(this.settings, this.settings.xeroTenantId, this.selectedContactId, mode, orderNumber, lines);
             if (!result.Success)
             {
                 this.lblStatus.Text = "Send failed: " + result.ErrorMessage;
@@ -551,20 +583,87 @@ namespace Job_Card
             {
                 return;
             }
-            string status = invoice.ContainsKey("Status") ? Convert.ToString(invoice["Status"]) : this.currentSentInvoice.status;
-            this.currentSentInvoice.status = status;
+            await this.ApplyInvoiceFromXeroToSentAsync(this.currentSentInvoice, invoice);
+            await this.RefreshHistoryAsync();
+        }
+
+        private async Task ApplyInvoiceFromXeroToSentAsync(SentInvoiceDoc sent, Dictionary<string, object> invoice)
+        {
+            string status = invoice.ContainsKey("Status") ? Convert.ToString(invoice["Status"]) : sent.status;
+            sent.status = status;
             if (invoice.ContainsKey("FullyPaidOnDate") && invoice["FullyPaidOnDate"] != null)
             {
                 DateTime paidDate;
                 if (DateTime.TryParse(Convert.ToString(invoice["FullyPaidOnDate"]), CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out paidDate))
                 {
-                    this.currentSentInvoice.datePaidUtc = paidDate.ToUniversalTime();
-                    await DataAccess.UpdateJobPaidStatusAsync(this.currentSentInvoice.jobId, paidDate);
-                    this.jobCard.SetPaidDateText(paidDate);
+                    sent.datePaidUtc = paidDate.ToUniversalTime();
+                    await DataAccess.UpdateJobPaidStatusAsync(sent.jobId, paidDate);
+                    if (sent.jobId == this.jobCard.GetCurrentJobId())
+                    {
+                        this.jobCard.SetPaidDateText(paidDate);
+                    }
                 }
             }
-            await DataAccess.UpsertSentInvoiceAsync(this.currentSentInvoice);
-            await this.RefreshHistoryAsync();
+            await DataAccess.UpsertSentInvoiceAsync(sent);
+        }
+
+        private async void btnSyncAllUnpaid_Click(object sender, EventArgs e)
+        {
+            if (!string.Equals(this.lblConnection.Text, "Connected", StringComparison.Ordinal))
+            {
+                return;
+            }
+            this.settings = await DataAccess.findSettings();
+            bool tokenOk = await XeroService.EnsureValidTokenAsync(this.settings);
+            if (!tokenOk)
+            {
+                this.lblStatus.Text = "Xero token is invalid. Reconnect.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(this.settings.xeroTenantId))
+            {
+                this.lblStatus.Text = "Choose a Xero tenant first.";
+                return;
+            }
+            this.syncAllUnpaidRunning = true;
+            this.UpdateSyncAllUnpaidButtonEnabled();
+            try
+            {
+                var unpaid = await DataAccess.FindUnpaidSentInvoicesForTenantAsync(this.settings.xeroTenantId);
+                int checkedCount = 0;
+                foreach (var sent in unpaid)
+                {
+                    if (string.IsNullOrWhiteSpace(sent.xeroInvoiceId))
+                    {
+                        continue;
+                    }
+                    var root = await XeroService.GetInvoiceAsync(this.settings, sent.xeroTenantId, sent.xeroInvoiceId);
+                    if (root == null || !root.ContainsKey("Invoices"))
+                    {
+                        continue;
+                    }
+                    var rows = root["Invoices"] as System.Collections.ArrayList;
+                    if (rows == null || rows.Count == 0)
+                    {
+                        continue;
+                    }
+                    var invoice = rows[0] as Dictionary<string, object>;
+                    if (invoice == null)
+                    {
+                        continue;
+                    }
+                    await this.ApplyInvoiceFromXeroToSentAsync(sent, invoice);
+                    checkedCount++;
+                }
+                this.currentSentInvoice = await DataAccess.FindSentInvoiceByJobAsync(this.jobCard.GetCurrentJobId(), this.settings.xeroTenantId);
+                await this.RefreshHistoryAsync();
+                this.lblStatus.Text = string.Format(CultureInfo.InvariantCulture, "Synced {0} unpaid Xero invoice(s) from Xero.", checkedCount);
+            }
+            finally
+            {
+                this.syncAllUnpaidRunning = false;
+                this.UpdateSyncAllUnpaidButtonEnabled();
+            }
         }
     }
 }

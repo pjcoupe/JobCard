@@ -330,7 +330,7 @@
                         float unitPriceFloat = 0;
                         float.TryParse(price, out unitPriceFloat);
                         surchargeMultiplier = getSurchargeMultiplier();
-                        unitPriceFloat = (float)Math.Round(1.15*unitPriceFloat * surchargeMultiplier, 2);
+                        unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier, 2);
                         price = "" + unitPriceFloat;
 
                         this.currentPrice.Text = "$"+price;
@@ -422,7 +422,7 @@
                     float unitPriceFloat = 0;
                     float.TryParse(unitPrice, out unitPriceFloat);
                     surchargeMultiplier = getSurchargeMultiplier();
-                    unitPriceFloat = (float)Math.Round(1.15 * unitPriceFloat * surchargeMultiplier,2);
+                    unitPriceFloat = (float)Math.Round(unitPriceFloat * surchargeMultiplier, 2);
 
                     JobTypePopup.jobUnitPrice.Text = "" +unitPriceFloat;
                     float price = (float)Math.Round((double)counter * (double)unitPriceFloat, 2);

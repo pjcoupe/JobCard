@@ -2470,7 +2470,8 @@
             "Cash",
             "Eftpos",
             "VISA",
-            "MasterCard"});
+            "MasterCard",
+            "Xero"});
             this.jobPaymentBy.Location = new System.Drawing.Point(694, 159);
             this.jobPaymentBy.Name = "jobPaymentBy";
             this.jobPaymentBy.Size = new System.Drawing.Size(108, 25);
@@ -3288,6 +3289,11 @@
             return this.jobBusinessName.Text != null ? this.jobBusinessName.Text.Trim() : "";
         }
 
+        public string GetCurrentOrderNumber()
+        {
+            return this.jobOrderNumber.Text != null ? this.jobOrderNumber.Text.Trim() : "";
+        }
+
         public double GetCurrentTotal()
         {
             this.UpdateAllTotals();
@@ -3661,15 +3667,13 @@
         public void UpdateAllTotals()
         {
 
-            double totalIncludingGST = 0.0;
-            double gst = 0.0;
             double totalExcludingGST = 0.0;
             for (int i = 0; i <= this.freightIndex; i++)
             {
-                double priceIncGST = 0.0;
-                if (double.TryParse(this.jobPrice[i].Text, out priceIncGST))
+                double lineExclGst = 0.0;
+                if (double.TryParse(this.jobPrice[i].Text, out lineExclGst))
                 {
-                    totalIncludingGST += priceIncGST;
+                    totalExcludingGST += lineExclGst;
                 }
             }
             if (incurCreditCardSurcharge())
@@ -3677,12 +3681,13 @@
                 // add credit card surcharge
                 //num2 = Math.Round((double)(num2 * 1.03), 2, MidpointRounding.AwayFromZero);
             }
-            gst = Math.Round((double)(totalIncludingGST * 15.0 / 115.0), 2, MidpointRounding.AwayFromZero);
-            totalExcludingGST = Math.Round((double)(totalIncludingGST - gst), 2, MidpointRounding.AwayFromZero);
+            totalExcludingGST = Math.Round(totalExcludingGST, 2, MidpointRounding.AwayFromZero);
+            double gst = Math.Round(totalExcludingGST * 0.15, 2, MidpointRounding.AwayFromZero);
+            double totalIncludingGST = Math.Round(totalExcludingGST + gst, 2, MidpointRounding.AwayFromZero);
 
-                this.jobPrice[this.totalIncludingGSTIndex].Text = totalIncludingGST.ToString("F2");
-                this.jobPrice[this.gstIndex].Text = gst.ToString("F2");
                 this.jobPrice[this.totalExcludingGSTIndex].Text = totalExcludingGST.ToString("F2");
+                this.jobPrice[this.gstIndex].Text = gst.ToString("F2");
+                this.jobPrice[this.totalIncludingGSTIndex].Text = totalIncludingGST.ToString("F2");
             this.jobPrice[this.amountToPayIndex].Text = totalIncludingGST.ToString("F2");
 
         }

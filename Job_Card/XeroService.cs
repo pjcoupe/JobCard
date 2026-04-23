@@ -247,8 +247,10 @@ namespace Job_Card
                 invoice["Type"] = "ACCREC";
                 invoice["Contact"] = new Dictionary<string, object> { { "ContactID", contactId } };
                 invoice["Date"] = DateTime.Now.ToString("yyyy-MM-dd");
+                invoice["DueDate"] = DateTime.Now.AddDays(14).ToString("yyyy-MM-dd");
                 invoice["Reference"] = reference;
                 invoice["LineItems"] = lineItems;
+                invoice["LineAmountTypes"] = "Exclusive";
                 invoice["CurrencyCode"] = "NZD";
                 invoice["Status"] = mode == "AuthoriseAndEmail" ? "AUTHORISED" : "DRAFT";
                 var body = new Dictionary<string, object> { { "Invoices", new List<Dictionary<string, object>> { invoice } } };
