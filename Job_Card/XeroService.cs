@@ -299,8 +299,9 @@ namespace Job_Card
             }
         }
 
-        public static async Task<bool> VoidInvoiceAsync(SettingsSettingsDoc settings, string tenantId, string invoiceId)
+        public static async Task<XeroInvoiceResult> UpdateInvoiceStatusAsync(SettingsSettingsDoc settings, string tenantId, string invoiceId, string status)
         {
+            var result = new XeroInvoiceResult();
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
@@ -313,14 +314,28 @@ namespace Job_Card
                             new Dictionary<string, object>
                             {
                                 {"InvoiceID", invoiceId},
-                                {"Status", "VOIDED"}
+                                {"Status", status}
                             }
                         }
                     }
                 };
                 string payload = Json.Serialize(body);
                 var response = await client.PostAsync("https://api.xero.com/api.xro/2.0/Invoices", new StringContent(payload, Encoding.UTF8, "application/json"));
-                return response.IsSuccessStatusCode;
+                string content = await response.Content.ReadAsStringAsync();
+                result.RawResponse = content;
+                if (!response.IsSuccessStatusCode)
+                {
+                    result.Success = false;
+                    result.ErrorMessage = string.Format(
+                        CultureInfo.InvariantCulture,
+                        "HTTP {0} {1}. Body: {2}",
+                        (int)response.StatusCode,
+                        response.ReasonPhrase,
+                        string.IsNullOrWhiteSpace(content) ? "(empty)" : content);
+                    return result;
+                }
+                result.Success = true;
+                return result;
             }
         }
 

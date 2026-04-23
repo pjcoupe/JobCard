@@ -26,6 +26,7 @@ namespace Job_Card
         private Button btnSyncAllUnpaid;
         private Label lblHistory;
         private Label lblStatus;
+        private ToolTip actionButtonsToolTip;
         private bool syncAllUnpaidRunning;
         private string selectedContactId;
         private string selectedContactName;
@@ -49,6 +50,7 @@ namespace Job_Card
             this.Text = "Xero Management";
             this.Size = new Size(760, 460);
             this.StartPosition = FormStartPosition.CenterParent;
+            this.actionButtonsToolTip = new ToolTip();
 
             this.btnSyncAllUnpaid = new Button
             {
@@ -103,6 +105,7 @@ namespace Job_Card
             this.btnSyncAllUnpaid.BringToFront();
             this.Load += this.XeroManagementForm_Load;
             this.FormClosing += this.XeroManagementForm_FormClosing;
+            this.MouseMove += this.XeroManagementForm_MouseMove;
         }
 
         private void XeroManagementForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -111,6 +114,24 @@ namespace Job_Card
             {
                 this.connectCancellation.Cancel();
             }
+        }
+
+        private void XeroManagementForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            bool connected = string.Equals(this.lblConnection.Text, "Connected", StringComparison.Ordinal);
+            if (connected)
+            {
+                this.actionButtonsToolTip.Hide(this);
+                return;
+            }
+            bool hoveringSend = this.btnSendInvoice.Bounds.Contains(e.Location);
+            bool hoveringDelete = this.btnDeleteInvoice.Bounds.Contains(e.Location);
+            if (!hoveringSend && !hoveringDelete)
+            {
+                this.actionButtonsToolTip.Hide(this);
+                return;
+            }
+            this.actionButtonsToolTip.Show("Connect first!", this, e.Location.X + 12, e.Location.Y + 12, 1200);
         }
 
         private async Task ReloadStateAsync()
@@ -135,10 +156,40 @@ namespace Job_Card
                 this.cboTenants.Items.Clear();
             }
             this.currentSentInvoice = await DataAccess.FindSentInvoiceByJobAsync(this.jobCard.GetCurrentJobId(), this.settings != null ? this.settings.xeroTenantId : null);
+            this.ApplyStoredContactFromSentInvoiceIfNeeded();
             await this.RefreshHistoryAsync();
-            this.RefreshActionStates();
+            this.RefreshActionStates("ReloadStateAsync initial");
             await this.RefreshPaidStatusFromXeroAsync();
+            this.RefreshActionStates("ReloadStateAsync after Xero status sync");
             this.UpdateSyncAllUnpaidButtonEnabled();
+        }
+
+        private void ApplyStoredContactFromSentInvoiceIfNeeded()
+        {
+            if (this.currentSentInvoice == null)
+            {
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(this.selectedContactId))
+            {
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(this.currentSentInvoice.xeroContactId))
+            {
+                return;
+            }
+            this.selectedContactId = this.currentSentInvoice.xeroContactId.Trim();
+            string name = this.currentSentInvoice.jobBusinessName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = this.jobCard.GetCurrentBusinessName();
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = "Xero contact";
+            }
+            this.selectedContactName = name;
+            this.lblCustomer.Text = "Customer: " + this.selectedContactName + " (from last invoice)";
         }
 
         private async Task RefreshHistoryAsync()
@@ -146,7 +197,6 @@ namespace Job_Card
             if (this.currentSentInvoice == null)
             {
                 this.lblHistory.Text = "No sent invoice for this job yet.";
-                this.btnDeleteInvoice.Enabled = false;
                 return;
             }
             this.lblHistory.Text = string.Format(
@@ -156,17 +206,44 @@ namespace Job_Card
                 this.currentSentInvoice.amountTotal,
                 this.currentSentInvoice.currency,
                 this.currentSentInvoice.dateSentUtc.ToLocalTime());
-            this.btnDeleteInvoice.Enabled = true;
         }
 
-        private void RefreshActionStates()
+        private void RefreshActionStates(string source)
         {
+            bool connected = string.Equals(this.lblConnection.Text, "Connected", StringComparison.Ordinal);
             bool hasBusiness = !string.IsNullOrWhiteSpace(this.jobCard.GetCurrentBusinessName());
             bool hasContact = !string.IsNullOrWhiteSpace(this.selectedContactId);
             bool totalNonZero = this.jobCard.GetCurrentTotal() > 0.0;
             bool hasTenant = this.settings != null && !string.IsNullOrWhiteSpace(this.settings.xeroTenantId);
-            bool alreadySent = this.currentSentInvoice != null;
-            this.btnSendInvoice.Enabled = hasBusiness && hasContact && totalNonZero && hasTenant && !alreadySent;
+            bool hasExistingSentInvoice = this.currentSentInvoice != null;
+            string existingInvoiceStatus = hasExistingSentInvoice && this.currentSentInvoice.status != null
+                ? this.currentSentInvoice.status.Trim()
+                : "";
+            bool existingInvoiceIsDeleted = hasExistingSentInvoice &&
+                string.Equals(existingInvoiceStatus, "DELETED", StringComparison.OrdinalIgnoreCase);
+            bool alreadySent = hasExistingSentInvoice && !existingInvoiceIsDeleted;
+            bool canSendInvoice = connected && hasBusiness && hasContact && totalNonZero && hasTenant && !alreadySent;
+            bool canDeleteInvoice = connected && hasExistingSentInvoice;
+            this.btnSendInvoice.Enabled = canSendInvoice;
+            this.btnDeleteInvoice.Enabled = canDeleteInvoice;
+            string disconnectedTooltip = connected ? string.Empty : "Connect first!";
+            this.actionButtonsToolTip.SetToolTip(this.btnSendInvoice, disconnectedTooltip);
+            this.actionButtonsToolTip.SetToolTip(this.btnDeleteInvoice, disconnectedTooltip);
+            System.Console.WriteLine(
+                "XeroManagementForm.RefreshActionStates [{0}] => Connected={1}; SendInvoiceEnabled={2}; DeleteInvoiceEnabled={3}; " +
+                "hasBusiness={4}; hasContact={5}; totalNonZero={6}; hasTenant={7}; hasExistingSentInvoice={8}; existingInvoiceStatus='{9}'; existingInvoiceIsDeleted={10}; alreadySent={11}",
+                source,
+                connected,
+                this.btnSendInvoice.Enabled,
+                this.btnDeleteInvoice.Enabled,
+                hasBusiness,
+                hasContact,
+                totalNonZero,
+                hasTenant,
+                hasExistingSentInvoice,
+                existingInvoiceStatus,
+                existingInvoiceIsDeleted,
+                alreadySent);
         }
 
         private void UpdateSyncAllUnpaidButtonEnabled()
@@ -380,7 +457,7 @@ namespace Job_Card
             {
                 this.lblStatus.Text = "Tenant selected: " + name;
             }
-            this.RefreshActionStates();
+            this.RefreshActionStates("PersistTenantSelectionFromComboAsync");
         }
 
         private async void btnCheckCustomer_Click(object sender, EventArgs e)
@@ -408,7 +485,7 @@ namespace Job_Card
                 this.selectedContactId = exact.ContactID;
                 this.selectedContactName = exact.Name;
                 this.lblCustomer.Text = "Customer: " + this.selectedContactName + " (exact)";
-                this.RefreshActionStates();
+                this.RefreshActionStates("btnCheckCustomer_Click exact");
                 return;
             }
             XeroContactMatch selected = this.ShowContactPicker(candidates);
@@ -424,7 +501,7 @@ namespace Job_Card
                 this.selectedContactName = selected.Name;
                 this.lblCustomer.Text = "Customer: " + this.selectedContactName + " (fallback)";
             }
-            this.RefreshActionStates();
+            this.RefreshActionStates("btnCheckCustomer_Click fallback");
         }
 
         private XeroContactMatch ShowContactPicker(List<XeroContactMatch> candidates)
@@ -523,7 +600,7 @@ namespace Job_Card
             this.currentSentInvoice = sent;
             await this.RefreshHistoryAsync();
             this.lblStatus.Text = "Invoice sent successfully.";
-            this.RefreshActionStates();
+            this.RefreshActionStates("btnSendInvoice_Click");
         }
 
         private async void btnDeleteInvoice_Click(object sender, EventArgs e)
@@ -543,17 +620,89 @@ namespace Job_Card
                 this.lblStatus.Text = "Cannot validate token.";
                 return;
             }
-            bool xeroOk = await XeroService.VoidInvoiceAsync(this.settings, this.currentSentInvoice.xeroTenantId, this.currentSentInvoice.xeroInvoiceId);
-            if (!xeroOk)
+            var invoiceRoot = await XeroService.GetInvoiceAsync(this.settings, this.currentSentInvoice.xeroTenantId, this.currentSentInvoice.xeroInvoiceId);
+            string invoiceStatus = this.GetInvoiceStatusFromRoot(invoiceRoot);
+            string statusToApply = this.GetInvoiceDeleteAction(invoiceStatus);
+            if (statusToApply == "NONE")
             {
-                this.lblStatus.Text = "Xero did not allow delete/void for this invoice state.";
+                this.lblStatus.Text = "Invoice is already " + invoiceStatus + " in Xero. Removing local sent record.";
+                await DataAccess.DeleteSentInvoiceAsync(this.currentSentInvoice.jobId, this.currentSentInvoice.xeroTenantId);
+                this.currentSentInvoice = null;
+                await this.RefreshHistoryAsync();
+                this.RefreshActionStates("btnDeleteInvoice_Click already deleted in Xero");
+                return;
+            }
+            if (statusToApply == null)
+            {
+                this.lblStatus.Text = "Cannot delete/void invoice while Xero status is " + (string.IsNullOrWhiteSpace(invoiceStatus) ? "(unknown)" : invoiceStatus) + ".";
+                return;
+            }
+            var xeroDelete = await XeroService.UpdateInvoiceStatusAsync(this.settings, this.currentSentInvoice.xeroTenantId, this.currentSentInvoice.xeroInvoiceId, statusToApply);
+            if (!xeroDelete.Success)
+            {
+                System.Console.WriteLine(
+                    "Xero status update failed for InvoiceID {0}. CurrentStatus={1}, RequestedStatus={2}. {3}",
+                    this.currentSentInvoice.xeroInvoiceId,
+                    invoiceStatus ?? "(unknown)",
+                    statusToApply,
+                    xeroDelete.ErrorMessage ?? "(no error message)");
+                if (!string.IsNullOrWhiteSpace(xeroDelete.RawResponse))
+                {
+                    System.Console.WriteLine("Xero status update raw response: " + xeroDelete.RawResponse);
+                }
+                this.lblStatus.Text = "Xero rejected status update to " + statusToApply + ": " + (xeroDelete.ErrorMessage ?? "Unknown error.");
                 return;
             }
             await DataAccess.DeleteSentInvoiceAsync(this.currentSentInvoice.jobId, this.currentSentInvoice.xeroTenantId);
             this.currentSentInvoice = null;
             await this.RefreshHistoryAsync();
-            this.lblStatus.Text = "Invoice voided in Xero and removed locally.";
-            this.RefreshActionStates();
+            this.lblStatus.Text = "Invoice marked " + statusToApply + " in Xero and removed locally.";
+            this.RefreshActionStates("btnDeleteInvoice_Click");
+        }
+
+        private string GetInvoiceStatusFromRoot(Dictionary<string, object> root)
+        {
+            if (root == null || !root.ContainsKey("Invoices"))
+            {
+                return null;
+            }
+            var rows = root["Invoices"] as System.Collections.ArrayList;
+            if (rows == null || rows.Count == 0)
+            {
+                return null;
+            }
+            var invoice = rows[0] as Dictionary<string, object>;
+            if (invoice == null || !invoice.ContainsKey("Status"))
+            {
+                return null;
+            }
+            string status = Convert.ToString(invoice["Status"]);
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return null;
+            }
+            return status.Trim().ToUpperInvariant();
+        }
+
+        private string GetInvoiceDeleteAction(string invoiceStatus)
+        {
+            if (string.IsNullOrWhiteSpace(invoiceStatus))
+            {
+                return null;
+            }
+            if (invoiceStatus == "DRAFT" || invoiceStatus == "SUBMITTED")
+            {
+                return "DELETED";
+            }
+            if (invoiceStatus == "AUTHORISED")
+            {
+                return "VOIDED";
+            }
+            if (invoiceStatus == "VOIDED" || invoiceStatus == "DELETED")
+            {
+                return "NONE";
+            }
+            return null;
         }
 
         public async Task RefreshPaidStatusFromXeroAsync()
@@ -585,6 +734,7 @@ namespace Job_Card
             }
             await this.ApplyInvoiceFromXeroToSentAsync(this.currentSentInvoice, invoice);
             await this.RefreshHistoryAsync();
+            this.RefreshActionStates("RefreshPaidStatusFromXeroAsync");
         }
 
         private async Task ApplyInvoiceFromXeroToSentAsync(SentInvoiceDoc sent, Dictionary<string, object> invoice)
@@ -656,7 +806,9 @@ namespace Job_Card
                     checkedCount++;
                 }
                 this.currentSentInvoice = await DataAccess.FindSentInvoiceByJobAsync(this.jobCard.GetCurrentJobId(), this.settings.xeroTenantId);
+                this.ApplyStoredContactFromSentInvoiceIfNeeded();
                 await this.RefreshHistoryAsync();
+                this.RefreshActionStates("btnSyncAllUnpaid_Click after reload");
                 this.lblStatus.Text = string.Format(CultureInfo.InvariantCulture, "Synced {0} unpaid Xero invoice(s) from Xero.", checkedCount);
             }
             finally

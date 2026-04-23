@@ -1047,7 +1047,12 @@
             }
             var filter = Builders<SentInvoiceDoc>.Filter.Eq(x => x.jobId, doc.jobId) &
                          Builders<SentInvoiceDoc>.Filter.Eq(x => x.xeroTenantId, doc.xeroTenantId);
-            if (doc.Id == ObjectId.Empty)
+            var existing = await _sentInvoices.Find(filter).FirstOrDefaultAsync();
+            if (existing != null)
+            {
+                doc.Id = existing.Id;
+            }
+            else if (doc.Id == ObjectId.Empty)
             {
                 doc.Id = ObjectId.GenerateNewId();
             }
