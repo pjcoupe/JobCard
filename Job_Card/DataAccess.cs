@@ -15,6 +15,7 @@
     using System.Reflection;
     using System.Threading.Tasks;
     using System.ComponentModel;
+    using System.Globalization;
     using System.Runtime.Remoting;
 
     public static class MongoIPAddressInputDialog
@@ -874,6 +875,9 @@
         [BsonElement("jobBusinessName")]
         public string jobBusinessName { get; set; }
 
+        [BsonElement("jobCollectedButUnpaid")]
+        public bool? jobCollectedButUnpaid { get; set; }
+
         [BsonElement("jobGoodReserved")]
         public bool? jobGoodReserved { get; set; }
 
@@ -906,6 +910,8 @@
         public string currency { get; set; }
         [BsonElement("dateSentUtc")]
         public DateTime dateSentUtc { get; set; }
+        [BsonElement("invoiceDueDate")]
+        public DateTime? invoiceDueDate { get; set; }
         [BsonElement("datePaidUtc")]
         public DateTime? datePaidUtc { get; set; }
         [BsonElement("status")]
@@ -959,6 +965,14 @@
                     _fussyCustomer = _database.GetCollection<FussyCustomerDoc>("fussyCustomer");
                     _settings = _settingsdatabase.GetCollection<SettingsSettingsDoc>("settings");
                     _sentInvoices = _settingsdatabase.GetCollection<SentInvoiceDoc>("sentInvoices");
+                    try
+                    {
+                        EnsureJobQueryIndexesAsync().GetAwaiter().GetResult();
+                    }
+                    catch (Exception indexErr)
+                    {
+                        System.Console.WriteLine("EnsureJobQueryIndexesAsync: " + indexErr);
+                    }
                     Application.Run(new JobCard(args));
                 } catch (Exception err)
                 {
@@ -1310,14 +1324,434 @@
             var result = await DataAccess._jobCard.Find(filter).Sort(new BsonDocument(sortByField, sortDescending ? -1 : 1))
                                             .Skip(skip).Limit(limit)
                                             .ToListAsync();
+            foreach (var doc in result)
+            {
+                DataAccess.ApplyLegacyJobGoodReservedToCollectedButUnpaid(doc);
+            }
             BindingList<JobCardDoc> doclist = new BindingList<JobCardDoc>();
             foreach (var doc in result)
             {
                 doclist.Add(doc);
             }
-            datagrid.DataSource = doclist;
+            DataAccess.BindJobCardDocListToDataGridView(datagrid, doclist);
             return result;
         }
+
+        public static async Task EnsureJobQueryIndexesAsync()
+        {
+            if (DataAccess._jobCard == null)
+            {
+                return;
+            }
+            var jobCardModels = new List<CreateIndexModel<JobCardDoc>>
+            {
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobDate).Ascending(c => c.jobDatePaid),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobDate_jobDatePaid", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobDatePaid).Ascending(c => c.jobDate),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobDatePaid_jobDate", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobDatePaid).Ascending(c => c.jobDate).Ascending(c => c.jobCollectedButUnpaid).Ascending(c => c.jobGoodReserved),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobDatePaid_jobDate_collected", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Descending(c => c.jobDate),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobDate_desc", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobCustomer),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobCustomer", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobBusinessName),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobBusinessName", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobOrderNumber),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobOrderNumber", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobTOTAL),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobTOTAL", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobDatePaid),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobDatePaid", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobDateCompleted),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobDateCompleted", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobID).Ascending(c => c.jobDateRequired),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobID_jobDateRequired", Unique = false }),
+                new CreateIndexModel<JobCardDoc>(
+                    Builders<JobCardDoc>.IndexKeys.Ascending(c => c.jobDate).Descending(c => c.jobID),
+                    new CreateIndexOptions { Name = "ix_jobQuery_jobDate_jobID_desc", Unique = false }),
+            };
+            await DataAccess._jobCard.Indexes.CreateManyAsync(jobCardModels);
+            if (DataAccess._sentInvoices != null)
+            {
+                var sentModels = new List<CreateIndexModel<SentInvoiceDoc>>
+                {
+                    new CreateIndexModel<SentInvoiceDoc>(
+                        Builders<SentInvoiceDoc>.IndexKeys.Ascending(s => s.datePaidUtc).Ascending(s => s.status).Ascending(s => s.jobId),
+                        new CreateIndexOptions { Name = "ix_sent_datePaid_status_jobId", Unique = false }),
+                    new CreateIndexModel<SentInvoiceDoc>(
+                        Builders<SentInvoiceDoc>.IndexKeys.Ascending(s => s.datePaidUtc).Ascending(s => s.status).Ascending(s => s.invoiceDueDate).Ascending(s => s.jobId),
+                        new CreateIndexOptions { Name = "ix_sent_overdue_lookup", Unique = false }),
+                };
+                await DataAccess._sentInvoices.Indexes.CreateManyAsync(sentModels);
+            }
+        }
+
+        public static HashSet<string> GetJobCardDocSortableFieldNames()
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            foreach (PropertyInfo p in typeof(JobCardDoc).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (Attribute.GetCustomAttribute(p, typeof(BsonIgnoreAttribute)) != null)
+                {
+                    continue;
+                }
+                var bsonEl = (BsonElementAttribute)Attribute.GetCustomAttribute(p, typeof(BsonElementAttribute));
+                if (bsonEl != null)
+                {
+                    set.Add(bsonEl.ElementName);
+                }
+                else if (Attribute.GetCustomAttribute(p, typeof(BsonIdAttribute)) != null)
+                {
+                    set.Add("_id");
+                }
+            }
+            return set;
+        }
+
+        public static DateTime GetDateRangeStartForListQuery(int dateRangeIndex)
+        {
+            DateTime today = DateTime.Today;
+            switch (dateRangeIndex)
+            {
+                case 0:
+                    return today.AddDays(-7);
+                case 1:
+                    return today.AddDays(-30);
+                case 2:
+                    return today.AddDays(-90);
+                case 3:
+                    return today.AddMonths(-6);
+                case 4:
+                    return today.AddYears(-1);
+                default:
+                    return today.AddDays(-30);
+            }
+        }
+
+        public static async Task<List<int>> GetJobIdsWithUnpaidXeroInvoiceAsync()
+        {
+            if (DataAccess._sentInvoices == null)
+            {
+                return new List<int>();
+            }
+            var b = Builders<SentInvoiceDoc>.Filter;
+            var filter = b.And(
+                b.Eq(x => x.datePaidUtc, (DateTime?)null),
+                b.Ne(x => x.status, "DELETED"),
+                b.Ne(x => x.status, "VOIDED"));
+            var docs = await DataAccess._sentInvoices.Find(filter).ToListAsync();
+            var set = new HashSet<int>();
+            foreach (var d in docs)
+            {
+                set.Add(d.jobId);
+            }
+            return new List<int>(set);
+        }
+
+        public static async Task<List<int>> GetJobIdsWithOverdueUnpaidXeroInvoiceAsync()
+        {
+            if (DataAccess._sentInvoices == null)
+            {
+                return new List<int>();
+            }
+            DateTime today = DateTime.Today;
+            var b = Builders<SentInvoiceDoc>.Filter;
+            var filter = b.And(
+                b.Eq(x => x.datePaidUtc, (DateTime?)null),
+                b.Ne(x => x.status, "DELETED"),
+                b.Ne(x => x.status, "VOIDED"),
+                b.Ne(x => x.invoiceDueDate, (DateTime?)null),
+                b.Lt(x => x.invoiceDueDate, today));
+            var docs = await DataAccess._sentInvoices.Find(filter).ToListAsync();
+            var set = new HashSet<int>();
+            foreach (var d in docs)
+            {
+                set.Add(d.jobId);
+            }
+            return new List<int>(set);
+        }
+
+        private static async Task<FilterDefinition<JobCardDoc>> BuildJobListQueryFilterAsync(int searchTypeIndex, int dateRangeIndex)
+        {
+            var b = Builders<JobCardDoc>.Filter;
+            var parts = new List<FilterDefinition<JobCardDoc>>();
+            if (dateRangeIndex != 5)
+            {
+                DateTime start = DataAccess.GetDateRangeStartForListQuery(dateRangeIndex);
+                DateTime endExclusive = DateTime.Today.AddDays(1);
+                parts.Add(b.Gte(x => x.jobDate, start));
+                parts.Add(b.Lt(x => x.jobDate, endExclusive));
+            }
+            if (searchTypeIndex == 0)
+            {
+                var noLocalPay = b.Eq("jobDatePaid", BsonNull.Value);
+                List<int> xeroUnpaidIds = await DataAccess.GetJobIdsWithUnpaidXeroInvoiceAsync();
+                if (xeroUnpaidIds == null || xeroUnpaidIds.Count == 0)
+                {
+                    parts.Add(noLocalPay);
+                }
+                else
+                {
+                    parts.Add(b.Or(noLocalPay, b.In(x => x.jobID, xeroUnpaidIds)));
+                }
+            }
+            else if (searchTypeIndex == 1)
+            {
+                var collected = b.Or(
+                    b.Eq("jobCollectedButUnpaid", true),
+                    b.Eq("jobGoodReserved", true));
+                var noPay = b.Eq("jobDatePaid", BsonNull.Value);
+                parts.Add(b.And(collected, noPay));
+            }
+            else if (searchTypeIndex == 2)
+            {
+                List<int> xeroUnpaidIds = await DataAccess.GetJobIdsWithUnpaidXeroInvoiceAsync();
+                parts.Add(b.In(x => x.jobID, xeroUnpaidIds != null && xeroUnpaidIds.Count > 0 ? xeroUnpaidIds : new List<int>()));
+            }
+            else if (searchTypeIndex == 3)
+            {
+                List<int> overdueIds = await DataAccess.GetJobIdsWithOverdueUnpaidXeroInvoiceAsync();
+                parts.Add(b.In(x => x.jobID, overdueIds != null && overdueIds.Count > 0 ? overdueIds : new List<int>()));
+            }
+            else
+            {
+                var noLocalPay = b.Eq("jobDatePaid", BsonNull.Value);
+                List<int> xeroUnpaidIds = await DataAccess.GetJobIdsWithUnpaidXeroInvoiceAsync();
+                if (xeroUnpaidIds == null || xeroUnpaidIds.Count == 0)
+                {
+                    parts.Add(noLocalPay);
+                }
+                else
+                {
+                    parts.Add(b.Or(noLocalPay, b.In(x => x.jobID, xeroUnpaidIds)));
+                }
+            }
+            FilterDefinition<JobCardDoc> filter = parts[0];
+            for (int i = 1; i < parts.Count; i++)
+            {
+                filter = Builders<JobCardDoc>.Filter.And(filter, parts[i]);
+            }
+            return filter;
+        }
+
+        public static async Task<long> CountJobsForListQueryAsync(int searchTypeIndex, int dateRangeIndex)
+        {
+            if (DataAccess._jobCard == null)
+            {
+                return 0;
+            }
+            var filter = await DataAccess.BuildJobListQueryFilterAsync(searchTypeIndex, dateRangeIndex);
+            return await DataAccess._jobCard.CountDocumentsAsync(filter);
+        }
+
+        private static string JobListQueryStr(string value)
+        {
+            return value ?? string.Empty;
+        }
+
+        private static string JobListQueryFormatDate(DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return string.Empty;
+            }
+            return value.Value.ToString("d/M/yy", CultureInfo.InvariantCulture);
+        }
+
+        private static string JobListQueryFormatBool(bool? value)
+        {
+            if (!value.HasValue)
+            {
+                return string.Empty;
+            }
+            return value.Value ? bool.TrueString : bool.FalseString;
+        }
+
+        private static string JobListQueryFormatMoney(float? value)
+        {
+            if (!value.HasValue)
+            {
+                return string.Empty;
+            }
+            return value.Value.ToString("F2", CultureInfo.InvariantCulture);
+        }
+
+        private static DataTable BuildJobListQueryDataTable(IEnumerable<JobCardDoc> results)
+        {
+            var table = new DataTable();
+            table.Locale = CultureInfo.InvariantCulture;
+            table.Columns.Add("jobID", typeof(int));
+            table.Columns.Add("jobDate", typeof(string));
+            table.Columns.Add("jobCustomer", typeof(string));
+            table.Columns.Add("jobBusinessName", typeof(string));
+            table.Columns.Add("jobPhone", typeof(string));
+            table.Columns.Add("jobAddress", typeof(string));
+            table.Columns.Add("jobEmail", typeof(string));
+            table.Columns.Add("jobOrderNumber", typeof(string));
+            table.Columns.Add("jobDateRequired", typeof(string));
+            table.Columns.Add("jobDateCompleted", typeof(string));
+            table.Columns.Add("jobDatePaid", typeof(string));
+            table.Columns.Add("jobPaymentBy", typeof(string));
+            table.Columns.Add("jobDelivery", typeof(string));
+            table.Columns.Add("jobReceivedFrom", typeof(string));
+            table.Columns.Add("jobTOTAL", typeof(string));
+            table.Columns.Add("jobCompleted", typeof(string));
+            table.Columns.Add("jobCollected", typeof(string));
+            table.Columns.Add("jobCollectedButUnpaid", typeof(string));
+            table.Columns.Add("jobQuotation", typeof(string));
+            if (results == null)
+            {
+                return table;
+            }
+            foreach (JobCardDoc d in results)
+            {
+                table.Rows.Add(
+                    d.jobID,
+                    JobListQueryFormatDate(d.jobDate),
+                    JobListQueryStr(d.jobCustomer),
+                    JobListQueryStr(d.jobBusinessName),
+                    JobListQueryStr(d.jobPhone),
+                    JobListQueryStr(d.jobAddress),
+                    JobListQueryStr(d.jobEmail),
+                    JobListQueryStr(d.jobOrderNumber),
+                    JobListQueryFormatDate(d.jobDateRequired),
+                    JobListQueryFormatDate(d.jobDateCompleted),
+                    JobListQueryFormatDate(d.jobDatePaid),
+                    JobListQueryStr(d.jobPaymentBy),
+                    JobListQueryStr(d.jobDelivery),
+                    JobListQueryStr(d.jobReceivedFrom),
+                    JobListQueryFormatMoney(d.jobTOTAL),
+                    JobListQueryFormatBool(d.jobCompleted),
+                    JobListQueryFormatBool(d.jobCollected),
+                    JobListQueryFormatBool(d.jobCollectedButUnpaid),
+                    JobListQueryFormatBool(d.jobQuotation));
+            }
+            return table;
+        }
+
+        private static void ApplyJobListQueryColumnHeaders(DataGridView datagrid)
+        {
+            if (datagrid == null || datagrid.Columns == null)
+            {
+                return;
+            }
+            foreach (DataGridViewColumn col in datagrid.Columns)
+            {
+                string n = col.Name;
+                if (n != null && n.Length > 3 && string.Equals(n.Substring(0, 3), "job", StringComparison.Ordinal))
+                {
+                    col.HeaderText = n.Substring(3);
+                }
+                else
+                {
+                    col.HeaderText = n ?? string.Empty;
+                }
+            }
+        }
+
+        private static void BindJobListQueryResultsToDataGridView(DataGridView datagrid, List<JobCardDoc> results)
+        {
+            if (datagrid == null || datagrid.IsDisposed)
+            {
+                return;
+            }
+            DataTable table = DataAccess.BuildJobListQueryDataTable(results);
+            void bind()
+            {
+                if (datagrid.IsDisposed)
+                {
+                    return;
+                }
+                datagrid.SuspendLayout();
+                try
+                {
+                    datagrid.AutoGenerateColumns = true;
+                    datagrid.DataSource = null;
+                    datagrid.DataSource = table;
+                    DataAccess.ApplyJobListQueryColumnHeaders(datagrid);
+                    if (datagrid.Columns.Count > 0)
+                    {
+                        try
+                        {
+                            datagrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCellsExceptHeader);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Console.WriteLine("Job list query AutoResizeColumns: " + ex.Message);
+                        }
+                    }
+                }
+                finally
+                {
+                    if (!datagrid.IsDisposed)
+                    {
+                        datagrid.ResumeLayout(true);
+                    }
+                }
+                if (!datagrid.IsDisposed)
+                {
+                    datagrid.Invalidate(true);
+                }
+            }
+            if (datagrid.InvokeRequired)
+            {
+                try
+                {
+                    datagrid.Invoke((Action)bind);
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+            }
+            else
+            {
+                bind();
+            }
+        }
+
+        public static async Task<List<JobCardDoc>> FindJobsForListQueryAsync(DataGridView datagrid, int searchTypeIndex, int dateRangeIndex, int skip, int limit = 50, string sortMongoField = null, bool? sortDescending = null)
+        {
+            if (DataAccess._jobCard == null)
+            {
+                DataAccess.BindJobListQueryResultsToDataGridView(datagrid, new List<JobCardDoc>());
+                return new List<JobCardDoc>();
+            }
+            var filter = await DataAccess.BuildJobListQueryFilterAsync(searchTypeIndex, dateRangeIndex);
+            string sortField;
+            bool sortDesc;
+            if (string.IsNullOrEmpty(sortMongoField))
+            {
+                sortField = "jobID";
+                sortDesc = true;
+            }
+            else
+            {
+                sortField = sortMongoField;
+                sortDesc = sortDescending ?? true;
+            }
+            var result = await DataAccess._jobCard.Find(filter).Sort(new BsonDocument(sortField, sortDesc ? -1 : 1))
+                .Skip(skip).Limit(limit)
+                .ToListAsync();
+            foreach (JobCardDoc doc in result)
+            {
+                DataAccess.ApplyLegacyJobGoodReservedToCollectedButUnpaid(doc);
+            }
+            DataAccess.BindJobListQueryResultsToDataGridView(datagrid, result);
+            return result;
+        }
+
         public static async Task<int> GetLastJobIDAsync()
         {
             var filter = new BsonDocument(); //Builders<JobCardDoc>.Filter.Ne("jobID", BsonNull.Value);
@@ -1607,6 +2041,10 @@
                 var props = type.GetProperties();
                 foreach (var prop in props)
                 {
+                    if (prop.Name == "jobGoodReserved")
+                    {
+                        continue;
+                    }
                     dictionary.Add(prop.Name, prop.PropertyType);
                     Console.WriteLine(prop.Name + " " + prop.PropertyType.ToString());
                 }
@@ -1903,6 +2341,89 @@
             MessageBox.Show(msg, "Database connection error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
         }
 
+        private static void ApplyLegacyJobGoodReservedToCollectedButUnpaid(JobCardDoc doc)
+        {
+            if (doc == null)
+            {
+                return;
+            }
+            if (!doc.jobCollectedButUnpaid.HasValue && doc.jobGoodReserved == true)
+            {
+                doc.jobCollectedButUnpaid = true;
+            }
+        }
+
+        private static void HideJobGoodReservedGridColumn(DataGridView datagrid)
+        {
+            if (datagrid == null)
+            {
+                return;
+            }
+            if (datagrid.Columns.Contains("jobGoodReserved"))
+            {
+                datagrid.Columns["jobGoodReserved"].Visible = false;
+            }
+        }
+
+        private static void BindJobCardDocListToDataGridView(DataGridView datagrid, BindingList<JobCardDoc> doclist)
+        {
+            if (datagrid == null || datagrid.IsDisposed)
+            {
+                return;
+            }
+            void bind()
+            {
+                if (datagrid.IsDisposed)
+                {
+                    return;
+                }
+                datagrid.SuspendLayout();
+                try
+                {
+                    datagrid.AutoGenerateColumns = true;
+                    datagrid.DataSource = null;
+                    datagrid.DataSource = doclist;
+                    DataAccess.HideJobGoodReservedGridColumn(datagrid);
+                    if (datagrid.Columns.Count > 0)
+                    {
+                        try
+                        {
+                            datagrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCellsExceptHeader);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Console.WriteLine("AutoResizeColumns: " + ex.Message);
+                        }
+                    }
+                }
+                finally
+                {
+                    if (!datagrid.IsDisposed)
+                    {
+                        datagrid.ResumeLayout(true);
+                    }
+                }
+                if (!datagrid.IsDisposed)
+                {
+                    datagrid.Invalidate(true);
+                }
+            }
+            if (datagrid.InvokeRequired)
+            {
+                try
+                {
+                    datagrid.Invoke((Action)bind);
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+            }
+            else
+            {
+                bind();
+            }
+        }
+
         public static async Task<List<JobCardDoc>> FindJobByFieldAsync(DataGridView datagrid, string fieldName, dynamic fieldValue, bool sortDescending = true, int limit = 1, int skip = 0)
         {
             var fields = typeof(JobCardDoc).GetProperties();
@@ -1926,16 +2447,36 @@
                     Limit(limit).
                     Sort(new BsonDocument(fieldName, sortDescending ? -1 : 1)).
                     ToListAsync();
+                foreach (var doc in result)
+                {
+                    DataAccess.ApplyLegacyJobGoodReservedToCollectedButUnpaid(doc);
+                }
                 BindingList<JobCardDoc> doclist = new BindingList<JobCardDoc>();
                 foreach (var doc in result)
                 {
                     doclist.Add(doc);
                 }
-                datagrid.DataSource = doclist;
+                DataAccess.BindJobCardDocListToDataGridView(datagrid, doclist);
                 return result;
             } else
             {
-                datagrid.DataSource = null;
+                if (datagrid != null && !datagrid.IsDisposed)
+                {
+                    if (datagrid.InvokeRequired)
+                    {
+                        try
+                        {
+                            datagrid.Invoke((Action)(() => { datagrid.DataSource = null; }));
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                        }
+                    }
+                    else
+                    {
+                        datagrid.DataSource = null;
+                    }
+                }
                 return null;
             }
 

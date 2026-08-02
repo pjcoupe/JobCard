@@ -155,6 +155,7 @@
 
         private void printDocument1_BeginPrint(object sender, PrintEventArgs e)
         {
+            this.printDocument1.DefaultPageSettings.Landscape = false;
             this.checkPrint = 0;
         }
 

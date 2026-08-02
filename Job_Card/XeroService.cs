@@ -319,13 +319,18 @@ namespace Job_Card
         public static async Task<List<XeroContactMatch>> FindContactsAsync(SettingsSettingsDoc settings, string tenantId, string businessName)
         {
             var matches = new List<XeroContactMatch>();
+            string term = businessName != null ? businessName.Trim() : "";
+            if (string.IsNullOrEmpty(term))
+            {
+                return matches;
+            }
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 client.DefaultRequestHeaders.Add("xero-tenant-id", tenantId);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                string where = Uri.EscapeDataString("Name!=null&&Name.Contains(\"" + businessName.Replace("\"", "\\\"") + "\")");
-                var response = await client.GetAsync("https://api.xero.com/api.xro/2.0/Contacts?where=" + where);
+                string url = "https://api.xero.com/api.xro/2.0/Contacts?searchTerm=" + Uri.EscapeDataString(term);
+                var response = await client.GetAsync(url);
                 string content = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
@@ -343,10 +348,15 @@ namespace Job_Card
                 }
                 foreach (Dictionary<string, object> c in contacts)
                 {
+                    string name = c.ContainsKey("Name") ? Convert.ToString(c["Name"]) : "";
+                    if (string.IsNullOrEmpty(name) || name.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
                     matches.Add(new XeroContactMatch
                     {
                         ContactID = c.ContainsKey("ContactID") ? Convert.ToString(c["ContactID"]) : "",
-                        Name = c.ContainsKey("Name") ? Convert.ToString(c["Name"]) : "",
+                        Name = name,
                         EmailAddress = c.ContainsKey("EmailAddress") ? Convert.ToString(c["EmailAddress"]) : ""
                     });
                 }
@@ -354,7 +364,7 @@ namespace Job_Card
             return matches;
         }
 
-        public static async Task<XeroInvoiceResult> CreateInvoiceAsync(SettingsSettingsDoc settings, string tenantId, string contactId, string mode, string reference, List<Dictionary<string, object>> lineItems)
+        public static async Task<XeroInvoiceResult> CreateInvoiceAsync(SettingsSettingsDoc settings, string tenantId, string contactId, string mode, string reference, List<Dictionary<string, object>> lineItems, DateTime dueDate)
         {
             var result = new XeroInvoiceResult();
             using (var client = new HttpClient())
@@ -367,7 +377,7 @@ namespace Job_Card
                 invoice["Type"] = "ACCREC";
                 invoice["Contact"] = new Dictionary<string, object> { { "ContactID", contactId } };
                 invoice["Date"] = DateTime.Now.ToString("yyyy-MM-dd");
-                invoice["DueDate"] = DateTime.Now.AddDays(14).ToString("yyyy-MM-dd");
+                invoice["DueDate"] = dueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 invoice["Reference"] = reference;
                 invoice["LineItems"] = lineItems;
                 invoice["LineAmountTypes"] = "Exclusive";
