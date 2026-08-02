@@ -15,6 +15,7 @@ namespace Job_Card
         private readonly JobCard jobCard;
         private SettingsSettingsDoc settings;
         private ComboBox cboMode;
+        private ComboBox cboDueDate;
         private Button btnConnect;
         private ComboBox cboTenants;
         private Label lblConnection;
@@ -67,6 +68,11 @@ namespace Job_Card
             this.cboMode.Items.AddRange(new object[] { "Draft", "AuthoriseAndEmail" });
             this.cboMode.SelectedIndexChanged += this.cboMode_SelectedIndexChanged;
 
+            var lblDueDate = new Label { Text = "Due date", Location = new Point(325, 20), AutoSize = true };
+            this.cboDueDate = new ComboBox { Location = new Point(385, 16), Width = 190, DropDownStyle = ComboBoxStyle.DropDownList };
+            this.cboDueDate.Items.AddRange(new object[] { "7 days", "14 days", "20th Next Month" });
+            this.cboDueDate.SelectedIndex = 1;
+
             this.btnConnect = new Button { Text = "Connect to Xero", Location = new Point(20, 55), Size = new Size(140, 32) };
             this.btnConnect.Click += this.btnConnect_Click;
             this.lblConnection = new Label { Text = "Disconnected", Location = new Point(170, 62), AutoSize = true };
@@ -85,11 +91,13 @@ namespace Job_Card
             this.btnDeleteInvoice = new Button { Text = "Delete Invoice", Location = new Point(150, 225), Size = new Size(120, 36), Enabled = false };
             this.btnDeleteInvoice.Click += this.btnDeleteInvoice_Click;
 
-            this.lblHistory = new Label { Text = "No sent invoice for this job yet.", Location = new Point(20, 280), AutoSize = false, Size = new Size(700, 80) };
-            this.lblStatus = new Label { Text = "", Location = new Point(20, 370), AutoSize = false, Size = new Size(700, 40), ForeColor = Color.DarkBlue };
+            this.lblHistory = new Label { Text = "No sent invoice for this job yet.", Location = new Point(20, 275), AutoSize = false, Size = new Size(700, 80) };
+            this.lblStatus = new Label { Text = "", Location = new Point(20, 365), AutoSize = false, Size = new Size(700, 40), ForeColor = Color.DarkBlue };
 
             this.Controls.Add(lblMode);
             this.Controls.Add(this.cboMode);
+            this.Controls.Add(lblDueDate);
+            this.Controls.Add(this.cboDueDate);
             this.Controls.Add(this.btnConnect);
             this.Controls.Add(this.lblConnection);
             this.Controls.Add(lblTenant);
@@ -263,6 +271,20 @@ namespace Job_Card
                 new KeyValuePair<string, dynamic>("xeroInvoiceMode", this.cboMode.SelectedItem.ToString())
             });
             this.lblStatus.Text = "Invoice mode saved.";
+        }
+
+        private DateTime GetSelectedInvoiceDueDate()
+        {
+            DateTime today = DateTime.Today;
+            switch (this.cboDueDate.SelectedIndex)
+            {
+                case 0:
+                    return today.AddDays(7);
+                case 2:
+                    return new DateTime(today.Year, today.Month, 1).AddMonths(1).AddDays(19);
+                default:
+                    return today.AddDays(14);
+            }
         }
 
         private async void btnConnect_Click(object sender, EventArgs e)
@@ -574,7 +596,8 @@ namespace Job_Card
                 string.IsNullOrWhiteSpace(this.settings.xeroDefaultSalesAccountCode) ? "200" : this.settings.xeroDefaultSalesAccountCode,
                 string.IsNullOrWhiteSpace(this.settings.xeroDefaultTaxType) ? "OUTPUT2" : this.settings.xeroDefaultTaxType);
             string mode = XeroService.GetDefaultMode(this.settings.xeroInvoiceMode);
-            var result = await XeroService.CreateInvoiceAsync(this.settings, this.settings.xeroTenantId, this.selectedContactId, mode, orderNumber, lines);
+            DateTime dueDate = this.GetSelectedInvoiceDueDate();
+            var result = await XeroService.CreateInvoiceAsync(this.settings, this.settings.xeroTenantId, this.selectedContactId, mode, orderNumber, lines, dueDate);
             if (!result.Success)
             {
                 this.lblStatus.Text = "Send failed: " + result.ErrorMessage;
@@ -592,6 +615,7 @@ namespace Job_Card
                 amountTotal = this.jobCard.GetCurrentTotal(),
                 currency = "NZD",
                 dateSentUtc = DateTime.UtcNow,
+                invoiceDueDate = dueDate.Date,
                 status = result.Status,
                 lineItemsSnapshot = XeroService.BuildLineItemsSnapshot(lines),
                 rawResponseSnippet = result.RawResponse
@@ -741,6 +765,14 @@ namespace Job_Card
         {
             string status = invoice.ContainsKey("Status") ? Convert.ToString(invoice["Status"]) : sent.status;
             sent.status = status;
+            if (invoice.ContainsKey("DueDate") && invoice["DueDate"] != null)
+            {
+                DateTime dueFromXero;
+                if (DateTime.TryParse(Convert.ToString(invoice["DueDate"]), CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out dueFromXero))
+                {
+                    sent.invoiceDueDate = dueFromXero.Date;
+                }
+            }
             if (invoice.ContainsKey("FullyPaidOnDate") && invoice["FullyPaidOnDate"] != null)
             {
                 DateTime paidDate;

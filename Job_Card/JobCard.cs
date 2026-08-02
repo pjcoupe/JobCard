@@ -231,7 +231,7 @@
         private Button btnRDAddressSurcharge;
         private System.Windows.Forms.Timer getLatestTimer;
         private TextBox jobFussyNotes;
-        private CheckBox jobGoodReserved;
+        private CheckBox jobCollectedButUnpaid;
         private ComboBox cboCamera;
         internal PictureBox pictureBox2;
         private CheckBox jobQuotation;
@@ -1205,6 +1205,7 @@
                 if (flag)
                 {
                     this.jobDatePaid.Text = DateTime.Now.ToString("d/M/yy");
+                    this.jobCollectedButUnpaid.Checked = false;
                 }
             }
         }
@@ -2107,7 +2108,7 @@
             this.btnRDAddressSurcharge = new System.Windows.Forms.Button();
             this.getLatestTimer = new System.Windows.Forms.Timer(this.components);
             this.jobFussyNotes = new System.Windows.Forms.TextBox();
-            this.jobGoodReserved = new System.Windows.Forms.CheckBox();
+            this.jobCollectedButUnpaid = new System.Windows.Forms.CheckBox();
             this.cboCamera = new System.Windows.Forms.ComboBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.jobQuotation = new System.Windows.Forms.CheckBox();
@@ -3054,16 +3055,16 @@
             this.jobFussyNotes.Enter += new System.EventHandler(this.ShowFussyNotes);
             this.jobFussyNotes.Leave += new System.EventHandler(this.OnFussyNotesLeave);
             // 
-            // jobGoodReserved
+            // jobCollectedButUnpaid
             // 
-            this.jobGoodReserved.BackColor = System.Drawing.SystemColors.Control;
-            this.jobGoodReserved.Location = new System.Drawing.Point(13, 170);
-            this.jobGoodReserved.Name = "jobGoodReserved";
-            this.jobGoodReserved.Size = new System.Drawing.Size(160, 37);
-            this.jobGoodReserved.TabIndex = 84;
-            this.jobGoodReserved.Text = "Reserved / Good Customer";
-            this.jobGoodReserved.UseVisualStyleBackColor = false;
-            this.jobGoodReserved.CheckedChanged += new System.EventHandler(this.jobGoodReserved_CheckedChanged);
+            this.jobCollectedButUnpaid.BackColor = System.Drawing.SystemColors.Control;
+            this.jobCollectedButUnpaid.Location = new System.Drawing.Point(13, 170);
+            this.jobCollectedButUnpaid.Name = "jobCollectedButUnpaid";
+            this.jobCollectedButUnpaid.Size = new System.Drawing.Size(160, 37);
+            this.jobCollectedButUnpaid.TabIndex = 84;
+            this.jobCollectedButUnpaid.Text = "Collected / Not Paid";
+            this.jobCollectedButUnpaid.UseVisualStyleBackColor = false;
+            this.jobCollectedButUnpaid.CheckedChanged += new System.EventHandler(this.jobCollectedButUnpaid_CheckedChanged);
             // 
             // cboCamera
             // 
@@ -3106,7 +3107,7 @@
             this.Controls.Add(this.jobQuotation);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.cboCamera);
-            this.Controls.Add(this.jobGoodReserved);
+            this.Controls.Add(this.jobCollectedButUnpaid);
             this.Controls.Add(this.jobFussyNotes);
             this.Controls.Add(this.btnFussy);
             this.Controls.Add(this.btnRDAddressSurcharge);
@@ -3464,7 +3465,41 @@
             }
         }
 
-        private void Load(int selectedRow = 0)
+        private async System.Threading.Tasks.Task ReconcileCollectedButUnpaidIfJobDatePaidSetAsync()
+        {
+            if (!this.jobCollectedButUnpaid.Checked)
+            {
+                return;
+            }
+            DateTime paidDate;
+            if (string.IsNullOrWhiteSpace(this.jobDatePaid.Text))
+            {
+                return;
+            }
+            if (!JobQueryForm.ParsedDateOK(this.jobDatePaid.Text.Trim(), out paidDate))
+            {
+                return;
+            }
+            if (!int.TryParse(this.jobID.Text, out int jobId) || jobId <= 0)
+            {
+                return;
+            }
+            this.jobCollectedButUnpaid.Checked = false;
+            var patch = new List<KeyValuePair<string, dynamic>>
+            {
+                new KeyValuePair<string, dynamic>("jobID", jobId),
+                new KeyValuePair<string, dynamic>("jobCollectedButUnpaid", false)
+            };
+            if (!await DataAccess.UpdateMongoAsync(patch))
+            {
+                this.jobCollectedButUnpaid.Checked = true;
+                MessageBox.Show("Could not save: Collected / Not Paid should be off when Date Paid is set.", "Save", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            this.originalValues["jobCollectedButUnpaid"] = "False";
+        }
+
+        private async void Load(int selectedRow = 0)
         {
             this.Loading = true;
              this.stopVideoCapture();
@@ -3552,7 +3587,7 @@
                             CheckBox item = (CheckBox)control;
                             item.BackColor = whiteSmoke;
                             item.Checked = flag3;
-                            if (name != "jobCompleted" && name != "jobGoodReserved" && name != "jobQuotation") 
+                            if (name != "jobCompleted" && name != "jobCollectedButUnpaid" && name != "jobQuotation") 
                             {
                                 flag2 |= flag3;
                                 item.Enabled = false;
@@ -3572,6 +3607,7 @@
                     box3.Visible = flag2;
                 }
                 this.LockAll(this.NeedLock());
+                await this.ReconcileCollectedButUnpaidIfJobDatePaidSetAsync();
                 this.undoList.Clear();
                 this.Loading = false;
                 this.updateCreditCardSurcharge();
@@ -3588,7 +3624,7 @@
                 this.BackColor = DefaultBackColor;
                 this.jobFussyNotes.Visible = false;
 
-                if (this.jobGoodReserved.Checked)
+                if (this.jobCollectedButUnpaid.Checked)
                 {
                     this.BackColor = Color.LightGreen;
                 } 
@@ -4938,9 +4974,13 @@
             this.OnNotesLeave(sender, e);
         }
 
-        private void jobGoodReserved_CheckedChanged(object sender, EventArgs e)
+        private void jobCollectedButUnpaid_CheckedChanged(object sender, EventArgs e)
         {
-            if (this.jobGoodReserved.Checked)
+            if (this.Loading)
+            {
+                return;
+            }
+            if (this.jobCollectedButUnpaid.Checked)
             {
                 this.BackColor = Color.LightGreen;
             }
