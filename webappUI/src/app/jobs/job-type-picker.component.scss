@@ -1,0 +1,178 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 38, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Bottom sheet on a phone, centred dialog on a larger screen. */
+.sheet {
+  width: 100%;
+  max-width: 720px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 30px rgba(10, 20, 40, 0.3);
+  overflow: hidden;
+}
+
+.sheet > header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 0.9rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.titles {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.titles h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.titles .muted {
+  font-size: 0.85rem;
+}
+
+.close {
+  flex: none;
+  width: 40px;
+  padding: 0;
+  border-color: transparent;
+  font-size: 1rem;
+}
+
+.filter {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.banner {
+  margin: 0.6rem 0.9rem 0;
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.6rem 0.9rem calc(1rem + env(safe-area-inset-bottom));
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+}
+
+.group + .group {
+  margin-top: 1rem;
+}
+
+.group h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 0.45rem;
+  padding: 0.3rem 0;
+  background: var(--surface);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* Auto-fitting option grid: one column on a narrow phone, more as room allows. */
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.4rem;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+.option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.option-price {
+  font-weight: 700;
+  color: var(--accent-dark);
+  white-space: nowrap;
+}
+
+.option-edit {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  padding: 0.35rem 0.3rem;
+  border-radius: 5px;
+}
+
+.option-edit:hover,
+.option-edit:focus-visible {
+  color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.option.editing {
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  cursor: default;
+}
+
+.edit-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.price-field {
+  max-width: 200px;
+}
+
+@media (min-width: 700px) {
+  .backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .sheet {
+    border-radius: 14px;
+    max-height: 85dvh;
+  }
+}

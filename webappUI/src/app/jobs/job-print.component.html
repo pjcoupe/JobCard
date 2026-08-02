@@ -1,0 +1,206 @@
+<!-- Screen-only controls; the print stylesheet hides this bar. -->
+<div class="controls no-print">
+  <a class="back" [routerLink]="['/jobs', job()?.jobID ?? '']">‹ Back to job</a>
+  <span class="spacer"></span>
+  <div class="button-row">
+    <button
+      type="button"
+      class="small"
+      [class.primary]="copyType() === 'customer'"
+      (click)="setCopyType('customer')"
+    >
+      Customer copy
+    </button>
+    <button
+      type="button"
+      class="small"
+      [class.primary]="copyType() === 'business'"
+      (click)="setCopyType('business')"
+    >
+      Workshop copy
+    </button>
+    <button type="button" class="primary" (click)="print()">Print</button>
+  </div>
+</div>
+
+@if (loading()) {
+  <p class="state muted no-print"><span class="spin" aria-hidden="true"></span> Loading…</p>
+} @else if (error()) {
+  <p class="banner error no-print" role="alert">{{ error() }}</p>
+} @else {
+  @if (job(); as j) {
+  <article class="sheet">
+    <header class="sheet-head">
+      <div class="business">
+        <h1>{{ businessName }}</h1>
+        <p class="heading">{{ heading() }}</p>
+      </div>
+      <div class="job-no">
+        <span class="label">Job</span>
+        <span class="number">#{{ j.jobID }}</span>
+      </div>
+    </header>
+
+    <!-- The workshop copy carries the job photo, as the desktop printout does. -->
+    @if (copyType() === 'business' && photoUrl()) {
+      <div class="job-photo">
+        <img [src]="photoUrl()" alt="Photo of the job" />
+      </div>
+    }
+
+    <section class="meta">
+      <div>
+        <span class="k">Job date</span>
+        <span class="v">{{ formatDate(j.jobDate) || '—' }}</span>
+      </div>
+      <div>
+        <span class="k">Order number</span>
+        <span class="v">{{ value('jobOrderNumber') || '—' }}</span>
+      </div>
+      <div>
+        <span class="k">Date required</span>
+        <span class="v">{{ formatDate(j.jobDateRequired) || '—' }}</span>
+      </div>
+      @if (isCompleted()) {
+        <div>
+          <span class="k">Date completed</span>
+          <span class="v">{{ formatDate(j.jobDateCompleted) }}</span>
+        </div>
+      }
+    </section>
+
+    <section class="block">
+      <h2>{{ value('jobBusinessName') ? 'Business / Customer' : 'Customer' }}</h2>
+      <p class="who">
+        @if (value('jobBusinessName')) {
+          <span>{{ value('jobBusinessName') }} / </span>
+        }
+        <strong>{{ value('jobCustomer') || 'No customer name' }}</strong>
+      </p>
+      <p class="contact">
+        @if (value('jobPhone')) {
+          <span>Ph: {{ value('jobPhone') }}</span>
+        }
+        @if (value('jobEmail')) {
+          <span>{{ value('jobEmail') }}</span>
+        }
+        @if (value('jobAddress')) {
+          <span>{{ value('jobAddress') }}</span>
+        }
+      </p>
+    </section>
+
+    @if (value('jobDelivery') || value('jobReceivedFrom')) {
+      <section class="block">
+        <h2>Delivery</h2>
+        @if (value('jobReceivedFrom')) {
+          <p class="small-line">Received from: {{ value('jobReceivedFrom') }}</p>
+        }
+        @if (value('jobDelivery')) {
+          <p>{{ value('jobDelivery') }}</p>
+        }
+      </section>
+    }
+
+    <section class="block">
+      <h2>Details</h2>
+      <div class="scroll-x">
+        <table class="items">
+          <thead>
+            <tr>
+              <th scope="col">Work</th>
+              <th scope="col" class="num">Qty</th>
+              <th scope="col" class="num">Unit</th>
+              <th scope="col" class="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of lines(); track line.key) {
+              <tr>
+                <td>
+                  @if (line.detail) {
+                    <span class="detail">{{ line.detail }}</span>
+                  }
+                  @if (line.type) {
+                    <span class="type">{{ line.type }}</span>
+                  }
+                </td>
+                <td class="num">{{ line.qty ?? '' }}</td>
+                <td class="num mono-money">
+                  @if (line.unitPrice != null) {
+                    {{ line.unitPrice | currency: 'NZD' : 'symbol-narrow' }}
+                  }
+                </td>
+                <td class="num mono-money">
+                  @if (line.price != null) {
+                    {{ line.price | currency: 'NZD' : 'symbol-narrow' }}
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="muted">No work recorded on this job yet.</td>
+              </tr>
+            }
+            @if (freight() != null) {
+              <tr>
+                <td><span class="detail">Freight</span></td>
+                <td class="num"></td>
+                <td class="num"></td>
+                <td class="num mono-money">
+                  {{ freight() | currency: 'NZD' : 'symbol-narrow' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <dl class="totals">
+        <div>
+          <dt>Total excluding {{ taxLabel }}</dt>
+          <dd class="mono-money">
+            {{ totals().totalExcludingGst | currency: 'NZD' : 'symbol-narrow' }}
+          </dd>
+        </div>
+        <div>
+          <dt>{{ taxLabel }} (15%)</dt>
+          <dd class="mono-money">{{ totals().gst | currency: 'NZD' : 'symbol-narrow' }}</dd>
+        </div>
+        <div class="grand">
+          <dt>Total to pay (incl {{ taxLabel }})</dt>
+          <dd class="mono-money">
+            {{ totals().amountToPay | currency: 'NZD' : 'symbol-narrow' }}
+          </dd>
+        </div>
+      </dl>
+
+      @if (isPaid()) {
+        <p class="paid-stamp">PAID — {{ formatDate(job()?.jobDatePaid) }}</p>
+      }
+    </section>
+
+    @if (value('jobNotes')) {
+      <section class="block">
+        <h2>Notes</h2>
+        <p class="notes">{{ value('jobNotes') }}</p>
+      </section>
+    }
+
+    <footer class="sheet-foot">
+      <h2>Disclaimer</h2>
+      <p class="disclaimer">{{ disclaimer }}</p>
+
+      @if (copyType() === 'customer') {
+        <p class="copy-line">CUSTOMER COPY — {{ footerNote() }}</p>
+        <p class="pay">
+          Bank account name: {{ bankAccountName }}<br />
+          Bank account #: {{ bankAccountNumber }} (use 'job#{{ j.jobID }}' as the reference)
+        </p>
+      } @else {
+        <p class="copy-line">{{ businessName }} copy</p>
+      }
+    </footer>
+  </article>
+  }
+}

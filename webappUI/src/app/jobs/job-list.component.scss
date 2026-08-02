@@ -1,0 +1,192 @@
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.85rem 0.75rem calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+.new-job .label {
+  display: inline;
+}
+
+/* ---------- view tabs ---------- */
+
+.views {
+  display: flex;
+  gap: 0.4rem;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.75rem;
+  /* Keeps the strip from being clipped mid-tab when it scrolls. */
+  scroll-snap-type: x proximity;
+}
+
+.view-tab {
+  flex: none;
+  scroll-snap-align: start;
+  min-height: 40px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.view-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---------- search ---------- */
+
+.search {
+  margin-bottom: 0.85rem;
+  padding: 0.85rem;
+}
+
+.search .field-row {
+  margin-bottom: 0.6rem;
+}
+
+.search .field.grow {
+  flex: 3 1 260px;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0.5rem;
+  justify-content: center;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- job rows ---------- */
+
+.job-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Mobile first: a stacked card. The grid areas are re-laid-out into columns on
+   wider screens, so the same markup reads as a table on a desktop. */
+.job-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'no main'
+    'meta meta'
+    'total total';
+  gap: 0.35rem 0.6rem;
+  align-items: start;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+}
+
+.job-row:hover {
+  border-color: var(--accent);
+  background: #fbfcfe;
+}
+
+.job-no {
+  grid-area: no;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.job-main {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.customer {
+  font-weight: 600;
+}
+
+.business,
+.summary {
+  font-size: 0.85rem;
+}
+
+/* Long free-text details are clamped to two lines instead of pushing the row
+   taller and taller. */
+.summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.job-meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dates {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.job-total {
+  grid-area: total;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.pager {
+  align-items: center;
+  margin-top: 0.85rem;
+}
+
+.range {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 720px) {
+  .job-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'no main meta total';
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .job-meta {
+    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+  }
+
+  .job-total {
+    text-align: right;
+    min-width: 6rem;
+  }
+}
+
+@media (max-width: 620px) {
+  /* The + icon alone is enough in the top bar on a phone. */
+  .new-job .label {
+    display: none;
+  }
+}

@@ -1,0 +1,101 @@
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh; /* avoids the mobile browser chrome cropping the card */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: linear-gradient(160deg, #1f5fa9 0%, #17497f 55%, #10314f 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(10, 20, 40, 0.28);
+  padding: 1.5rem 1.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.brand h1 {
+  font-size: 1.35rem;
+  margin: 0.35rem 0 0.15rem;
+}
+
+.brand p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.banner {
+  margin: 0;
+}
+
+.password-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.password-wrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reveal {
+  flex: none;
+  font-size: 0.85rem;
+}
+
+.submit {
+  margin-top: 0.35rem;
+  width: 100%;
+  min-height: 48px;
+  font-size: 1.02rem;
+}
+
+.hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+@media (max-height: 520px) {
+  /* Landscape phone: trim the vertical padding so the form still fits. */
+  .login-page {
+    align-items: flex-start;
+    padding-block: 0.75rem;
+  }
+
+  .login-card {
+    padding: 1rem;
+    gap: 0.6rem;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+}

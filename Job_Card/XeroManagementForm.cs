@@ -145,7 +145,7 @@ namespace Job_Card
                 this.cboMode.SelectedIndex = 0;
             }
 
-            bool connected = this.settings != null && !string.IsNullOrWhiteSpace(this.settings.xeroAccessToken);
+            bool connected = this.settings != null && !string.IsNullOrWhiteSpace(XeroService.ActiveToken(this.settings));
             this.lblConnection.Text = connected ? "Connected" : "Disconnected";
             if (connected)
             {

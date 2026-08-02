@@ -1,0 +1,550 @@
+<app-bar
+  [title]="jobId() ? 'Job #' + jobId() : 'Job card'"
+  [subtitle]="value('jobCustomer') || null"
+  backTo="/jobs"
+>
+  @if (jobId()) {
+    <a class="print-link" [routerLink]="['/jobs', jobId(), 'print']">Print</a>
+  }
+</app-bar>
+
+<main class="page">
+  @if (loading()) {
+    <p class="state muted"><span class="spin" aria-hidden="true"></span> Loading job…</p>
+  } @else if (!job()) {
+    <p class="banner error" role="alert">{{ error() || 'Job not found.' }}</p>
+    <a class="button-link" routerLink="/jobs">Back to jobs</a>
+  } @else {
+    @if (error()) {
+      <p class="banner error" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+      <p class="banner ok" role="status" (click)="dismissNotice()">{{ notice() }}</p>
+    }
+    @if (isFussy()) {
+      <p class="banner warn">
+        Flagged customer — take extra care with this job and check the notes.
+      </p>
+    }
+
+    <!-- Job identity + navigation -->
+    <section class="card">
+      <header>
+        <div class="job-title">
+          <h1>Job #{{ jobId() }}</h1>
+          @for (chip of statusChips(); track chip.label) {
+            <span [class]="'chip ' + chip.kind">{{ chip.label }}</span>
+          }
+        </div>
+        <div class="button-row nav">
+          <button
+            type="button"
+            class="small"
+            (click)="goTo(neighbours().previous)"
+            [disabled]="neighbours().previous == null"
+            title="Previous job"
+          >
+            ‹ Prev
+          </button>
+          <button
+            type="button"
+            class="small"
+            (click)="goTo(neighbours().next)"
+            [disabled]="neighbours().next == null"
+            title="Next job"
+          >
+            Next ›
+          </button>
+        </div>
+      </header>
+
+      <div class="field-grid">
+        <div class="field" [class.invalid]="!value('jobCustomer').trim()">
+          <label for="jobCustomer">Customer name</label>
+          <input
+            id="jobCustomer"
+            type="text"
+            autocomplete="name"
+            [class.changed]="isChanged('jobCustomer')"
+            [ngModel]="value('jobCustomer')"
+            (ngModelChange)="setField('jobCustomer', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobBusinessName">Business name</label>
+          <input
+            id="jobBusinessName"
+            type="text"
+            autocomplete="organization"
+            [class.changed]="isChanged('jobBusinessName')"
+            [ngModel]="value('jobBusinessName')"
+            (ngModelChange)="setField('jobBusinessName', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobPhone">Phone</label>
+          <input
+            id="jobPhone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel"
+            [class.changed]="isChanged('jobPhone')"
+            [ngModel]="value('jobPhone')"
+            (ngModelChange)="setField('jobPhone', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobEmail">Email</label>
+          <input
+            id="jobEmail"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            autocapitalize="none"
+            spellcheck="false"
+            [class.changed]="isChanged('jobEmail')"
+            [ngModel]="value('jobEmail')"
+            (ngModelChange)="setField('jobEmail', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobAddress">Address</label>
+          <input
+            id="jobAddress"
+            type="text"
+            autocomplete="street-address"
+            [class.changed]="isChanged('jobAddress')"
+            [ngModel]="value('jobAddress')"
+            (ngModelChange)="setField('jobAddress', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobOrderNumber">Order number</label>
+          <input
+            id="jobOrderNumber"
+            type="text"
+            [class.changed]="isChanged('jobOrderNumber')"
+            [ngModel]="value('jobOrderNumber')"
+            (ngModelChange)="setField('jobOrderNumber', $event)"
+          />
+        </div>
+
+        <!-- Photos sit alongside the other details, as the desktop form's
+             picture box did in its top-right corner. -->
+        @if (jobId(); as id) {
+          <app-job-photos [jobId]="id" />
+        }
+      </div>
+
+      <div class="button-row care">
+        <button type="button" class="small" (click)="flagFussy()" [disabled]="isFussy()">
+          {{ isFussy() ? 'Flagged for care' : 'Flag for extra care' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Dates and handling -->
+    <section class="card">
+      <header><h2>Dates &amp; handling</h2></header>
+
+      <div class="field-grid">
+        <div class="field" [class.invalid]="!dateValue('jobDate')">
+          <label for="jobDate">Job date</label>
+          <input
+            id="jobDate"
+            type="date"
+            [class.changed]="isChanged('jobDate')"
+            [ngModel]="dateValue('jobDate')"
+            (ngModelChange)="setDateField('jobDate', $event)"
+          />
+        </div>
+
+        <div class="field">
+          <label for="jobDateRequired">Date required</label>
+          <div class="input-with-action">
+            <input
+              id="jobDateRequired"
+              type="date"
+              [class.changed]="isChanged('jobDateRequired')"
+              [ngModel]="dateValue('jobDateRequired')"
+              (ngModelChange)="setDateField('jobDateRequired', $event)"
+            />
+            <button
+              type="button"
+              class="small"
+              (click)="addWeekToRequired($event)"
+              title="Add a week (hold Shift to go back a week)"
+            >
+              +1 wk
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="jobDateCompleted">Date completed</label>
+          <div class="input-with-action">
+            <input
+              id="jobDateCompleted"
+              type="date"
+              [class.changed]="isChanged('jobDateCompleted')"
+              [ngModel]="dateValue('jobDateCompleted')"
+              (ngModelChange)="setDateField('jobDateCompleted', $event)"
+            />
+            <button type="button" class="small" (click)="markCompletedToday()">Today</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="jobDatePaid">Date paid</label>
+          <div class="input-with-action">
+            <input
+              id="jobDatePaid"
+              type="date"
+              [class.changed]="isChanged('jobDatePaid')"
+              [ngModel]="dateValue('jobDatePaid')"
+              (ngModelChange)="setDateField('jobDatePaid', $event)"
+            />
+            <button type="button" class="small" (click)="markPaidToday()">Today</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="jobReceivedFrom">Received from</label>
+          <select
+            id="jobReceivedFrom"
+            [class.changed]="isChanged('jobReceivedFrom')"
+            [ngModel]="value('jobReceivedFrom')"
+            (ngModelChange)="setField('jobReceivedFrom', $event)"
+          >
+            @for (option of receivedFromOptions; track option) {
+              <option [value]="option">{{ option || '—' }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="jobPaymentBy">Payment by</label>
+          <select
+            id="jobPaymentBy"
+            [class.changed]="isChanged('jobPaymentBy')"
+            [ngModel]="value('jobPaymentBy')"
+            (ngModelChange)="setField('jobPaymentBy', $event)"
+          >
+            @for (option of paymentByOptions; track option) {
+              <option [value]="option">{{ option || '—' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field delivery">
+        <label for="jobDelivery">Delivery instructions</label>
+        <input
+          id="jobDelivery"
+          type="text"
+          [class.changed]="isChanged('jobDelivery')"
+          [ngModel]="value('jobDelivery')"
+          (ngModelChange)="setField('jobDelivery', $event)"
+        />
+        <div class="button-row">
+          <button type="button" class="small" (click)="setDeliveryCollect()">Collect</button>
+          <button type="button" class="small" (click)="setDeliveryCourier()">Courier</button>
+        </div>
+      </div>
+
+      <div class="field-row flags">
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            [ngModel]="boolValue('jobQuotation')"
+            (ngModelChange)="setField('jobQuotation', $event)"
+          />
+          Quotation only
+        </label>
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            [ngModel]="boolValue('jobGoodReserved')"
+            (ngModelChange)="setField('jobGoodReserved', $event)"
+          />
+          Reserved / good customer
+        </label>
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            [ngModel]="boolValue('jobCompleted')"
+            (ngModelChange)="setField('jobCompleted', $event)"
+          />
+          Duplicate receipt
+        </label>
+      </div>
+    </section>
+
+    <!-- Work items -->
+    <section class="card">
+      <header>
+        <h2>Work &amp; pricing</h2>
+        <div class="button-row">
+          <button type="button" class="small" (click)="toggleCollapsed()">
+            {{ collapsed() ? 'Show all lines' : 'Show fewer lines' }}
+          </button>
+          <button type="button" class="primary small" (click)="addWorkLine()">+ Add work</button>
+        </div>
+      </header>
+
+      <ul class="lines">
+        @for (line of visibleLines(); track line.key) {
+          <li class="line" [class.has-data]="line.type || line.detail || line.price != null">
+            <div class="line-head">
+              <span class="line-label muted">{{ line.label }}</span>
+              @if (line.kind === 'fixed') {
+                <label class="checkbox legacy">
+                  <input
+                    type="checkbox"
+                    [ngModel]="line.checked === true"
+                    (ngModelChange)="setLineChecked(line.key, $event)"
+                  />
+                  <span class="sr-only">Mark {{ line.label }} as done</span>
+                </label>
+              }
+              <span class="spacer"></span>
+              @if (line.type || line.detail || line.price != null) {
+                <button
+                  type="button"
+                  class="subtle small"
+                  (click)="clearLine(line.key)"
+                  [attr.aria-label]="'Clear ' + line.label"
+                >
+                  Clear
+                </button>
+              }
+            </div>
+
+            <div class="line-body">
+              <div class="field type-field">
+                <label [attr.for]="'type-' + line.key">Work</label>
+                <button
+                  type="button"
+                  class="type-button"
+                  [id]="'type-' + line.key"
+                  (click)="openPicker(line.key)"
+                >
+                  @if (line.type) {
+                    <span class="type-value">{{ line.type }}</span>
+                  } @else {
+                    <span class="type-placeholder muted">Tap to choose work…</span>
+                  }
+                </button>
+              </div>
+
+              <div class="field detail-field">
+                <label [attr.for]="'detail-' + line.key">Detail</label>
+                <input
+                  [id]="'detail-' + line.key"
+                  type="text"
+                  [ngModel]="line.detail ?? ''"
+                  (ngModelChange)="setLineField(line.key, 'detail', $event)"
+                />
+              </div>
+
+              <div class="field qty-field">
+                <label [attr.for]="'qty-' + line.key">Qty</label>
+                <input
+                  [id]="'qty-' + line.key"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  step="1"
+                  [ngModel]="line.qty ?? ''"
+                  (ngModelChange)="setLineField(line.key, 'qty', $event)"
+                />
+              </div>
+
+              <div class="field money-field">
+                <label [attr.for]="'unit-' + line.key">Unit price</label>
+                <input
+                  [id]="'unit-' + line.key"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="line.unitPrice ?? ''"
+                  (ngModelChange)="setLineField(line.key, 'unitPrice', $event)"
+                />
+              </div>
+
+              <div class="field money-field">
+                <label [attr.for]="'price-' + line.key">Line total</label>
+                <input
+                  [id]="'price-' + line.key"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="line.price ?? ''"
+                  (ngModelChange)="setLineField(line.key, 'price', $event)"
+                />
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <!-- Freight sits with the totals rather than in the work list. -->
+      @if (freightLine(); as freight) {
+        <div class="freight">
+          <div class="field money-field">
+            <label for="freight">Freight</label>
+            <div class="input-with-action">
+              <input
+                id="freight"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                [ngModel]="freight.price ?? ''"
+                (ngModelChange)="setLineField('Freight', 'price', $event)"
+              />
+              <button
+                type="button"
+                class="small"
+                (click)="addRuralDeliverySurcharge()"
+                title="Add the rural delivery surcharge"
+              >
+                RD
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <dl class="totals">
+        <div>
+          <dt>Total excluding {{ taxLabel }}</dt>
+          <dd class="mono-money">
+            {{ totals().totalExcludingGst | currency: 'NZD' : 'symbol-narrow' }}
+          </dd>
+        </div>
+        <div>
+          <dt>{{ taxLabel }} (15%)</dt>
+          <dd class="mono-money">{{ totals().gst | currency: 'NZD' : 'symbol-narrow' }}</dd>
+        </div>
+        <div class="grand">
+          <dt>Amount to pay</dt>
+          <dd class="mono-money">
+            {{ totals().amountToPay | currency: 'NZD' : 'symbol-narrow' }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Notes -->
+    <section class="card">
+      <header><h2>Notes</h2></header>
+      <div class="field">
+        <label for="jobNotes" class="sr-only">Job notes</label>
+        <textarea
+          id="jobNotes"
+          rows="8"
+          [class.changed]="isChanged('jobNotes')"
+          [ngModel]="value('jobNotes')"
+          (ngModelChange)="setField('jobNotes', $event)"
+        ></textarea>
+      </div>
+
+      @if (isFussy()) {
+        <div class="field">
+          <label for="jobFussyNotes">Care notes</label>
+          <textarea
+            id="jobFussyNotes"
+            rows="4"
+            [class.changed]="isChanged('jobFussyNotes')"
+            [ngModel]="value('jobFussyNotes')"
+            (ngModelChange)="setField('jobFussyNotes', $event)"
+          ></textarea>
+        </div>
+      }
+    </section>
+
+    <!-- Xero. Enabled only for business jobs, as the desktop's btnXero is gated on
+         jobBusinessName being non-blank (jobBusinessName_TextChanged). -->
+    <section class="card">
+      <header><h2>Xero</h2></header>
+      @if (xeroSummary(); as summary) {
+        <p class="xero-summary">{{ summary }}</p>
+      } @else if (hasBusinessName()) {
+        <p class="muted">No invoice sent to Xero for this job yet.</p>
+      }
+      <div class="button-row">
+        <button type="button" (click)="openXero()" [disabled]="!hasBusinessName()">
+          Xero invoicing
+        </button>
+      </div>
+      @if (!hasBusinessName()) {
+        <p class="muted xero-hint">
+          Add a business name above to invoice this job through Xero.
+        </p>
+      }
+    </section>
+
+    <section class="card danger-zone">
+      <header><h2>Other actions</h2></header>
+      <div class="button-row stack-mobile">
+        <button type="button" (click)="duplicate()">Duplicate job</button>
+        <a class="button-link" [routerLink]="['/jobs', jobId(), 'print']">Print / invoice</a>
+        <span class="spacer"></span>
+        <button type="button" class="danger" (click)="remove()">Delete job</button>
+      </div>
+    </section>
+
+    <!-- Sticky save bar so Save is always reachable on a long phone page. -->
+    <div class="save-bar" [class.dirty]="hasUnsavedChanges()">
+      <span class="save-status">
+        @if (hasUnsavedChanges()) {
+          <span class="dot" aria-hidden="true"></span> Unsaved changes
+        } @else {
+          <span class="muted">All changes saved</span>
+        }
+      </span>
+      <div class="button-row">
+        @if (hasUnsavedChanges()) {
+          <button type="button" (click)="revert()" [disabled]="saving()">Discard</button>
+        }
+        <button
+          type="button"
+          class="primary"
+          (click)="save()"
+          [disabled]="saving() || !hasUnsavedChanges()"
+        >
+          @if (saving()) {
+            <span class="spin" aria-hidden="true"></span> Saving…
+          } @else {
+            Save job
+          }
+        </button>
+      </div>
+    </div>
+  }
+</main>
+
+@if (pickerForKey()) {
+  <app-job-type-picker
+    [lineLabel]="pickerLineLabel()"
+    (picked)="applyPickedType($event)"
+    (dismissed)="closePicker()"
+  />
+}
+
+@if (xeroOpen() && jobId(); as openJobId) {
+  <app-xero-panel
+    [jobId]="openJobId"
+    [businessName]="value('jobBusinessName')"
+    (paidDateChanged)="applyXeroPaidDate($event)"
+    (dismissed)="closeXero()"
+  />
+}

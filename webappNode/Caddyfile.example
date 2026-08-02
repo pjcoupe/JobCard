@@ -1,0 +1,43 @@
+# Caddy config for serving the web app over HTTPS.
+#
+# Copy to "Caddyfile" (no extension) next to caddy.exe, edit the two marked
+# lines, and run it. Caddy obtains a Let's Encrypt certificate on first start and
+# renews it by itself — there is nothing to buy and no renewal to remember.
+#
+# See the "HTTPS and internet access" section of README.md for the full walkthrough
+# (hostname, router ports, and switching the Xero redirect URI over).
+
+# EDIT THIS: the hostname pointing at this machine's public IP.
+#   A free option that needs no DNS setup of your own is DuckDNS, e.g.
+#   jobcard.duckdns.org. Or use sslip.io, which needs no registration at all:
+#   1-2-3-4.sslip.io resolves to 1.2.3.4 — substitute your own address.
+# A bare IP will not work here: Let's Encrypt issues certificates for names.
+jobcard.duckdns.org {
+	encode gzip zstd
+
+	# The API. Node keeps listening on plain HTTP on localhost only; Caddy is
+	# what faces the network, so PORT does not need forwarding at the router.
+	handle /api/* {
+		reverse_proxy localhost:3000
+	}
+
+	# The Angular app, built with `npm run build` in webappUI.
+	handle {
+		# EDIT THIS: absolute path to webappUI/dist/webapp-ui/browser.
+		# Forward slashes work fine on Windows.
+		root * C:/jobcard/JobCard/webappUI/dist/webapp-ui/browser
+
+		# Angular routes like /jobs/123 are not files on disk. Without this,
+		# reloading the page or opening a bookmarked job returns 404.
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Keep the access log; it is the only record of who reached the app.
+	log {
+		output file access.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

@@ -114,9 +114,13 @@ namespace Job_Card
                     return false;
                 }
                 var map = Json.Deserialize<Dictionary<string, object>>(content);
+                object accessToken = map.ContainsKey("access_token") ? map["access_token"] : null;
                 var updates = new List<KeyValuePair<string, dynamic>>
                 {
-                    new KeyValuePair<string, dynamic>("xeroAccessToken", map.ContainsKey("access_token") ? map["access_token"] : null),
+                    // activeXeroToken is the field shared with the web app; xeroAccessToken
+                    // is written alongside it for older builds. See ActiveToken.
+                    new KeyValuePair<string, dynamic>("activeXeroToken", accessToken),
+                    new KeyValuePair<string, dynamic>("xeroAccessToken", accessToken),
                     new KeyValuePair<string, dynamic>("xeroRefreshToken", map.ContainsKey("refresh_token") ? map["refresh_token"] : null)
                 };
                 if (map.ContainsKey("expires_in"))
@@ -129,45 +133,161 @@ namespace Job_Card
             }
         }
 
+        // How long the refresh lease is held, and how long a caller that lost the lease
+        // waits for the winner before giving up and trying itself.
+        private const int TokenLeaseSeconds = 30;
+        private const int TokenLeaseWaitMs = 500;
+        private const int TokenLeaseWaitAttempts = 20;
+
+        /// <summary>
+        /// The Xero access token currently in use. activeXeroToken is the shared field that
+        /// both this app and the web app read and write, so the two run off one Xero
+        /// connection. xeroAccessToken is still written alongside it and is used as a
+        /// fallback here, so a partially upgraded fleet keeps working.
+        /// </summary>
+        public static string ActiveToken(SettingsSettingsDoc settings)
+        {
+            if (settings == null)
+            {
+                return "";
+            }
+            if (!string.IsNullOrWhiteSpace(settings.activeXeroToken))
+            {
+                return settings.activeXeroToken;
+            }
+            return settings.xeroAccessToken == null ? "" : settings.xeroAccessToken;
+        }
+
+        /// <summary>True when the stored token is present and not about to expire.</summary>
+        private static bool TokenIsFresh(SettingsSettingsDoc settings)
+        {
+            return settings != null
+                && !string.IsNullOrWhiteSpace(ActiveToken(settings))
+                && settings.xeroTokenExpiresAtUtc.HasValue
+                && settings.xeroTokenExpiresAtUtc.Value > DateTime.UtcNow.AddMinutes(1);
+        }
+
+        /// <summary>
+        /// Copy a freshly stored token set onto the caller's in-memory settings object, so a
+        /// caller that does not re-read settings still uses the new token rather than the
+        /// stale one it loaded.
+        /// </summary>
+        private static void CopyTokenInto(SettingsSettingsDoc target, SettingsSettingsDoc source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+            target.activeXeroToken = source.activeXeroToken;
+            target.xeroAccessToken = source.xeroAccessToken;
+            target.xeroRefreshToken = source.xeroRefreshToken;
+            target.xeroTokenExpiresAtUtc = source.xeroTokenExpiresAtUtc;
+        }
+
         public static async Task<bool> EnsureValidTokenAsync(SettingsSettingsDoc settings)
         {
             if (settings == null || string.IsNullOrWhiteSpace(settings.xeroRefreshToken))
             {
                 return false;
             }
-            if (!string.IsNullOrWhiteSpace(settings.xeroAccessToken) && settings.xeroTokenExpiresAtUtc.HasValue && settings.xeroTokenExpiresAtUtc.Value > DateTime.UtcNow.AddMinutes(1))
+            if (TokenIsFresh(settings))
             {
                 return true;
             }
-            using (var client = new HttpClient())
+
+            // The web app or another window may have refreshed since our caller loaded
+            // settings, in which case there is nothing to do but pick up the new token.
+            SettingsSettingsDoc latest = await DataAccess.findSettings();
+            if (TokenIsFresh(latest))
             {
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://identity.xero.com/connect/token");
-                string basic = Convert.ToBase64String(Encoding.UTF8.GetBytes(settings.xeroClientId + ":" + settings.xeroClientSecret));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
-                request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                CopyTokenInto(settings, latest);
+                return true;
+            }
+
+            // Only one app may call Xero's token endpoint at a time: a refresh rotates the
+            // refresh token and retires the old one, so a simultaneous second call is
+            // rejected and that app has to reconnect.
+            bool holdsLease = await DataAccess.TryAcquireXeroTokenLockAsync(TokenLeaseSeconds);
+            if (!holdsLease)
+            {
+                for (int attempt = 0; attempt < TokenLeaseWaitAttempts; attempt++)
                 {
-                    {"grant_type","refresh_token"},
-                    {"refresh_token", settings.xeroRefreshToken}
-                });
-                var response = await client.SendAsync(request);
-                string content = await response.Content.ReadAsStringAsync();
-                if (!response.IsSuccessStatusCode)
+                    await Task.Delay(TokenLeaseWaitMs);
+                    latest = await DataAccess.findSettings();
+                    if (TokenIsFresh(latest))
+                    {
+                        CopyTokenInto(settings, latest);
+                        return true;
+                    }
+                }
+                // Whoever held the lease never finished. Rather than leave the user stuck,
+                // try ourselves — by now the lease has expired so this should succeed.
+                holdsLease = await DataAccess.TryAcquireXeroTokenLockAsync(TokenLeaseSeconds);
+                if (!holdsLease)
                 {
                     return false;
                 }
-                var map = Json.Deserialize<Dictionary<string, object>>(content);
-                var updates = new List<KeyValuePair<string, dynamic>>
+            }
+
+            try
+            {
+                // Always refresh with the newest refresh token on record, not the one our
+                // caller happened to load.
+                string refreshToken = (latest != null && !string.IsNullOrWhiteSpace(latest.xeroRefreshToken))
+                    ? latest.xeroRefreshToken
+                    : settings.xeroRefreshToken;
+
+                using (var client = new HttpClient())
                 {
-                    new KeyValuePair<string, dynamic>("xeroAccessToken", map.ContainsKey("access_token") ? map["access_token"] : settings.xeroAccessToken),
-                    new KeyValuePair<string, dynamic>("xeroRefreshToken", map.ContainsKey("refresh_token") ? map["refresh_token"] : settings.xeroRefreshToken)
-                };
-                if (map.ContainsKey("expires_in"))
-                {
-                    int seconds = Convert.ToInt32(map["expires_in"]);
-                    updates.Add(new KeyValuePair<string, dynamic>("xeroTokenExpiresAtUtc", DateTime.UtcNow.AddSeconds(seconds - 60)));
+                    var request = new HttpRequestMessage(HttpMethod.Post, "https://identity.xero.com/connect/token");
+                    string basic = Convert.ToBase64String(Encoding.UTF8.GetBytes(settings.xeroClientId + ":" + settings.xeroClientSecret));
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+                    request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        {"grant_type","refresh_token"},
+                        {"refresh_token", refreshToken}
+                    });
+                    var response = await client.SendAsync(request);
+                    string content = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                            "XERO TOKEN REFRESH FAILED: HTTP {0} {1}. Body: {2}",
+                            (int)response.StatusCode, response.ReasonPhrase,
+                            string.IsNullOrEmpty(content) ? "(empty)" : content));
+                        return false;
+                    }
+                    var map = Json.Deserialize<Dictionary<string, object>>(content);
+                    string newAccessToken = map.ContainsKey("access_token") ? Convert.ToString(map["access_token"]) : ActiveToken(settings);
+                    string newRefreshToken = map.ContainsKey("refresh_token") ? Convert.ToString(map["refresh_token"]) : refreshToken;
+                    var updates = new List<KeyValuePair<string, dynamic>>
+                    {
+                        new KeyValuePair<string, dynamic>("activeXeroToken", newAccessToken),
+                        new KeyValuePair<string, dynamic>("xeroAccessToken", newAccessToken),
+                        new KeyValuePair<string, dynamic>("xeroRefreshToken", newRefreshToken)
+                    };
+                    DateTime? expiresAt = null;
+                    if (map.ContainsKey("expires_in"))
+                    {
+                        int seconds = Convert.ToInt32(map["expires_in"]);
+                        expiresAt = DateTime.UtcNow.AddSeconds(seconds - 60);
+                        updates.Add(new KeyValuePair<string, dynamic>("xeroTokenExpiresAtUtc", expiresAt));
+                    }
+                    await DataAccess.UpdateSettingsFieldsAsync(updates);
+
+                    settings.activeXeroToken = newAccessToken;
+                    settings.xeroAccessToken = newAccessToken;
+                    settings.xeroRefreshToken = newRefreshToken;
+                    if (expiresAt.HasValue)
+                    {
+                        settings.xeroTokenExpiresAtUtc = expiresAt;
+                    }
+                    return true;
                 }
-                await DataAccess.UpdateSettingsFieldsAsync(updates);
-                return true;
+            }
+            finally
+            {
+                await DataAccess.ReleaseXeroTokenLockAsync();
             }
         }
 
@@ -176,7 +296,7 @@ namespace Job_Card
             var list = new List<XeroTenant>();
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 var response = await client.GetAsync("https://api.xero.com/connections");
                 string content = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
@@ -201,7 +321,7 @@ namespace Job_Card
             var matches = new List<XeroContactMatch>();
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 client.DefaultRequestHeaders.Add("xero-tenant-id", tenantId);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 string where = Uri.EscapeDataString("Name!=null&&Name.Contains(\"" + businessName.Replace("\"", "\\\"") + "\")");
@@ -239,7 +359,7 @@ namespace Job_Card
             var result = new XeroInvoiceResult();
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 client.DefaultRequestHeaders.Add("xero-tenant-id", tenantId);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -286,7 +406,7 @@ namespace Job_Card
         {
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 client.DefaultRequestHeaders.Add("xero-tenant-id", tenantId);
                 var response = await client.GetAsync("https://api.xero.com/api.xro/2.0/Invoices/" + invoiceId);
                 string content = await response.Content.ReadAsStringAsync();
@@ -304,7 +424,7 @@ namespace Job_Card
             var result = new XeroInvoiceResult();
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.xeroAccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ActiveToken(settings));
                 client.DefaultRequestHeaders.Add("xero-tenant-id", tenantId);
                 var body = new Dictionary<string, object>
                 {

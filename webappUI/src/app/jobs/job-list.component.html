@@ -1,0 +1,129 @@
+<app-bar title="Wheel Job Cards" [subtitle]="rangeLabel">
+  <button type="button" class="new-job" (click)="newJob()" [disabled]="creating()">
+    @if (creating()) {
+      <span class="spin" aria-hidden="true"></span>
+    } @else {
+      <span aria-hidden="true">+</span>
+    }
+    <span class="label">New job</span>
+  </button>
+</app-bar>
+
+<main class="page">
+  @if (error()) {
+    <p class="banner error" role="alert">{{ error() }}</p>
+  }
+
+  <!-- Saved views: a horizontally scrollable strip on narrow screens so the
+       tabs never wrap or shrink below a comfortable tap size. -->
+  <nav class="views scroll-x" aria-label="Job views">
+    @for (v of views; track v.id) {
+      <button
+        type="button"
+        class="view-tab"
+        [class.active]="view() === v.id"
+        [attr.aria-pressed]="view() === v.id"
+        (click)="selectView(v.id)"
+      >
+        {{ v.label }}
+      </button>
+    }
+  </nav>
+
+  <form class="search card" (ngSubmit)="search()">
+    <div class="field-row">
+      <div class="field grow">
+        <label for="q">Search</label>
+        <input
+          id="q"
+          type="search"
+          inputmode="search"
+          enterkeyhint="search"
+          placeholder="Customer, business, phone, order no…"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          name="q"
+        />
+      </div>
+      <div class="field">
+        <label for="field">In field</label>
+        <select
+          id="field"
+          name="field"
+          [ngModel]="searchField()"
+          (ngModelChange)="searchField.set($event)"
+        >
+          <option value="">Any of the usual fields</option>
+          @for (f of searchFields; track f.field) {
+            <option [value]="f.field">{{ f.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="button-row">
+      <button type="submit" class="primary" [disabled]="loading()">Search</button>
+      @if (query() || searchField()) {
+        <button type="button" (click)="clearSearch()">Clear</button>
+      }
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="state muted"><span class="spin" aria-hidden="true"></span> Loading jobs…</p>
+  } @else if (items().length === 0) {
+    <p class="state muted">
+      No jobs match this view.
+      @if (query()) {
+        <button type="button" class="subtle" (click)="clearSearch()">Clear the search</button>
+      }
+    </p>
+  } @else {
+    <ul class="job-list">
+      @for (item of items(); track item._id) {
+        <li>
+          <a class="job-row" [routerLink]="['/jobs', item.jobID]">
+            <span class="job-no">#{{ item.jobID }}</span>
+
+            <span class="job-main">
+              <span class="customer">{{ item.jobCustomer || 'No customer name' }}</span>
+              @if (item.jobBusinessName) {
+                <span class="business muted">{{ item.jobBusinessName }}</span>
+              }
+              @if (item.summary) {
+                <span class="summary muted">{{ item.summary }}</span>
+              }
+            </span>
+
+            <span class="job-meta">
+              <span [class]="'chip ' + statusOf(item).kind">{{ statusOf(item).label }}</span>
+              <span class="dates muted">
+                {{ formatDate(item.jobDate) }}
+                @if (item.jobDateRequired) {
+                  <span class="required">· due {{ formatDate(item.jobDateRequired) }}</span>
+                }
+              </span>
+            </span>
+
+            <span class="job-total mono-money">
+              @if (item.total != null) {
+                {{ item.total | currency: 'NZD' : 'symbol-narrow' }}
+              } @else {
+                <span class="muted">—</span>
+              }
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <div class="button-row pager">
+      <button type="button" (click)="previousPage()" [disabled]="!canGoPrevious">
+        ‹ Previous
+      </button>
+      <span class="spacer"></span>
+      <span class="range muted">{{ rangeLabel }}</span>
+      <span class="spacer"></span>
+      <button type="button" (click)="nextPage()" [disabled]="!canGoNext">Next ›</button>
+    </div>
+  }
+</main>

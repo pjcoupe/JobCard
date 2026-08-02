@@ -1,0 +1,164 @@
+/* Same sheet shell as job-type-picker: bottom sheet on a phone, centred dialog
+   above 700px. Sits above the app bar and save bar, below the photo viewer. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 38, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 30px rgba(10, 20, 40, 0.3);
+  overflow: hidden;
+}
+
+.sheet > header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 0.9rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.titles {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.titles h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.titles .muted {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close {
+  flex: none;
+  width: 40px;
+  padding: 0;
+  border-color: transparent;
+  font-size: 1rem;
+}
+
+.banner {
+  margin: 0.6rem 0.9rem 0;
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.6rem 0.9rem calc(1rem + env(safe-area-inset-bottom));
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+}
+
+.block + .block {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.block .banner {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.6rem;
+}
+
+/* The invoice summary line can be long; let it wrap rather than overflow. */
+.history {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem;
+}
+
+.paste {
+  margin-top: 0.8rem;
+}
+
+.paste .hint {
+  margin-top: 0.35rem;
+}
+
+.candidates {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.candidate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+}
+
+.candidate-name {
+  font-weight: 600;
+}
+
+.candidate .muted {
+  font-size: 0.82rem;
+}
+
+@media (min-width: 700px) {
+  .backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .sheet {
+    border-radius: 14px;
+    max-height: 85dvh;
+  }
+}

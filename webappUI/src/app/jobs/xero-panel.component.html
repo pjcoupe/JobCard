@@ -1,0 +1,266 @@
+<div class="backdrop" (click)="onBackdrop($event)">
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="xero-title">
+    <header>
+      <div class="titles">
+        <h2 id="xero-title">Xero</h2>
+        @if (businessName()) {
+          <span class="muted">{{ businessName() }}</span>
+        }
+      </div>
+      <button type="button" class="close" (click)="dismiss()" aria-label="Close">✕</button>
+    </header>
+
+    @if (error()) {
+      <p class="banner error" role="alert" (click)="dismissMessages()">{{ error() }}</p>
+    }
+    @if (notice()) {
+      <p class="banner ok" role="status" (click)="dismissMessages()">{{ notice() }}</p>
+    }
+
+    <div class="sheet-body">
+      @if (loading()) {
+        <p class="state muted"><span class="spin" aria-hidden="true"></span> Loading Xero…</p>
+      } @else {
+        <!-- Connection ------------------------------------------------------ -->
+        <section class="block">
+          <h3>Connection</h3>
+
+          @if (!configured()) {
+            <p class="banner warn">
+              Xero is not set up yet. These fields are still missing from the shared settings
+              document: {{ status()?.missing?.join(', ') }}.
+            </p>
+          } @else {
+            <p class="line">
+              <span class="chip" [class.ok]="connected()" [class.muted]="!connected()">
+                {{ connected() ? 'Connected' : 'Not connected' }}
+              </span>
+              @if (connected() && status()?.tokenExpiresAt) {
+                <span class="muted">token valid until {{ status()?.tokenExpiresAt }}</span>
+              }
+            </p>
+
+            <div class="button-row stack-mobile">
+              <button
+                type="button"
+                class="primary small"
+                (click)="connect()"
+                [disabled]="busy() !== null"
+              >
+                @if (busy() === 'connect') {
+                  <span class="spin" aria-hidden="true"></span> Working…
+                } @else {
+                  {{ connected() ? 'Reconnect to Xero' : 'Connect to Xero' }}
+                }
+              </button>
+              <button type="button" class="subtle small" (click)="load()" [disabled]="busy() !== null">
+                Refresh
+              </button>
+              <span class="spacer"></span>
+              @if (connected()) {
+                <button
+                  type="button"
+                  class="danger small"
+                  (click)="disconnect()"
+                  [disabled]="busy() !== null"
+                >
+                  Disconnect
+                </button>
+              }
+            </div>
+
+            @if (pasteNeeded()) {
+              <!-- The redirect URI does not point at this server (it is a localhost
+                   URL and you may be on a phone), so the code has to come back by hand. -->
+              <div class="field paste">
+                <label for="xero-paste">Paste the address Xero redirected to</label>
+                <input
+                  id="xero-paste"
+                  type="text"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  placeholder="http://localhost:8888/callback?code=…&amp;state=…"
+                  [ngModel]="pastedUrl()"
+                  (ngModelChange)="pastedUrl.set($event)"
+                />
+                <p class="muted hint">
+                  The page will not load — that is expected. Copy the whole address from the
+                  browser's address bar and paste it here.
+                </p>
+                <div class="button-row">
+                  <button
+                    type="button"
+                    class="primary small"
+                    (click)="completePastedConnect()"
+                    [disabled]="busy() !== null || !pastedUrl().trim()"
+                  >
+                    Finish connecting
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </section>
+
+        @if (connected()) {
+          <!-- Organisation -------------------------------------------------- -->
+          <section class="block">
+            <h3>Organisation</h3>
+            @if (tenants().length === 0) {
+              <p class="muted">No Xero organisations available on this connection.</p>
+            } @else {
+              <div class="field">
+                <label for="xero-tenant">Xero organisation</label>
+                <select
+                  id="xero-tenant"
+                  [ngModel]="status()?.tenantId ?? ''"
+                  (ngModelChange)="chooseTenant($event)"
+                  [disabled]="busy() !== null"
+                >
+                  <option value="" disabled>Choose an organisation…</option>
+                  @for (tenant of tenants(); track tenant.tenantId) {
+                    <option [value]="tenant.tenantId">{{ tenant.tenantName }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </section>
+
+          <!-- Invoice mode -------------------------------------------------- -->
+          <section class="block">
+            <h3>Invoice mode</h3>
+            <div class="field">
+              <label for="xero-mode">When sending an invoice</label>
+              <select
+                id="xero-mode"
+                [ngModel]="status()?.invoiceMode ?? 'Draft'"
+                (ngModelChange)="chooseMode($event)"
+                [disabled]="busy() !== null"
+              >
+                <option value="Draft">Draft — create it in Xero only</option>
+                <option value="AuthoriseAndEmail">
+                  Approve and email — send it to the customer
+                </option>
+              </select>
+            </div>
+          </section>
+
+          <!-- Customer ------------------------------------------------------ -->
+          <section class="block">
+            <h3>Customer</h3>
+            @if (selectedContact(); as contact) {
+              <p class="line">
+                <span class="chip ok">{{ contact.name }}</span>
+                @if (contact.emailAddress) {
+                  <span class="muted">{{ contact.emailAddress }}</span>
+                }
+              </p>
+            } @else {
+              <p class="muted">No Xero customer chosen yet.</p>
+            }
+
+            <div class="button-row">
+              <button
+                type="button"
+                class="small"
+                (click)="checkCustomer()"
+                [disabled]="busy() !== null || !businessName()"
+              >
+                @if (busy() === 'customer') {
+                  <span class="spin" aria-hidden="true"></span> Checking…
+                } @else {
+                  Check customer
+                }
+              </button>
+            </div>
+
+            @if (checkedWithNoMatch()) {
+              <p class="banner warn">
+                No Xero customer matches "{{ businessName() }}". Add them in Xero first, or
+                correct the business name on the job card.
+              </p>
+            }
+
+            @if (candidates().length > 0) {
+              <!-- Inline candidate list, rather than the desktop's second modal. -->
+              <ul class="candidates">
+                @for (candidate of candidates(); track candidate.contactId) {
+                  <li>
+                    <button type="button" class="candidate" (click)="pickCandidate(candidate)">
+                      <span class="candidate-name">{{ candidate.name }}</span>
+                      @if (candidate.emailAddress) {
+                        <span class="muted">{{ candidate.emailAddress }}</span>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <!-- Invoice ------------------------------------------------------- -->
+          <section class="block">
+            <h3>Invoice</h3>
+            <p class="line history">{{ historyLine() }}</p>
+
+            @if (!canSend() && blockedReason()) {
+              <p class="banner info">{{ blockedReason() }}</p>
+            }
+
+            <div class="button-row stack-mobile">
+              <button
+                type="button"
+                class="primary small"
+                (click)="sendInvoice()"
+                [disabled]="busy() !== null || !canSend() || !selectedContact()"
+              >
+                @if (busy() === 'send') {
+                  <span class="spin" aria-hidden="true"></span> Sending…
+                } @else {
+                  Send invoice
+                }
+              </button>
+              <span class="spacer"></span>
+              @if (canDelete()) {
+                <button
+                  type="button"
+                  class="danger small"
+                  (click)="deleteInvoice()"
+                  [disabled]="busy() !== null"
+                >
+                  @if (busy() === 'delete') {
+                    <span class="spin" aria-hidden="true"></span> Working…
+                  } @else {
+                    {{ deleteAction() === 'VOIDED' ? 'Void invoice' : 'Delete invoice' }}
+                  }
+                </button>
+              }
+            </div>
+          </section>
+
+          <!-- Maintenance --------------------------------------------------- -->
+          <section class="block">
+            <h3>All jobs</h3>
+            <p class="muted hint">
+              Re-checks every unpaid invoice for this organisation and updates the paid dates.
+            </p>
+            <div class="button-row">
+              <button
+                type="button"
+                class="subtle small"
+                (click)="syncUnpaid()"
+                [disabled]="busy() !== null"
+              >
+                @if (busy() === 'sync') {
+                  <span class="spin" aria-hidden="true"></span> Syncing…
+                } @else {
+                  Sync all unpaid
+                }
+              </button>
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </section>
+</div>

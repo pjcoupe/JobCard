@@ -1,0 +1,437 @@
+/* Global styles for the wheel job card app.
+   The layout is fluid throughout: labels sit above their inputs, control rows
+   wrap instead of overflowing, and touch targets stay finger sized so the same
+   screens work on a phone in the workshop and on a desktop at the counter. */
+
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-alt: #ebebeb; /* the desktop grid's alternating stripe */
+  --border: #d3d7dd;
+  --border-strong: #b6bcc5;
+  --text: #1d2430;
+  --text-muted: #5d6675;
+  --accent: #1f5fa9;
+  --accent-dark: #17497f;
+  --accent-soft: #e8f0fa;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --warn: #8a5a00;
+  --warn-soft: #fff4d6;
+  --ok: #1b6b3a;
+  --ok-soft: #e6f4ea;
+  --changed: #fffbdd; /* desktop tints edited fields light yellow */
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.09), 0 1px 2px rgba(16, 24, 40, 0.05);
+  --tap-target: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+/* ---------- form controls ---------- */
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.25rem;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='date'],
+input[type='email'],
+input[type='tel'],
+input[type='password'],
+input[type='search'],
+select,
+textarea {
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 0.5rem 0.65rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /* 16px prevents iOS Safari from zooming when a field is focused. */
+  font-size: 1rem;
+}
+
+textarea {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+input[readonly],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: #f1f2f4;
+  color: var(--text-muted);
+}
+
+/* Fields whose value differs from what was loaded, mirroring the desktop's
+   light-yellow "unsaved change" tint. */
+input.changed,
+select.changed,
+textarea.changed {
+  background: var(--changed);
+  border-color: #ddc94b;
+}
+
+input.invalid,
+.field.invalid input {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.field {
+  min-width: 0; /* lets grid children shrink instead of forcing overflow */
+}
+
+/* Auto-fitting field grid: as many columns as fit, one column on a phone. */
+.field-grid {
+  display: grid;
+  gap: 0.75rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field-grid.narrow {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.field-row > .field {
+  flex: 1 1 200px;
+}
+
+/* ---------- buttons ---------- */
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--tap-target);
+  padding: 0.5rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+button:hover:not(:disabled) {
+  background: #f7f8fa;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+
+button.danger {
+  background: var(--surface);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+button.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
+button.subtle {
+  background: transparent;
+  border-color: transparent;
+  color: var(--accent);
+  padding-inline: 0.4rem;
+}
+
+button.small {
+  min-height: 34px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Button groups wrap rather than overflowing on narrow screens. */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.button-row.end {
+  justify-content: flex-end;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* ---------- surfaces ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+
+.card + .card {
+  margin-top: 0.85rem;
+}
+
+.card > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.card > header h2 {
+  margin: 0;
+}
+
+.banner {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.banner.error {
+  background: var(--danger-soft);
+  border-color: #f1b5b0;
+  color: var(--danger);
+}
+
+.banner.warn {
+  background: var(--warn-soft);
+  border-color: #e6cf8e;
+  color: var(--warn);
+}
+
+.banner.ok {
+  background: var(--ok-soft);
+  border-color: #a8d5b8;
+  color: var(--ok);
+}
+
+.banner.info {
+  background: var(--accent-soft);
+  border-color: #b9d2ef;
+  color: var(--accent-dark);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.chip.ok {
+  background: var(--ok-soft);
+  border-color: #a8d5b8;
+  color: var(--ok);
+}
+
+.chip.warn {
+  background: var(--warn-soft);
+  border-color: #e6cf8e;
+  color: var(--warn);
+}
+
+.chip.info {
+  background: var(--accent-soft);
+  border-color: #b9d2ef;
+  color: var(--accent-dark);
+}
+
+.chip.muted {
+  background: #eef0f3;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.mono-money {
+  font-variant-numeric: tabular-nums;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-target);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox input[type='checkbox'] {
+  width: 1.2rem;
+  height: 1.2rem;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+/* Wide content (tables) scrolls inside its own container so the page body
+   never scrolls sideways. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.spin {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation-duration: 2s;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 15px;
+  }
+
+  .card {
+    padding: 0.8rem;
+    border-radius: 8px;
+  }
+
+  /* Full-width action buttons are easier to hit one-handed. */
+  .button-row.stack-mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .button-row.stack-mobile > button {
+    width: 100%;
+  }
+}

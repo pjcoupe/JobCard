@@ -1,0 +1,68 @@
+<main class="login-page">
+  <form class="login-card" (ngSubmit)="submit()" autocomplete="on">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">◎</span>
+      <h1>Wheel Job Cards</h1>
+      <p class="muted">Sign in to continue</p>
+    </div>
+
+    @if (error()) {
+      <p class="banner error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        name="username"
+        type="text"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        enterkeyhint="next"
+        [disabled]="busy()"
+        [ngModel]="username()"
+        (ngModelChange)="username.set($event)"
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="password-wrap">
+        <input
+          id="password"
+          name="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          enterkeyhint="go"
+          [disabled]="busy()"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+        />
+        <button
+          type="button"
+          class="subtle reveal"
+          (click)="toggleShowPassword()"
+          [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        >
+          {{ showPassword() ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="primary submit" [disabled]="busy()">
+      @if (busy()) {
+        <span class="spin" aria-hidden="true"></span>
+        <span>Checking…</span>
+      } @else {
+        <span>Sign in</span>
+      }
+    </button>
+
+    @if (busy()) {
+      <p class="muted hint" aria-live="polite">
+        Verifying your credentials with the server.
+      </p>
+    }
+  </form>
+</main>

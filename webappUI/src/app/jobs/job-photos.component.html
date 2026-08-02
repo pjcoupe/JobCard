@@ -1,0 +1,156 @@
+<!-- Compact cell, sized to sit alongside the other fields in the details card. -->
+<div class="photos-field" role="group" aria-label="Photos">
+  <span class="field-label">
+    Photos
+    @if (count() > 0) {
+      <span class="count">{{ count() }}</span>
+    }
+  </span>
+
+  @if (!available()) {
+    <p class="unavailable muted" [title]="unavailableReason() || ''">
+      Photo share unavailable
+    </p>
+  } @else {
+    <div class="strip">
+      @if (loading()) {
+        <span class="tile placeholder"><span class="spin" aria-hidden="true"></span></span>
+      } @else {
+        @for (photo of inlinePhotos(); track photo.name; let i = $index) {
+          <button
+            type="button"
+            class="tile thumb"
+            (click)="openViewer(i)"
+            [attr.aria-label]="'View ' + photo.name"
+          >
+            @if (photo.isVideo) {
+              <span class="video-tile" aria-hidden="true">▶</span>
+            } @else if (photo.thumbnailUrl) {
+              <img [src]="photo.thumbnailUrl" [alt]="photo.name" />
+            } @else if (photo.thumbnailFailed) {
+              <span class="failed-tile" aria-hidden="true">!</span>
+            } @else {
+              <span class="spin" aria-hidden="true"></span>
+            }
+          </button>
+        }
+
+        <!-- "+N" hints at the photos behind "Show all" and opens straight at them. -->
+        @if (hiddenCount() > 0) {
+          <button
+            type="button"
+            class="tile more"
+            (click)="openViewer(2)"
+            [attr.aria-label]="'View the other ' + hiddenCount() + ' photos'"
+          >
+            +{{ hiddenCount() }}
+          </button>
+        }
+      }
+
+      <div class="actions">
+        @if (count() > 0) {
+          <button type="button" class="small" (click)="openViewer(0)">Show all</button>
+        }
+        <!-- A label wrapping a hidden file input: opens the camera on a phone,
+             the file picker on a desktop. -->
+        <label class="small add" [class.busy]="uploading()">
+          <input
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            multiple
+            [disabled]="uploading()"
+            (change)="onFilesPicked($event)"
+          />
+          @if (uploading()) {
+            <span class="spin" aria-hidden="true"></span>
+            <span>Uploading…</span>
+          } @else {
+            <!-- Inline SVG rather than an emoji, so it renders the same on any
+                 machine regardless of the installed emoji font. -->
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M9 3.5 8 5.5H4.5A1.5 1.5 0 0 0 3 7v11a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18V7a1.5 1.5 0 0 0-1.5-1.5H16l-1-2Z"
+              />
+              <circle cx="12" cy="12.5" r="3.75" />
+            </svg>
+            <span>Add photo</span>
+          }
+        </label>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <p class="msg error" role="alert" (click)="dismissMessages()">{{ error() }}</p>
+  } @else if (notice()) {
+    <p class="msg ok" role="status" (click)="dismissMessages()">{{ notice() }}</p>
+  }
+</div>
+
+<!-- Full-screen viewer: buttons, swipe left/right, and Esc / arrow keys. -->
+@if (viewerPhoto(); as photo) {
+  <div class="viewer-backdrop" (click)="onBackdrop($event)">
+    <div class="viewer" role="dialog" aria-modal="true" aria-label="Photo viewer">
+      <header>
+        <span class="name">{{ photo.name }}</span>
+        <span class="position muted">{{ viewerPosition() }}</span>
+        <button type="button" class="icon close" (click)="closeViewer()" aria-label="Close">
+          ✕
+        </button>
+      </header>
+
+      <div
+        class="stage"
+        (touchstart)="onTouchStart($event)"
+        (touchend)="onTouchEnd($event)"
+      >
+        @if (photo.fullFailed) {
+          <p class="muted">This file could not be loaded.</p>
+        } @else if (!photo.fullUrl) {
+          <p class="muted"><span class="spin" aria-hidden="true"></span> Loading…</p>
+        } @else if (photo.isVideo) {
+          <video [src]="photo.fullUrl" controls playsinline></video>
+        } @else {
+          <img [src]="photo.fullUrl" [alt]="photo.name" draggable="false" />
+        }
+      </div>
+
+      <footer>
+        <button
+          type="button"
+          class="nav"
+          (click)="showPrevious()"
+          [disabled]="count() < 2"
+          aria-label="Previous photo"
+        >
+          ‹ Prev
+        </button>
+        <button
+          type="button"
+          class="nav"
+          (click)="showNext()"
+          [disabled]="count() < 2"
+          aria-label="Next photo"
+        >
+          Next ›
+        </button>
+        <span class="meta muted">{{ sizeLabel(photo.sizeBytes) }}</span>
+        <button
+          type="button"
+          class="icon trash"
+          (click)="deleteCurrent()"
+          aria-label="Delete this photo"
+          title="Delete this photo"
+        >
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9 3h6l.75 1.5H20v2H4v-2h4.25L9 3Zm-3.5 5h13l-.9 11.6A1.5 1.5 0 0 1 16.1 21H7.9a1.5 1.5 0 0 1-1.5-1.4L5.5 8Zm4 2.5v7h1.5v-7H9.5Zm3.5 0v7h1.5v-7H13Z"
+            />
+          </svg>
+        </button>
+      </footer>
+    </div>
+  </div>
+}

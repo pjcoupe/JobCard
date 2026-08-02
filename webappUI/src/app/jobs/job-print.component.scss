@@ -1,0 +1,326 @@
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  padding-top: max(0.6rem, env(safe-area-inset-top));
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.back {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.3rem 0;
+}
+
+.state,
+.banner {
+  margin: 1.5rem 0.75rem;
+  text-align: center;
+}
+
+/* The sheet is sized for A4 but stays fluid on a phone screen. */
+.sheet {
+  max-width: 210mm;
+  margin: 0.85rem auto;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+}
+
+.sheet-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--text);
+}
+
+.sheet-head h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.heading {
+  margin: 0.15rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.job-no {
+  text-align: right;
+  line-height: 1.1;
+}
+
+.job-no .label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.job-no .number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.job-photo {
+  padding: 0.6rem 0 0;
+  text-align: center;
+}
+
+.job-photo img {
+  max-width: 100%;
+  /* Roughly the proportion the desktop printout reserves for the photo. */
+  max-height: 60mm;
+  object-fit: contain;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.4rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.meta .k {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.meta .v {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.block {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.block h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.block p {
+  margin: 0 0 0.2rem;
+}
+
+.who strong {
+  font-size: 1.02rem;
+}
+
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.small-line {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- items ---------- */
+
+/* No minimum width: the work description wraps so the money columns stay on
+   screen even on a 320px phone, rather than scrolling out of sight. */
+.items {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.items th,
+.items td {
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.items td:first-child,
+.items th:first-child {
+  padding-left: 0;
+}
+
+.items td:last-child,
+.items th:last-child {
+  padding-right: 0;
+}
+
+.items th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom-color: var(--border-strong);
+}
+
+.items .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.items .detail {
+  display: block;
+  font-weight: 600;
+}
+
+.items .type {
+  display: block;
+  font-size: 0.87rem;
+  color: var(--text-muted);
+}
+
+.totals {
+  margin: 0.7rem 0 0;
+  margin-left: auto;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.totals > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.totals dt {
+  font-size: 0.87rem;
+  color: var(--text-muted);
+}
+
+.totals dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.totals .grand {
+  margin-top: 0.2rem;
+  padding-top: 0.35rem;
+  border-top: 2px solid var(--text);
+}
+
+.totals .grand dt {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.totals .grand dd {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.paid-stamp {
+  margin: 0.7rem 0 0;
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border: 2px solid var(--ok);
+  border-radius: 6px;
+  color: var(--ok);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  transform: rotate(-2deg);
+}
+
+.notes {
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.sheet-foot {
+  padding-top: 0.7rem;
+}
+
+.sheet-foot h2 {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.disclaimer {
+  margin: 0 0 0.6rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.copy-line {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+}
+
+.pay {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* ---------- print ---------- */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .sheet {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 10.5pt;
+    color: #000;
+  }
+
+  /* Let wide tables print in full rather than being clipped by the scroller. */
+  .scroll-x {
+    overflow: visible;
+  }
+
+  .block,
+  .sheet-foot,
+  .items tr,
+  .job-photo {
+    break-inside: avoid;
+  }
+
+  .paid-stamp {
+    transform: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
+}

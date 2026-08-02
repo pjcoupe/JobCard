@@ -107,6 +107,7 @@
         }
     }
 
+    [BsonIgnoreExtraElements]
     public class FussyCustomerDoc
     {
         [BsonId]
@@ -115,6 +116,7 @@
         public string phoneOrEmail { get; set; }
 
     }
+    [BsonIgnoreExtraElements]
     public class PricingDoc
     {
         [BsonId]
@@ -130,6 +132,10 @@
 
 
     }
+    // BsonIgnoreExtraElements: the web app (webappNode) shares this database and may
+    // store fields this class does not declare. Without this attribute the driver
+    // throws a FormatException on any unmapped element and findSettings() fails.
+    [BsonIgnoreExtraElements]
     public class SettingsSettingsDoc
     {
         [BsonId]
@@ -168,12 +174,38 @@
         public string xeroDefaultSalesAccountCode { get; set; }
         [BsonElement("xeroDefaultTaxType")]
         public string xeroDefaultTaxType { get; set; }
+
+        // The Xero access token currently in use. Shared with the web app so both
+        // apps run off one Xero connection instead of each holding its own token.
+        // Written alongside xeroAccessToken, which stays populated so a partially
+        // upgraded fleet keeps working.
+        [BsonElement("activeXeroToken")]
+        public string activeXeroToken { get; set; }
+
+        // Short lease guarding the token refresh. Xero rotates the refresh token on
+        // every use and retires the old one, so two apps refreshing at once would
+        // lock one of them out. Whoever wins this lease refreshes; everyone else
+        // waits and re-reads the new token. See XeroService.EnsureValidTokenAsync.
+        [BsonElement("xeroTokenLockUntilUtc")]
+        public DateTime? xeroTokenLockUntilUtc { get; set; }
+
+        // Web app (webappNode) configuration. This app never reads these; they are
+        // mapped only so their names are documented in one place alongside the rest
+        // of the shared settings.
+        [BsonElement("PHOTO_ROOT")]
+        public string PHOTO_ROOT { get; set; }
+        [BsonElement("AUTH_SECRET")]
+        public string AUTH_SECRET { get; set; }
+        [BsonElement("AUTH_PASSWORD_SHA256")]
+        public string AUTH_PASSWORD_SHA256 { get; set; }
+
         public BsonDocument pricing { get; set; }
 
 
     }
 
 
+    [BsonIgnoreExtraElements]
     public class JobCardDoc
     {
         [BsonId]
@@ -848,6 +880,7 @@
         [BsonElement("jobQuotation")]
         public bool? jobQuotation { get; set; }
     }
+    [BsonIgnoreExtraElements]
     public class SentInvoiceDoc
     {
         [BsonId]
@@ -1013,6 +1046,84 @@
             return result.IsAcknowledged;
         }
 
+        /// <summary>
+        /// Upsert that only $sets the fields listed, leaving every other element of the
+        /// document untouched. Use this instead of ReplaceOneAsync: a replace swaps the
+        /// whole document, so any element this app's class does not declare (for example
+        /// something written by the web app) is silently dropped on the next write.
+        /// Same shape as UpdateSettingsFieldsAsync above, generalised to any collection.
+        /// </summary>
+        private static async Task<bool> UpsertFieldsAsync<T>(
+            IMongoCollection<T> collection,
+            FilterDefinition<T> filter,
+            ObjectId id,
+            List<KeyValuePair<string, object>> fields)
+        {
+            if (collection == null || fields == null || fields.Count == 0)
+            {
+                return false;
+            }
+            var updateList = new List<UpdateDefinition<T>>();
+            foreach (var pair in fields)
+            {
+                if (pair.Value == null)
+                {
+                    updateList.Add(Builders<T>.Update.Set(pair.Key, BsonNull.Value));
+                }
+                else
+                {
+                    updateList.Add(Builders<T>.Update.Set(pair.Key, BsonValue.Create(pair.Value)));
+                }
+            }
+            // _id cannot be $set, only supplied when the upsert actually inserts.
+            if (id != ObjectId.Empty)
+            {
+                updateList.Add(Builders<T>.Update.SetOnInsert("_id", id));
+            }
+            UpdateOptions upsertOptions = new UpdateOptions { IsUpsert = true };
+            var updateResult = await collection.UpdateOneAsync(filter, Builders<T>.Update.Combine(updateList), upsertOptions);
+            return updateResult.IsAcknowledged;
+        }
+
+        /// <summary>
+        /// Try to take the Xero token-refresh lease. Xero rotates the refresh token on every
+        /// use and retires the old one, so if this app and the web app refresh at the same
+        /// moment one of them gets locked out and has to reconnect. Whoever wins this lease
+        /// refreshes; the loser waits, re-reads settings, and uses the token it finds.
+        /// Returns true only if this caller won.
+        /// </summary>
+        public static async Task<bool> TryAcquireXeroTokenLockAsync(int leaseSeconds)
+        {
+            SettingsSettingsDoc settingsDoc = await findSettings();
+            if (settingsDoc == null)
+            {
+                return false;
+            }
+            DateTime now = DateTime.UtcNow;
+            var b = Builders<SettingsSettingsDoc>.Filter;
+            // An Eq against null also matches documents where the field is absent, which is
+            // the state before anything has ever taken the lease.
+            var filter = b.Eq(x => x.Id, settingsDoc.Id) &
+                         b.Or(b.Eq(x => x.xeroTokenLockUntilUtc, (DateTime?)null),
+                              b.Lt(x => x.xeroTokenLockUntilUtc, now));
+            var update = Builders<SettingsSettingsDoc>.Update.Set(x => x.xeroTokenLockUntilUtc, (DateTime?)now.AddSeconds(leaseSeconds));
+            var result = await _settings.UpdateOneAsync(filter, update);
+            return result.IsAcknowledged && result.ModifiedCount > 0;
+        }
+
+        /// <summary>Release the Xero token-refresh lease taken by TryAcquireXeroTokenLockAsync.</summary>
+        public static async Task ReleaseXeroTokenLockAsync()
+        {
+            SettingsSettingsDoc settingsDoc = await findSettings();
+            if (settingsDoc == null)
+            {
+                return;
+            }
+            var filter = Builders<SettingsSettingsDoc>.Filter.Eq(x => x.Id, settingsDoc.Id);
+            var update = Builders<SettingsSettingsDoc>.Update.Set(x => x.xeroTokenLockUntilUtc, (DateTime?)null);
+            await _settings.UpdateOneAsync(filter, update);
+        }
+
         public static async Task<SentInvoiceDoc> FindSentInvoiceByJobAsync(int jobId, string tenantId)
         {
             var filters = new List<FilterDefinition<SentInvoiceDoc>>
@@ -1056,9 +1167,28 @@
             {
                 doc.Id = ObjectId.GenerateNewId();
             }
-            UpdateOptions options = new UpdateOptions { IsUpsert = true };
-            var result = await _sentInvoices.ReplaceOneAsync(filter, doc, options);
-            return result.IsAcknowledged;
+            // $set the known fields rather than replacing the document, so anything the
+            // web app has added to this record survives. See UpsertFieldsAsync.
+            var fields = new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>("jobId", doc.jobId),
+                new KeyValuePair<string, object>("jobBusinessName", doc.jobBusinessName),
+                new KeyValuePair<string, object>("xeroTenantId", doc.xeroTenantId),
+                new KeyValuePair<string, object>("xeroContactId", doc.xeroContactId),
+                new KeyValuePair<string, object>("xeroInvoiceId", doc.xeroInvoiceId),
+                new KeyValuePair<string, object>("invoiceNumber", doc.invoiceNumber),
+                new KeyValuePair<string, object>("invoiceMode", doc.invoiceMode),
+                new KeyValuePair<string, object>("amountTotal", doc.amountTotal),
+                new KeyValuePair<string, object>("currency", doc.currency),
+                new KeyValuePair<string, object>("dateSentUtc", doc.dateSentUtc),
+                // null here is what marks an invoice unpaid, so it must be written
+                // explicitly rather than skipped (FindUnpaidSentInvoicesForTenantAsync).
+                new KeyValuePair<string, object>("datePaidUtc", doc.datePaidUtc),
+                new KeyValuePair<string, object>("status", doc.status),
+                new KeyValuePair<string, object>("lineItemsSnapshot", doc.lineItemsSnapshot),
+                new KeyValuePair<string, object>("rawResponseSnippet", doc.rawResponseSnippet)
+            };
+            return await UpsertFieldsAsync(_sentInvoices, filter, doc.Id, fields);
         }
 
         public static async Task<bool> DeleteSentInvoiceAsync(int jobId, string tenantId)
@@ -1145,13 +1275,16 @@
             {
                 found.stringPrice = (overridePrice != null && overridePrice.Text.Trim() != "") ? overridePrice.Text.Trim() : amount;
                 found.controlText = (overrideControlText != null && overrideControlText.Text.Trim() != "") ? overrideControlText.Text.Trim() : controlText;
-                UpdateOptions updateOptions = new UpdateOptions();
-                updateOptions.IsUpsert = true;
-                var updateResult = await DataAccess._pricing.ReplaceOneAsync(finalFilter, found, updateOptions);
-                if ((updateResult.IsModifiedCountAvailable && updateResult.ModifiedCount > 0) || (updateResult.IsAcknowledged && updateResult.UpsertedId != null))
+                // $set the known fields rather than replacing the document, so anything the
+                // web app has added to this record survives. See UpsertFieldsAsync.
+                var pricingFields = new List<KeyValuePair<string, object>>
                 {
-                    //System.Console.Out.WriteLine("updated text "+found.controlText);
-                }
+                    new KeyValuePair<string, object>("isWheel", found.isWheel),
+                    new KeyValuePair<string, object>("controlName", found.controlName),
+                    new KeyValuePair<string, object>("controlText", found.controlText),
+                    new KeyValuePair<string, object>("stringPrice", found.stringPrice)
+                };
+                await UpsertFieldsAsync(DataAccess._pricing, finalFilter, found.Id, pricingFields);
             }
             if (overrideControlText != null)
             {
