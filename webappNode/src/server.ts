@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { requireAuth } from './auth.js';
@@ -52,7 +55,32 @@ app.use('/api/photos', requireAuth, photosRouter);
 // top-level browser navigation from Xero and cannot carry an Authorization header.
 app.use('/api/xero', xeroRouter);
 
-app.use((_req: Request, res: Response) => {
+/**
+ * Where `npm run build` in webappUI leaves the compiled app. Serving it from here
+ * makes the whole deployment one process on one port: nothing else to install,
+ * and the browser is same-origin so CORS never comes into play. Set UI_ROOT to
+ * override, or leave the app unbuilt to run the API on its own.
+ */
+const uiRoot = process.env.UI_ROOT
+  ? resolve(process.env.UI_ROOT)
+  : resolve(dirname(fileURLToPath(import.meta.url)), '../../webappUI/dist/webapp-ui/browser');
+const uiAvailable = existsSync(resolve(uiRoot, 'index.html'));
+
+if (uiAvailable) {
+  // index.html is served by the fallback below rather than here, so there is one
+  // place deciding what a non-file path returns.
+  app.use(express.static(uiRoot, { index: false }));
+}
+
+app.use((req: Request, res: Response) => {
+  // A path that is not a file on disk is an Angular route like /jobs/123, so it
+  // gets index.html and the router resolves it in the browser. /api is deliberately
+  // excluded: an unknown endpoint there is a real 404 and must stay JSON, never a
+  // page handed to something expecting data.
+  if (uiAvailable && req.method === 'GET' && !req.path.startsWith('/api/')) {
+    res.sendFile(resolve(uiRoot, 'index.html'));
+    return;
+  }
   res.status(404).json({ error: 'Not found' });
 });
 
@@ -104,6 +132,15 @@ async function main(): Promise<void> {
     }
   } catch (err) {
     console.warn('[api] could not check the photo share:', err);
+  }
+
+  if (uiAvailable) {
+    console.log(`[api] serving the web app from ${uiRoot}`);
+  } else {
+    console.warn(
+      `[api] no web app at ${uiRoot} — API only. ` +
+        'Run "npm run build" in webappUI to have this server serve it too.'
+    );
   }
 
   const server = app.listen(config.port, () => {
