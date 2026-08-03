@@ -78,6 +78,22 @@
             <span>Add photo</span>
           }
         </label>
+
+        <!-- Drives an attached webcam directly, which is what the desk PCs
+             need: their file picker has no camera behind it. -->
+        <button
+          type="button"
+          class="small cam"
+          [disabled]="uploading()"
+          (click)="openCamera()"
+        >
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M4 6.5h9A1.5 1.5 0 0 1 14.5 8v8a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 16V8A1.5 1.5 0 0 1 4 6.5Zm12.5 4.25 4-2.6a.75.75 0 0 1 1.15.63v6.44a.75.75 0 0 1-1.15.63l-4-2.6v-2.5Z"
+            />
+          </svg>
+          <span>Web photo</span>
+        </button>
       </div>
     </div>
   }
@@ -88,6 +104,94 @@
     <p class="msg ok" role="status" (click)="dismissMessages()">{{ notice() }}</p>
   }
 </div>
+
+<!-- Webcam capture: live preview, freeze the frame, then Use or Retake. -->
+@if (cameraOpen()) {
+  <div class="viewer-backdrop" (click)="onCameraBackdrop($event)">
+    <div class="viewer camera" role="dialog" aria-modal="true" aria-label="Take a photo">
+      <header>
+        <span class="name">Take a photo</span>
+        <!-- Only worth showing where there is actually a choice to make. -->
+        @if (cameras().length > 1) {
+          <select
+            class="camera-pick"
+            [value]="cameraId() ?? ''"
+            [disabled]="uploading()"
+            (change)="onCameraChange($event)"
+            aria-label="Camera"
+          >
+            @for (device of cameras(); track device.deviceId; let i = $index) {
+              <option [value]="device.deviceId">{{ cameraLabel(device, i) }}</option>
+            }
+          </select>
+        }
+        <button
+          type="button"
+          class="icon close"
+          [disabled]="uploading()"
+          (click)="closeCamera()"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="stage">
+        @if (capturedUrl(); as still) {
+          <img [src]="still" alt="The photo just taken" draggable="false" />
+        } @else if (cameraLive()) {
+          <!-- Created as soon as there is a stream; the component's effect
+               attaches it, so the ordering of the two does not matter. -->
+          <video #cameraVideo autoplay muted playsinline></video>
+        } @else if (cameraStarting()) {
+          <p class="camera-msg starting">
+            <span class="spin" aria-hidden="true"></span> Starting the camera…
+          </p>
+        } @else if (cameraError()) {
+          <p class="camera-msg error" role="alert">{{ cameraError() }}</p>
+        }
+      </div>
+
+      <footer>
+        @if (capturedUrl()) {
+          <button type="button" class="nav" [disabled]="uploading()" (click)="retake()">
+            Retake
+          </button>
+          <span class="meta muted"></span>
+          <button type="button" class="nav use" [disabled]="uploading()" (click)="usePhoto()">
+            @if (uploading()) {
+              <span class="spin" aria-hidden="true"></span>
+              <span>Uploading…</span>
+            } @else {
+              <span>Use photo</span>
+            }
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="nav use"
+            [disabled]="!cameraLive() || cameraStarting()"
+            (click)="takePhoto()"
+          >
+            Take photo
+          </button>
+          <span class="meta muted">
+            @if (cameraError() && !cameraLive()) {
+              Use “Add photo” instead.
+            }
+          </span>
+          <button type="button" class="nav" (click)="closeCamera()">Cancel</button>
+        }
+      </footer>
+
+      <!-- When the stage is showing a photo or the live feed, an error has
+           nowhere to go above, so it goes below the controls instead. -->
+      @if (cameraError() && (capturedUrl() || cameraLive())) {
+        <p class="camera-msg error" role="alert">{{ cameraError() }}</p>
+      }
+    </div>
+  </div>
+}
 
 <!-- Full-screen viewer: buttons, swipe left/right, and Esc / arrow keys. -->
 @if (viewerPhoto(); as photo) {

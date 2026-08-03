@@ -137,6 +137,18 @@
   cursor: progress;
 }
 
+/* "Web photo" sits next to the filled "Add photo" as its outlined pair: the
+   same shape and weight, visibly the secondary of the two. */
+.cam {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.cam:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
 /* Icons inherit the text colour, so they suit both the blue and dark buttons. */
 .ico {
   width: 1.05em;
@@ -290,6 +302,74 @@
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
+}
+
+/* ---------- webcam capture ---------- */
+
+/* Reuses the viewer's chrome — same backdrop, header and footer panels — so
+   capturing and browsing feel like the same screen. */
+.viewer.camera .stage {
+  /* Column so the "starting" message sits under the (still empty) video rather
+     than beside it. */
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.camera-pick {
+  flex: none;
+  width: auto;
+  max-width: 40%;
+  min-height: 34px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+/* The dropdown list itself is drawn by the OS, which does not inherit the
+   translucent panel colours — keep its options readable. */
+.camera-pick option {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.camera-msg {
+  margin: 0;
+  max-width: 34rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* The copy below the controls is a flex child of the dialog column, which would
+   otherwise stretch it to the full width. */
+.viewer.camera > .camera-msg {
+  align-self: center;
+}
+
+.camera-msg.starting {
+  background: none;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.camera-msg.error {
+  border: 1px solid var(--danger);
+}
+
+/* The confirming action — take, then use — is the filled one. */
+.viewer.camera > footer .use {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.viewer.camera > footer .use:hover:not(:disabled) {
+  background: var(--accent-dark);
 }
 
 @media (max-width: 480px) {

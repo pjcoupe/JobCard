@@ -625,5 +625,8 @@ browser's print dialog with an A4 stylesheet) and SMTP email. Xero **is** ported
 now — see the Xero section above.
 
 Photos *are* supported — see above — but capture works differently: instead of
-driving a DirectShow webcam, the browser's file input with `capture="environment"`
-opens the phone camera or a desktop file picker.
+driving a DirectShow webcam, the file input with `capture="environment"` opens the
+phone camera or a desktop file picker ("Add photo"), and "Web photo" captures from
+an attached webcam through the browser's `getUserMedia`. The latter needs an HTTPS
+address — browsers refuse camera access otherwise — so on the desk PCs it works
+only once Caddy is in front (see "HTTPS and internet access" above).

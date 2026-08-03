@@ -134,6 +134,15 @@ the panel explains that the share is unreachable and everything else still works
 - **Add photo** is a `<input type="file" accept="image/*,video/*" capture="environment" multiple>`
   wrapped in a styled label — on a phone it opens the camera, on a desktop the
   file picker. Multiple files upload in sequence.
+- **Web photo** drives an attached webcam through `getUserMedia`, for the desk
+  PCs whose file picker has no camera behind it: a live preview, "Take photo" to
+  freeze the frame, then "Use photo" or "Retake". The still is drawn to a canvas
+  at the camera's own resolution and uploaded as JPEG down the same path as a
+  picked file, so naming, the Mongo backup and duplicate detection are identical.
+  A camera dropdown appears only when the machine reports more than one.
+  Browsers only grant camera access in a secure context, so on a plain
+  `http://host:4200` address the dialog says so and points at **Add photo** —
+  see "HTTPS and internet access" in `webappNode/README.md`.
 - Tapping a tile opens a full-screen viewer with prev/next and delete, the
   equivalent of the desktop `PictureViewer` dialog (which also deleted on
   right-click).

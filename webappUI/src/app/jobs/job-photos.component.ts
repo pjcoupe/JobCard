@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
+  ElementRef,
   HostListener,
   computed,
   effect,
@@ -9,6 +10,7 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import type { JobPhoto } from 'webapp-shared';
 import { PhotoService } from '../core/photo.service';
@@ -34,15 +36,25 @@ const INLINE_THUMBNAILS = 2;
 const SWIPE_THRESHOLD = 45;
 
 /**
+ * JPEG quality for webcam captures. High enough that the result is
+ * indistinguishable from the camera's own output, without writing a needlessly
+ * large file to the share for every shot.
+ */
+const CAPTURE_QUALITY = 0.92;
+
+/**
  * Photos for a job, presented as a compact cell inside the job's main details
- * card: a couple of thumbnails, "Show all", and "Add photo". Everything else
- * happens in the full-screen viewer, which supports buttons, swipes and the
- * keyboard.
+ * card: a couple of thumbnails, "Show all", "Add photo" and "Web photo".
+ * Everything else happens in the full-screen viewer, which supports buttons,
+ * swipes and the keyboard.
  *
  * The desktop app showed a fixed picture box in the form's top-right corner and
  * captured from a DirectShow webcam. Here the backend serves the same shared
- * drive, and "Add photo" is a file input with `capture="environment"`, which
- * opens the camera on a phone and a file picker on a desktop.
+ * drive, and there are two ways in: "Add photo" is a file input with
+ * `capture="environment"`, which opens the camera on a phone and a file picker
+ * on a desktop; "Web photo" drives an attached webcam through getUserMedia,
+ * which is what the desk PCs need. Both end up in `uploadFiles`, so a capture
+ * is stored, named, backed up and listed exactly like a picked file.
  */
 @Component({
   selector: 'app-job-photos',
@@ -66,6 +78,26 @@ export class JobPhotosComponent {
 
   /** Index of the photo open in the viewer, or null when it is closed. */
   readonly viewerIndex = signal<number | null>(null);
+
+  // ---------- webcam capture ----------
+
+  /** Only queried while the camera dialog is open, so this is a signal. */
+  private readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('cameraVideo');
+
+  readonly cameraOpen = signal(false);
+  readonly cameraStarting = signal(false);
+  readonly cameraError = signal<string | null>(null);
+  /** The captured still, held until it is uploaded or retaken. */
+  readonly capturedUrl = signal<string | null>(null);
+
+  private readonly stream = signal<MediaStream | null>(null);
+  private captured: Blob | null = null;
+
+  /** Video inputs, listed only once permission is granted (labels need it). */
+  readonly cameras = signal<MediaDeviceInfo[]>([]);
+  readonly cameraId = signal<string | null>(null);
+
+  readonly cameraLive = computed(() => this.stream() !== null && this.capturedUrl() === null);
 
   readonly count = computed(() => this.loaded().length);
 
@@ -91,10 +123,32 @@ export class JobPhotosComponent {
     // time it stored a photo and loop forever.
     effect(() => {
       const jobId = this.jobId();
-      untracked(() => void this.load(jobId));
+      untracked(() => {
+        // Never leave a camera open across jobs: the capture would be filed
+        // against whichever job is now on screen.
+        this.closeCamera();
+        void this.load(jobId);
+      });
     });
 
-    this.destroyRef.onDestroy(() => this.releaseAll());
+    // The <video> only exists while the dialog is open, so the stream is
+    // attached here rather than at the point getUserMedia resolves: this reruns
+    // as soon as the element appears, whichever happens first.
+    effect(() => {
+      const element = this.videoEl()?.nativeElement;
+      const stream = this.stream();
+      if (!element || !stream || element.srcObject === stream) return;
+      element.srcObject = stream;
+      // Autoplay is already on the element; this covers browsers that need the
+      // explicit nudge after a late srcObject assignment.
+      void element.play().catch(() => undefined);
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.releaseAll();
+      this.stopStream();
+      this.releaseCapture();
+    });
   }
 
   private releaseAll(): void {
@@ -162,13 +216,24 @@ export class JobPhotosComponent {
     // Clear the input so picking the same file again still fires a change event.
     input.value = '';
     if (files.length === 0) return;
+    await this.uploadFiles(files);
+  }
 
+  /**
+   * Upload files and report what happened, shared by the file picker and the
+   * webcam. Returns false if any upload failed, so the caller can keep its own
+   * UI open rather than dismissing it over an error the user cannot see.
+   */
+  private async uploadFiles(files: File[]): Promise<boolean> {
     this.uploading.set(true);
     this.error.set(null);
     this.notice.set(null);
     let added = 0;
     let duplicates = 0;
     let backupMisses = 0;
+    // Held rather than shown straight away: the reload below starts by clearing
+    // `error`, so an upload failure set here would be wiped before it was read.
+    let failure: string | null = null;
 
     try {
       for (const file of files) {
@@ -181,7 +246,7 @@ export class JobPhotosComponent {
             if (!result.backedUp) backupMisses++;
           }
         } catch (err) {
-          this.error.set(describeError(err, `Could not upload ${file.name}.`));
+          failure = describeError(err, `Could not upload ${file.name}.`);
           break;
         }
       }
@@ -199,9 +264,171 @@ export class JobPhotosComponent {
         this.notice.set(notice);
       }
       await this.load(this.jobId());
+      // Takes precedence over anything the reload reported: a photo that did not
+      // upload is the more useful thing to say.
+      if (failure) this.error.set(failure);
     } finally {
       this.uploading.set(false);
     }
+    return failure === null;
+  }
+
+  // ---------- webcam capture ----------
+
+  /**
+   * Open the camera dialog and start the preview. Anything that goes wrong is
+   * reported inside the dialog: the commonest cause by far is the app being
+   * reached over plain HTTP, which browsers block outright, and the fix ("use
+   * Add photo", or put it behind HTTPS) is worth spelling out.
+   */
+  async openCamera(): Promise<void> {
+    if (this.uploading()) return;
+    this.dismissMessages();
+    this.cameraOpen.set(true);
+    this.cameraError.set(null);
+    await this.startStream(this.cameraId());
+  }
+
+  private async startStream(deviceId: string | null): Promise<void> {
+    this.stopStream();
+    this.releaseCapture();
+    this.cameraStarting.set(true);
+    this.cameraError.set(null);
+    try {
+      if (!window.isSecureContext) {
+        throw new Error(
+          'The browser only allows camera access over an HTTPS address. Use "Add photo" instead, or see the HTTPS section of the setup notes.'
+        );
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('This browser cannot use the camera. Use "Add photo" instead.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        // A specific camera once one has been chosen, otherwise whichever the
+        // browser considers the default.
+        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        audio: false,
+      });
+      if (!this.cameraOpen()) {
+        // Closed while the permission prompt was up.
+        stopTracks(stream);
+        return;
+      }
+      this.stream.set(stream);
+      this.cameraId.set(stream.getVideoTracks()[0]?.getSettings().deviceId ?? deviceId);
+      await this.listCameras();
+    } catch (err) {
+      this.cameraError.set(describeCameraError(err));
+    } finally {
+      this.cameraStarting.set(false);
+    }
+  }
+
+  /** Labels are only populated once permission has been granted, so list late. */
+  private async listCameras(): Promise<void> {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      this.cameras.set(devices.filter((device) => device.kind === 'videoinput'));
+    } catch {
+      this.cameras.set([]);
+    }
+  }
+
+  cameraLabel(device: MediaDeviceInfo, index: number): string {
+    return device.label || `Camera ${index + 1}`;
+  }
+
+  async onCameraChange(event: Event): Promise<void> {
+    const deviceId = (event.target as HTMLSelectElement).value;
+    await this.startStream(deviceId || null);
+  }
+
+  /** Freeze the current frame at the camera's own resolution. */
+  async takePhoto(): Promise<void> {
+    const video = this.videoEl()?.nativeElement;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      this.cameraError.set('The camera is not ready yet. Try again in a moment.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      this.cameraError.set('This browser could not process the captured frame.');
+      return;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', CAPTURE_QUALITY)
+    );
+    if (!blob) {
+      this.cameraError.set('The photo could not be captured. Try again.');
+      return;
+    }
+
+    // The stream is deliberately left running behind the still, so "Retake" is
+    // instant and does not re-trigger a permission prompt.
+    this.releaseCapture();
+    this.captured = blob;
+    this.capturedUrl.set(URL.createObjectURL(blob));
+    this.cameraError.set(null);
+  }
+
+  retake(): void {
+    this.releaseCapture();
+    this.cameraError.set(null);
+  }
+
+  /** Upload the frozen frame down the same path as a picked file. */
+  async usePhoto(): Promise<void> {
+    const blob = this.captured;
+    if (!blob || this.uploading()) return;
+
+    // The server generates the real filename from the job; this one only ever
+    // appears in an error message.
+    const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' });
+    const ok = await this.uploadFiles([file]);
+    if (ok) {
+      this.closeCamera();
+      return;
+    }
+    // Keep the still so it can be retried, and move the message inside the
+    // dialog, which is covering the field-level one.
+    this.cameraError.set(this.error() ?? 'The photo could not be uploaded.');
+    this.error.set(null);
+  }
+
+  closeCamera(): void {
+    this.stopStream();
+    this.releaseCapture();
+    this.cameraOpen.set(false);
+    this.cameraStarting.set(false);
+    this.cameraError.set(null);
+  }
+
+  onCameraBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget && !this.uploading()) {
+      this.closeCamera();
+    }
+  }
+
+  /** Releasing the tracks is what turns the camera's indicator light off. */
+  private stopStream(): void {
+    const stream = this.stream();
+    if (stream) {
+      stopTracks(stream);
+      this.stream.set(null);
+    }
+  }
+
+  private releaseCapture(): void {
+    this.photos.releaseObjectUrl(this.capturedUrl());
+    this.capturedUrl.set(null);
+    this.captured = null;
   }
 
   // ---------- viewer ----------
@@ -298,6 +525,14 @@ export class JobPhotosComponent {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
+    // The camera dialog sits above the viewer, so it gets Escape first.
+    if (this.cameraOpen()) {
+      if (event.key === 'Escape' && !this.uploading()) {
+        this.closeCamera();
+        event.preventDefault();
+      }
+      return;
+    }
     if (this.viewerIndex() == null) return;
     switch (event.key) {
       case 'Escape':
@@ -354,6 +589,36 @@ export class JobPhotosComponent {
     if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} kB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
+}
+
+function stopTracks(stream: MediaStream): void {
+  for (const track of stream.getTracks()) {
+    track.stop();
+  }
+}
+
+/**
+ * Turn a getUserMedia rejection into something actionable. The DOMException
+ * names are the browser's own, and each has a different fix.
+ */
+function describeCameraError(err: unknown): string {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case 'NotAllowedError':
+      case 'SecurityError':
+        return 'Camera access was blocked. Allow it for this site in the browser (the icon in the address bar), then try again.';
+      case 'NotFoundError':
+      case 'OverconstrainedError':
+        return 'No camera was found on this machine.';
+      case 'NotReadableError':
+      case 'AbortError':
+        return 'The camera could not be started — another program may be using it.';
+      default:
+        return `The camera could not be started (${err.name}).`;
+    }
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return 'The camera could not be started.';
 }
 
 function describeError(err: unknown, fallback: string): string {
