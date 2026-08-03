@@ -11,6 +11,7 @@ import {
   RECEIVED_FROM_OPTIONS,
   TAX_LABEL,
   addDays,
+  addPlatingType,
   applyLine,
   calculateTotals,
   fromDateInputValue,
@@ -26,6 +27,7 @@ import {
   type JobTypeOption,
   type XeroSentInvoice,
 } from 'webapp-shared';
+import { AuthService } from '../core/auth.service';
 import { JobService } from '../core/job.service';
 import { XeroService } from '../core/xero.service';
 import { AppBarComponent } from '../shared/app-bar.component';
@@ -65,7 +67,11 @@ export class JobCardComponent {
   private readonly router = inject(Router);
   private readonly jobs = inject(JobService);
   private readonly xero = inject(XeroService);
+  private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+
+  /** Plating lines take several processes each; wheel lines take one. */
+  readonly isPlating = computed(() => this.auth.database() === 'plating');
 
   readonly receivedFromOptions = RECEIVED_FROM_OPTIONS;
   readonly paymentByOptions = PAYMENT_BY_OPTIONS;
@@ -432,21 +438,34 @@ export class JobCardComponent {
   }
 
   /**
-   * Apply a picked job type. Matches the desktop popup: the group name becomes
-   * the detail, the caption becomes the type, the quantity steps up by one and
-   * the line total is quantity x unit price.
+   * Apply a picked job type, which the two businesses do differently — see
+   * doCheckChange in JobTypePopup.cs.
+   *
+   * Wheel: one type per line. The group name becomes the detail, the caption
+   * becomes the type, the quantity steps up by one and the line total is
+   * quantity x unit price.
+   *
+   * Plating: one line holds the whole sequence of processes, so the pick is
+   * added to the type field ("Strip, Polish, (2x)Nickle") and nothing else on
+   * the line is touched — detail, quantity and price all describe the items
+   * being plated, not the processes, and are filled in by hand.
    */
   applyPickedType(option: JobTypeOption): void {
     const key = this.pickerForKey();
     if (!key) return;
+    const plating = this.isPlating();
+
     this.lines.update((lines) =>
       lines.map((line) => {
         if (line.key !== key) return line;
+        if (plating) {
+          return { ...line, type: addPlatingType(line.type, option.label) };
+        }
         const sameType = line.type === option.label;
         const qty = sameType ? (line.qty ?? 0) + 1 : 1;
         return {
           ...line,
-          detail: option.detail,
+          detail: option.detail ?? line.detail,
           type: option.label,
           qty,
           unitPrice: option.price,
@@ -454,8 +473,24 @@ export class JobCardComponent {
         };
       })
     );
-    this.pickerForKey.set(null);
+    // Wheel picks one thing and is done. Plating almost always adds several
+    // processes at once, so the sheet stays open until it is dismissed.
+    if (!plating) this.pickerForKey.set(null);
     this.bump();
+  }
+
+  /** Type field of the line the picker is filling, for its running summary. */
+  readonly pickerLineTypes = computed(() => {
+    this.formVersion();
+    const key = this.pickerForKey();
+    if (!key) return '';
+    return this.lines().find((l) => l.key === key)?.type ?? '';
+  });
+
+  /** The picker's CLEAR button — empties the whole line, as ClearClicked does. */
+  clearPickerLine(): void {
+    const key = this.pickerForKey();
+    if (key) this.clearLine(key);
   }
 
   /**

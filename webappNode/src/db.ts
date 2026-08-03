@@ -1,13 +1,22 @@
 import { MongoClient, type Collection, type Db } from 'mongodb';
+import { JOB_DATABASES, type JobDatabase } from 'webapp-shared';
 import { config } from './config.js';
 
 /**
- * Collections mirror DataAccess.connectMongoDb(): the wheel app uses the
- * "wheel" database for jobs/pricing/fussy customers and a separate "settings"
- * database for shared settings and sent Xero invoices.
+ * Collections mirror DataAccess.connectMongoDb().
+ *
+ * There are two job databases — "wheel" and "plating" — and each session works
+ * against exactly one of them, chosen at sign-in and carried by the session
+ * token (see auth.ts). Every accessor below therefore takes that choice as an
+ * argument: making it a parameter rather than ambient state means the compiler
+ * catches a caller that has not thought about which business it is reading, and
+ * there is no request-scoped global to leak from one request into the next.
+ *
+ * The "settings" database is shared by both, exactly as it is on the desktop:
+ * shared settings and sent Xero invoices live there regardless of mode.
  */
 let client: MongoClient | null = null;
-let jobDb: Db | null = null;
+const jobDbs = new Map<JobDatabase, Db>();
 let settingsDb: Db | null = null;
 
 export async function connect(): Promise<void> {
@@ -17,20 +26,54 @@ export async function connect(): Promise<void> {
     serverSelectionTimeoutMS: 15000,
   });
   await client.connect();
-  jobDb = client.db(config.mongoDb);
+  for (const name of JOB_DATABASES) {
+    jobDbs.set(name, client.db(config.jobDatabases[name]));
+  }
   settingsDb = client.db(config.mongoSettingsDb);
   // Fail fast if the server is unreachable rather than on the first request.
-  await jobDb.command({ ping: 1 });
+  await requireJobDb('wheel').command({ ping: 1 });
 
-  // Best-effort: these indexes make per-job and per-file photo backup lookups
-  // fast, but their absence should never stop the server from starting.
+  // Only touch databases that already exist. createIndex would otherwise bring
+  // an absent one into being — a deployment that runs plating only should not
+  // end up with an empty "wheel" database next to it, and vice versa. A missing
+  // database still works if someone signs in to it; it just starts unindexed.
+  let existing: string[] = [];
   try {
-    await jobDb.collection('jobPictures').createIndex({ jobId: 1 });
+    const listed = await client.db().admin().listDatabases({ nameOnly: true });
+    existing = listed.databases.map((d) => d.name);
+  } catch (err) {
+    console.warn('[db] could not list databases, skipping index checks:', err);
+    return;
+  }
+
+  for (const name of JOB_DATABASES) {
+    const dbName = config.jobDatabases[name];
+    if (!existing.includes(dbName)) {
+      console.warn(
+        `[db] the "${dbName}" database does not exist on this server. Signing in as ` +
+          `"${name}" will create it on the first save.`
+      );
+      continue;
+    }
+    await ensureJobIndexes(requireJobDb(name), dbName);
+  }
+}
+
+/**
+ * Indexes the web app needs, created per job database.
+ *
+ * Best-effort throughout: their absence makes queries slower, never wrong, and
+ * must not stop the server from starting.
+ */
+async function ensureJobIndexes(db: Db, label: string): Promise<void> {
+  // These make per-job and per-file photo backup lookups fast.
+  try {
+    await db.collection('jobPictures').createIndex({ jobId: 1 });
     // Exact-match lookups by filename (serving a thumbnail/full variant, and
     // checking whether a file is already backed up) go through this one.
-    await jobDb.collection('jobPictures').createIndex({ jobId: 1, name: 1 });
+    await db.collection('jobPictures').createIndex({ jobId: 1, name: 1 });
   } catch (err) {
-    console.warn('[db] could not ensure the jobPictures indexes:', err);
+    console.warn(`[db] could not ensure the ${label} jobPictures indexes:`, err);
   }
 
   // The job list sorts on these. Without them the "Completed jobs" and "Unpaid
@@ -43,13 +86,13 @@ export async function connect(): Promise<void> {
   // "Incomplete" and "All"/latest sort on jobDate and jobID, which existing
   // compound indexes can walk. Verified with explain() — see README.
   try {
-    await jobDb.collection('jobCard').createIndex({ jobDateCompleted: -1 });
-    await jobDb.collection('jobCard').createIndex({ jobDatePaid: 1, jobDateCompleted: -1 });
+    await db.collection('jobCard').createIndex({ jobDateCompleted: -1 });
+    await db.collection('jobCard').createIndex({ jobDatePaid: 1, jobDateCompleted: -1 });
   } catch (err) {
-    console.warn('[db] could not ensure the jobCard list indexes:', err);
+    console.warn(`[db] could not ensure the ${label} jobCard list indexes:`, err);
   }
 
-  await ensureJobIdIndex(jobDb);
+  await ensureJobIdIndex(db, label);
 }
 
 /**
@@ -69,7 +112,7 @@ export async function connect(): Promise<void> {
  * years of production data may well do. That has to be checked before it can be
  * changed; see README.
  */
-async function ensureJobIdIndex(db: Db): Promise<void> {
+async function ensureJobIdIndex(db: Db, label: string): Promise<void> {
   try {
     await db.collection('jobCard').createIndex({ jobID: 1 });
   } catch (err) {
@@ -78,20 +121,21 @@ async function ensureJobIdIndex(db: Db): Promise<void> {
     // Treat that as success rather than warning about it on every boot.
     const code = (err as { code?: number }).code;
     if (code === 85 || code === 86) return;
-    console.warn('[db] could not ensure the jobCard jobID index:', err);
+    console.warn(`[db] could not ensure the ${label} jobCard jobID index:`, err);
   }
 }
 
 export async function disconnect(): Promise<void> {
   await client?.close();
   client = null;
-  jobDb = null;
+  jobDbs.clear();
   settingsDb = null;
 }
 
-function requireJobDb(): Db {
-  if (!jobDb) throw new Error('Database not connected');
-  return jobDb;
+function requireJobDb(database: JobDatabase): Db {
+  const db = jobDbs.get(database);
+  if (!db) throw new Error('Database not connected');
+  return db;
 }
 
 function requireSettingsDb(): Db {
@@ -99,34 +143,36 @@ function requireSettingsDb(): Db {
   return settingsDb;
 }
 
-export function jobCards(): Collection {
-  return requireJobDb().collection('jobCard');
+export function jobCards(database: JobDatabase): Collection {
+  return requireJobDb(database).collection('jobCard');
 }
 
-export function pricing(): Collection {
-  return requireJobDb().collection('pricing');
+export function pricing(database: JobDatabase): Collection {
+  return requireJobDb(database).collection('pricing');
 }
 
-export function fussyCustomers(): Collection {
-  return requireJobDb().collection('fussyCustomer');
+export function fussyCustomers(database: JobDatabase): Collection {
+  return requireJobDb(database).collection('fussyCustomer');
 }
 
 /**
  * Compressed photo backups: two documents per photo (a full copy and a
  * 250px-wide thumbnail), { jobId, name, contentHash, isThumbnail, base64Image }.
  * See photo-backup.ts and photo-backup-sync.ts. Deliberately a separate
- * collection rather than a field on jobCard — the desktop app's MongoDB
- * driver throws on unmapped fields, so this keeps it completely invisible and
- * safe to it.
+ * collection rather than fields on jobCard: base64 image data has no business
+ * bloating every job document, and a collection the desktop app never queries
+ * cannot affect it at all.
  */
-export function jobPictures(): Collection {
-  return requireJobDb().collection('jobPictures');
+export function jobPictures(database: JobDatabase): Collection {
+  return requireJobDb(database).collection('jobPictures');
 }
 
+/** Shared by both businesses — not per-database. */
 export function settings(): Collection {
   return requireSettingsDb().collection('settings');
 }
 
+/** Shared by both businesses — not per-database. See xero-invoices.ts. */
 export function sentInvoices(): Collection {
   return requireSettingsDb().collection('sentInvoices');
 }

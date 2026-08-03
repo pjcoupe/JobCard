@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { requireAuth } from './auth.js';
-import { config } from './config.js';
+import { config, redactMongoUrl } from './config.js';
 import { connect, disconnect } from './db.js';
 import { mappedDriveWarning, status as photoStatus } from './photo-store.js';
 import { authRouter } from './routes/auth.js';
@@ -31,7 +31,13 @@ app.use(
 );
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', database: config.mongoDb, mode: 'wheel' });
+  res.json({
+    status: 'ok',
+    // Both businesses are served by one deployment; which one a request reads is
+    // decided by the session token, not by the server. See src/databases.ts.
+    databases: config.jobDatabases,
+    settingsDatabase: config.mongoSettingsDb,
+  });
 });
 
 app.use('/api/auth', authRouter);
@@ -62,11 +68,16 @@ async function main(): Promise<void> {
   // is genuinely a database problem. Anything else must not be reported as one.
   try {
     await connect();
-    console.log(`[api] connected to ${config.mongoUrl} database "${config.mongoDb}"`);
+    const names = Object.values(config.jobDatabases).join('", "');
+    console.log(
+      `[api] connected to ${redactMongoUrl(config.mongoUrl)} — job databases "${names}", ` +
+        `settings "${config.mongoSettingsDb}"`
+    );
   } catch (err) {
     console.error(
-      `[api] cannot reach MongoDB at ${config.mongoUrl}. ` +
-        'Start mongod or set MONGO_URL, then restart.',
+      `[api] cannot reach MongoDB at ${redactMongoUrl(config.mongoUrl)}. ` +
+        'Start mongod, or point the app somewhere else with mongoIP=<host> ' +
+        '(see webappNode/README.md), then restart.',
       err
     );
     process.exit(1);

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { JOB_DATABASES, jobDatabaseLabel, type JobDatabase } from 'webapp-shared';
 import { AuthService } from '../core/auth.service';
 
 @Component({
@@ -15,8 +16,16 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  /** The two businesses, in a fixed order so the radios never move about. */
+  readonly databases = JOB_DATABASES.map((value) => ({
+    value,
+    label: jobDatabaseLabel(value),
+  }));
+
   readonly username = signal('');
   readonly password = signal('');
+  /** Starts on whichever business was used last on this device. */
+  readonly database = signal<JobDatabase>(this.auth.database());
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
@@ -34,7 +43,7 @@ export class LoginComponent {
 
     this.busy.set(true);
     try {
-      await this.auth.login(username, password);
+      await this.auth.login(username, password, this.database());
       // Correct credentials go straight through to the job list.
       const returnTo = new URLSearchParams(window.location.search).get('returnTo');
       await this.router.navigateByUrl(returnTo && returnTo.startsWith('/') ? returnTo : '/jobs');

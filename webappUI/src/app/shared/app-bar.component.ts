@@ -19,7 +19,12 @@ import { AuthService } from '../core/auth.service';
         </a>
       }
       <div class="titles">
-        <span class="title">{{ title() }}</span>
+        <span class="title-line">
+          <span class="title">{{ title() }}</span>
+          <!-- Which business this session is in. Always visible: the two look
+               identical otherwise, and a job number exists in both. -->
+          <span class="db-chip">{{ auth.databaseLabel() }}</span>
+        </span>
         @if (subtitle()) {
           <span class="subtitle">{{ subtitle() }}</span>
         }
@@ -71,11 +76,31 @@ import { AuthService } from '../core/auth.service';
       line-height: 1.2;
     }
 
+    .title-line {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
+    }
+
     .title {
       font-weight: 700;
       font-size: 1.02rem;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .db-chip {
+      flex: none;
+      padding: 0.05rem 0.4rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       white-space: nowrap;
     }
 

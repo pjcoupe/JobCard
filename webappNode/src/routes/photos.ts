@@ -2,7 +2,8 @@ import { createReadStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { Router, type Request, type Response } from 'express';
 import type { ObjectId } from 'mongodb';
-import { isVideoFilename, toLines, type JobCardDoc } from 'webapp-shared';
+import { isVideoFilename, toLines, type JobCardDoc, type JobDatabase } from 'webapp-shared';
+import { sessionDb } from '../auth.js';
 import { config } from '../config.js';
 import { jobCards, jobPictures } from '../db.js';
 import { ensureBackupForFile, ensureBackupsForJob } from '../photo-backup-sync.js';
@@ -70,10 +71,12 @@ function sniffImageContentType(buffer: Buffer): string {
 }
 
 /** Load the job so photos can be filed under its date and named after it. */
-async function loadJob(jobIdRaw: string): Promise<JobCardDoc | null> {
+async function loadJob(database: JobDatabase, jobIdRaw: string): Promise<JobCardDoc | null> {
   const jobId = Number(jobIdRaw);
   if (!Number.isFinite(jobId)) return null;
-  return (await jobCards().findOne({ jobID: Math.trunc(jobId) })) as unknown as JobCardDoc | null;
+  return (await jobCards(database).findOne({
+    jobID: Math.trunc(jobId),
+  })) as unknown as JobCardDoc | null;
 }
 
 function jobDateOf(job: JobCardDoc): Date | null {
@@ -111,7 +114,8 @@ photosRouter.get('/status', async (_req: Request, res: Response) => {
  * after that fast, since the check is a no-op once backed up.
  */
 photosRouter.get('/jobs/:jobID', async (req: Request, res: Response) => {
-  const job = await loadJob(req.params.jobID);
+  const database = sessionDb(req);
+  const job = await loadJob(database, req.params.jobID);
   if (!job) {
     res.status(404).json({ error: 'Job not found' });
     return;
@@ -120,7 +124,7 @@ photosRouter.get('/jobs/:jobID', async (req: Request, res: Response) => {
   const result = await listForJob(job.jobID, jobDate);
   if (config.photoBackupEnabled && result.available) {
     try {
-      await ensureBackupsForJob(job._id as unknown as ObjectId, job.jobID, jobDate);
+      await ensureBackupsForJob(database, job._id as unknown as ObjectId, job.jobID, jobDate);
     } catch (err) {
       console.warn(`[photos] repair pass failed for job ${job.jobID}:`, err);
     }
@@ -139,7 +143,8 @@ photosRouter.get('/jobs/:jobID', async (req: Request, res: Response) => {
  * back to the share file, self-healing a still image at the same time.
  */
 photosRouter.get('/jobs/:jobID/:name', async (req: Request, res: Response) => {
-  const job = await loadJob(req.params.jobID);
+  const database = sessionDb(req);
+  const job = await loadJob(database, req.params.jobID);
   if (!job) {
     res.status(404).json({ error: 'Job not found' });
     return;
@@ -149,7 +154,7 @@ photosRouter.get('/jobs/:jobID/:name', async (req: Request, res: Response) => {
   const name = req.params.name;
 
   if (config.photoBackupEnabled) {
-    const doc = await jobPictures().findOne({ jobId, name, isThumbnail: wantsThumbnail });
+    const doc = await jobPictures(database).findOne({ jobId, name, isThumbnail: wantsThumbnail });
     if (doc) {
       const bytes = Buffer.from(doc.base64Image as string, 'base64');
       res.setHeader('Content-Type', sniffImageContentType(bytes));
@@ -168,7 +173,7 @@ photosRouter.get('/jobs/:jobID/:name', async (req: Request, res: Response) => {
   // Self-heal: this still image had no Mongo backup at all for the requested
   // variant. Best-effort, and must never delay or break serving the file.
   if (config.photoBackupEnabled && !resolved.isVideo) {
-    ensureBackupForFile(jobId, name, () => readFile(resolved.path)).catch((err) => {
+    ensureBackupForFile(database, jobId, name, () => readFile(resolved.path)).catch((err) => {
       console.warn(`[photos] on-demand backup failed for "${name}":`, err);
     });
   }
@@ -194,7 +199,8 @@ photosRouter.get('/jobs/:jobID/:name', async (req: Request, res: Response) => {
  * app names its captures, so files stay consistent between the two apps.
  */
 photosRouter.post('/jobs/:jobID', async (req: Request, res: Response) => {
-  const job = await loadJob(req.params.jobID);
+  const database = sessionDb(req);
+  const job = await loadJob(database, req.params.jobID);
   if (!job) {
     res.status(404).json({ error: 'Job not found' });
     return;
@@ -241,7 +247,12 @@ photosRouter.post('/jobs/:jobID', async (req: Request, res: Response) => {
   let backedUp = false;
   if (config.photoBackupEnabled && !result.duplicateOf && !isVideoFilename(result.photo.name)) {
     try {
-      await ensureBackupForFile(job._id as unknown as ObjectId, result.photo.name, async () => body);
+      await ensureBackupForFile(
+        database,
+        job._id as unknown as ObjectId,
+        result.photo.name,
+        async () => body
+      );
       backedUp = true;
     } catch (err) {
       console.warn(`[photos] backup failed for job ${job.jobID}:`, err);
@@ -257,7 +268,8 @@ photosRouter.post('/jobs/:jobID', async (req: Request, res: Response) => {
 
 /** DELETE /api/photos/jobs/:jobID/:name */
 photosRouter.delete('/jobs/:jobID/:name', async (req: Request, res: Response) => {
-  const job = await loadJob(req.params.jobID);
+  const database = sessionDb(req);
+  const job = await loadJob(database, req.params.jobID);
   if (!job) {
     res.status(404).json({ error: 'Job not found' });
     return;
@@ -273,7 +285,7 @@ photosRouter.delete('/jobs/:jobID/:name', async (req: Request, res: Response) =>
   // which is what the user is watching for, so a failure here is logged
   // rather than surfaced as an error.
   try {
-    await jobPictures().deleteMany({
+    await jobPictures(database).deleteMany({
       jobId: job._id as unknown as ObjectId,
       name: req.params.name,
     });

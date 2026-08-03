@@ -9,8 +9,10 @@ import {
   numberedLineFields,
   toLines,
   type JobCardDoc,
+  type JobDatabase,
   type JobListItem,
 } from 'webapp-shared';
+import { sessionDb } from '../auth.js';
 import { jobCards, jobPictures } from '../db.js';
 import { buildUpdate, COMPUTED_FIELDS } from '../job-fields.js';
 
@@ -121,6 +123,7 @@ function toListItem(doc: JobCardDoc): JobListItem {
 
 /** GET /api/jobs — saved views plus single-field search, paginated. */
 jobsRouter.get('/', async (req: Request, res: Response) => {
+  const database = sessionDb(req);
   const view = String(req.query.view ?? 'incomplete');
   const field = req.query.field ? String(req.query.field) : '';
   const q = req.query.q ? String(req.query.q).trim() : '';
@@ -158,7 +161,7 @@ jobsRouter.get('/', async (req: Request, res: Response) => {
     }
   }
 
-  const collection = jobCards();
+  const collection = jobCards(database);
   const [docs, total] = await Promise.all([
     collection
       .find(filter)
@@ -179,8 +182,8 @@ jobsRouter.get('/', async (req: Request, res: Response) => {
 });
 
 /** GET /api/jobs/latest — the highest job number, as the desktop opens on. */
-jobsRouter.get('/latest', async (_req: Request, res: Response) => {
-  const doc = await jobCards().find({}).sort({ jobID: -1 }).limit(1).next();
+jobsRouter.get('/latest', async (req: Request, res: Response) => {
+  const doc = await jobCards(sessionDb(req)).find({}).sort({ jobID: -1 }).limit(1).next();
   if (!doc) {
     res.status(404).json({ error: 'No jobs found' });
     return;
@@ -195,7 +198,7 @@ jobsRouter.get('/:jobID', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid job number' });
     return;
   }
-  const doc = await jobCards().findOne({ jobID: Math.trunc(jobID) });
+  const doc = await jobCards(sessionDb(req)).findOne({ jobID: Math.trunc(jobID) });
   if (!doc) {
     res.status(404).json({ error: `Job ${jobID} not found` });
     return;
@@ -210,7 +213,7 @@ jobsRouter.get('/:jobID/neighbours', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid job number' });
     return;
   }
-  const collection = jobCards();
+  const collection = jobCards(sessionDb(req));
   const [prev, next] = await Promise.all([
     collection.find({ jobID: { $lt: jobID } }).sort({ jobID: -1 }).limit(1).next(),
     collection.find({ jobID: { $gt: jobID } }).sort({ jobID: 1 }).limit(1).next(),
@@ -225,8 +228,11 @@ jobsRouter.get('/:jobID/neighbours', async (req: Request, res: Response) => {
  * Allocate the next job number. The desktop app reads the highest jobID and
  * adds one; a unique index on jobID means a racing insert fails, so retry.
  */
-async function insertWithNextJobId(base: Partial<JobCardDoc>): Promise<JobCardDoc> {
-  const collection = jobCards();
+async function insertWithNextJobId(
+  database: JobDatabase,
+  base: Partial<JobCardDoc>
+): Promise<JobCardDoc> {
+  const collection = jobCards(database);
   let lastError: unknown = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     const highest = await collection.find({}).sort({ jobID: -1 }).limit(1).next();
@@ -248,14 +254,24 @@ async function insertWithNextJobId(base: Partial<JobCardDoc>): Promise<JobCardDo
 }
 
 /**
+ * The notes a new job starts with. DisclaimerNoteAsync only appends the wheel
+ * disclaimer when isWheelApp() is true, so a plating job starts with empty
+ * notes — its disclaimer is printed on the docket instead of stored per job.
+ */
+function startingNotes(database: JobDatabase): string | null {
+  return database === 'wheel' ? WHEEL_DISCLAIMER_NOTE : null;
+}
+
+/**
  * POST /api/jobs — new job.
  * Mirrors btnNewJob_Click: next job number, today's date, and (wheel mode only)
  * the wheel disclaimer pre-filled into notes.
  */
-jobsRouter.post('/', async (_req: Request, res: Response) => {
-  const job = await insertWithNextJobId({
+jobsRouter.post('/', async (req: Request, res: Response) => {
+  const database = sessionDb(req);
+  const job = await insertWithNextJobId(database, {
     jobDate: new Date(),
-    jobNotes: WHEEL_DISCLAIMER_NOTE,
+    jobNotes: startingNotes(database),
   });
   res.status(201).json({ job });
 });
@@ -266,12 +282,13 @@ jobsRouter.post('/', async (_req: Request, res: Response) => {
  */
 jobsRouter.post('/:jobID/duplicate', async (req: Request, res: Response) => {
   const jobID = Math.trunc(Number(req.params.jobID));
-  const source = (await jobCards().findOne({ jobID })) as unknown as JobCardDoc | null;
+  const database = sessionDb(req);
+  const source = (await jobCards(database).findOne({ jobID })) as unknown as JobCardDoc | null;
   if (!source) {
     res.status(404).json({ error: `Job ${jobID} not found` });
     return;
   }
-  const job = await insertWithNextJobId({
+  const job = await insertWithNextJobId(database, {
     jobDate: new Date(),
     jobOrderNumber: source.jobOrderNumber ?? null,
     jobCustomer: source.jobCustomer ?? null,
@@ -281,7 +298,7 @@ jobsRouter.post('/:jobID/duplicate', async (req: Request, res: Response) => {
     jobEmail: source.jobEmail ?? null,
     jobDelivery: source.jobDelivery ?? null,
     jobReceivedFrom: source.jobReceivedFrom ?? null,
-    jobNotes: WHEEL_DISCLAIMER_NOTE,
+    jobNotes: startingNotes(database),
   });
   res.status(201).json({ job });
 });
@@ -296,7 +313,8 @@ jobsRouter.put('/:jobID', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid job number' });
     return;
   }
-  const collection = jobCards();
+  const database = sessionDb(req);
+  const collection = jobCards(database);
   const existing = (await collection.findOne({ jobID })) as unknown as JobCardDoc | null;
   if (!existing) {
     res.status(404).json({ error: `Job ${jobID} not found` });
@@ -327,7 +345,16 @@ jobsRouter.delete('/:jobID', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid job number' });
     return;
   }
-  const deleted = await jobCards().findOneAndDelete({ jobID });
+  const database = sessionDb(req);
+  // includeResultMetadata: false returns the deleted document itself rather than
+  // driver 5.x's { value, ok, lastErrorObject } wrapper — which is always truthy,
+  // so without this the 404 below could never fire and the cleanup that follows
+  // would run with an undefined jobId. Driver 6 made this the default; passing it
+  // explicitly means this reads the same under either.
+  const deleted = await jobCards(database).findOneAndDelete(
+    { jobID },
+    { includeResultMetadata: false }
+  );
   if (!deleted) {
     res.status(404).json({ error: `Job ${jobID} not found` });
     return;
@@ -336,7 +363,7 @@ jobsRouter.delete('/:jobID', async (req: Request, res: Response) => {
   // Clean up any photo backups so deleting a job doesn't leave them orphaned.
   // Best effort: the job itself is already gone, which is what matters most.
   try {
-    await jobPictures().deleteMany({ jobId: deleted._id });
+    await jobPictures(database).deleteMany({ jobId: deleted._id });
   } catch (err) {
     console.warn(`[jobs] photo backup cleanup failed for job ${jobID}:`, err);
   }

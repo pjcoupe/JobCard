@@ -1,8 +1,65 @@
 # webappNode — backend API
 
-Express + MongoDB API for the wheel job card web app. It reads and writes the
-**same `wheel` database the desktop `GeorgesWheel.exe` uses**, with the same
-field names and BSON types, so both applications can run against one dataset.
+Express + MongoDB API for the job card web app. It reads and writes the **same
+databases the desktop app uses**, with the same field names and BSON types, so
+both applications can run against one dataset.
+
+## Wheel and plating
+
+There are two businesses in two MongoDB databases, `wheel` and `plating`. The
+desktop app decides which one it is by its own executable name — anything with
+"wheel" in it opens `wheel`, everything else opens `plating`
+(`JobTypePopup.isWheelApp`, read by `DataAccess.connectMongoDb`), so an installed
+exe is permanently one business.
+
+One deployment of this API serves both. The choice is made with the radio
+buttons on the sign-in screen and is **signed into the session token**, so:
+
+- every request works in exactly one business, decided at sign-in;
+- nothing the browser sends can move a request to the other database — changing
+  business means signing in again;
+- `POST /api/auth/login` requires a `database` of `wheel` or `plating` and
+  refuses to guess. A token issued before this existed carries no database and
+  is rejected, which signs that session out once.
+
+Every collection accessor in `src/db.ts` therefore takes the database as an
+argument (`jobCards(database)`), and route handlers get it from `sessionDb(req)`.
+It is a parameter rather than ambient request state on purpose: the compiler
+then catches any code path that has not decided which business it is reading.
+
+`settings` is **not** per-business. Shared settings and sent Xero invoices live
+there for both, exactly as on the desktop.
+
+What differs by business:
+
+| | Wheel | Plating |
+| --- | --- | --- |
+| Jobs, prices, fussy customers, photo backups | `wheel` database | `plating` database |
+| `pricing` documents | `isWheel: true` | `isWheel: false` |
+| Job type groups | Wheel repair, tyre service, skirt damage | Repair and Finishing, Plating, Galv, Other |
+| Picking a job type | writes the group name into the line's detail | leaves the detail alone, title-cases the caption |
+| New job notes | wheel disclaimer pre-filled | empty |
+| Photo share | one `PHOTO_ROOT` for both, as the desktop does | ditto |
+
+### Sent Xero invoices across the two businesses
+
+`settings.sentInvoices` is shared and keys on the bare job number plus the Xero
+tenant, so wheel job 1234 and plating job 1234 would otherwise be one record. If
+both businesses invoiced through the same Xero organisation, a sync could mark
+the wrong job paid.
+
+Records written here therefore carry a `database` field, and every read, write
+and delete is filtered by it. Safe to add because the desktop app now declares
+`[BsonIgnoreExtraElements]` on `SentInvoiceDoc` and writes through
+`UpsertFieldsAsync` (a `$set` upsert, not `ReplaceOneAsync`), so a field it does
+not know about is neither rejected on read nor dropped on write.
+
+Records with no `database` — written before this existed, or by the desktop —
+are matched by both businesses, because nothing in them says which one they
+belong to. That is the behaviour there has always been, now confined to untagged
+records rather than all of them, and it retires itself as invoices are re-sent
+through the web app. `applyInvoiceFromXero` marks the job paid in the record's
+own database when it has one and only falls back to the session's otherwise.
 
 ## Run
 
@@ -21,9 +78,12 @@ than failing on the first request.
 
 | Variable                 | Default                     | Purpose                                        |
 | ------------------------ | --------------------------- | ---------------------------------------------- |
-| `MONGO_URL`              | `mongodb://localhost:27017` | Mongo connection string                        |
-| `MONGO_DB`               | `wheel`                     | Job database — wheel mode always uses `wheel`  |
-| `MONGO_SETTINGS_DB`      | `settings`                  | Shared settings / sent Xero invoices           |
+| `MONGO_IP`               | `localhost`                 | Mongo host — see "Pointing at another MongoDB" |
+| `MONGO_PORT`             | `27017`                     | Mongo port                                     |
+| `MONGO_URL`              | `mongodb://localhost:27017` | Full connection string, if the two above are not enough |
+| `MONGO_DB_WHEEL`         | `wheel`                     | Job database behind the "Wheel" sign-in choice |
+| `MONGO_DB_PLATING`       | `plating`                   | Job database behind the "Plating" sign-in choice |
+| `MONGO_SETTINGS_DB`      | `settings`                  | Shared settings / sent Xero invoices (both businesses) |
 | `PORT`                   | `3000`                      | Listen port                                    |
 | `CORS_ORIGIN`            | `http://localhost:4200`     | Comma-separated allowed browser origins        |
 | `AUTH_SECRET`†           | `change-me-in-production`   | Signs session tokens — **set this in prod**    |
@@ -43,6 +103,63 @@ To change the password, hash the new one and set `AUTH_PASSWORD_SHA256`:
 ```bash
 node -e "const c=require('crypto');console.log(c.createHash('sha256').update('jobcard-wheel:'+process.argv[1]).digest('hex'))" 'the-new-password'
 ```
+
+### Pointing at another MongoDB
+
+By default the app connects to `mongodb://localhost:27017`. To use a database on
+another machine — the workshop server, say — pass the host on the command line,
+the way the desktop app prompts for it on startup:
+
+```bash
+node dist/server.js mongoIP=192.168.1.50
+node dist/server.js mongoIP=192.168.1.50 mongoPort=27018
+npm run dev -- mongoIP=192.168.1.50            # through npm, note the --
+```
+
+The two are independent: give only `mongoIP` and the port stays 27017; give only
+`mongoPort` and the host stays localhost. A hostname works as well as an IP
+(`mongoIP=workshop-pc`), names are matched case-insensitively, and a leading `--`
+is accepted (`--mongoIP=…`).
+
+The same values can be set as `MONGO_IP` and `MONGO_PORT` in the environment or
+`.env`, which is the better choice for a permanent deployment. Precedence is:
+
+1. `mongoIP=` / `mongoPort=` command-line arguments
+2. `MONGO_IP` / `MONGO_PORT`
+3. `MONGO_URL` — a full connection string, for anything the simple form cannot
+   express: authentication, a replica set, TLS
+4. `mongodb://localhost:27017`
+
+Bad input stops the server rather than quietly falling back to localhost, which
+would otherwise look like a successful start against the wrong database:
+
+```
+[config] mongoPort must be a whole number between 1 and 65535 — got "abc".
+```
+
+Any password in a `MONGO_URL` is masked in the startup log.
+
+### Why the `mongodb` driver is held at 5.x
+
+The workshop server runs **MongoDB 4.0.2** (wire version 7) — the desktop app is
+built against the 2018-era `MongoDB.Driver` 2.7.0, so the server has stayed where
+it is. The Node driver 6.x refuses to talk to anything older than MongoDB 4.2 and
+fails at startup with:
+
+```
+MongoCompatibilityError: Server at 192.168.1.9:27017 reports maximum wire version 7,
+but this version of the Node.js Driver requires at least 8 (MongoDB 4.2)
+```
+
+There is no option to relax that check, so `package.json` pins `mongodb` to `^5.9.2`
+(supports servers 3.6–7.0). **Do not bump it to 6.x or later** unless the workshop
+server is upgraded to 4.2+ first — and upgrading it means checking the desktop app's
+C# driver against the new server, since 2.7.0 is only supported up to 4.0.
+
+One call site depends on the version: `findOneAndDelete` in `routes/jobs.ts` passes
+`includeResultMetadata: false`, because 5.x otherwise returns a
+`{ value, ok, lastErrorObject }` wrapper instead of the document. That is 6.x's
+default, so the call reads the same under either driver.
 
 ### Settings that can live in MongoDB instead
 
@@ -78,25 +195,31 @@ its session tokens can be forged outright. Set them before exposing the app.
 
 ## Authentication
 
-There is one account. `POST /api/auth/login` compares the username and a salted
-SHA-256 of the password in constant time; the plaintext password is not stored in
-the repository. A correct login returns an HMAC-signed token immediately. A wrong
-one waits `LOGIN_FAILURE_DELAY_MS` and then answers `401 {"error":"Access denied"}`,
-which slows credential guessing. Every route except `/api/health` and
-`/api/auth/login` requires `Authorization: Bearer <token>`.
+There is one account. `POST /api/auth/login` takes a username, a password and the
+`database` to work in, and compares the username and a salted SHA-256 of the
+password in constant time; the plaintext password is not stored in the
+repository. A correct login returns an HMAC-signed token immediately. A wrong one
+waits `LOGIN_FAILURE_DELAY_MS` and then answers `401 {"error":"Access denied"}`,
+which slows credential guessing. A missing or unknown `database` is answered
+`400` straight away — it is a client mistake, not a credential guess. Every route
+except `/api/health` and `/api/auth/login` requires
+`Authorization: Bearer <token>`.
+
+The token payload is `{ sub, db, exp }`, all of it signed. `db` is what every
+request reads and writes — see "Wheel and plating" above.
 
 ## Endpoints
 
 | Method   | Path                        | Notes                                              |
 | -------- | --------------------------- | -------------------------------------------------- |
-| `GET`    | `/api/health`               | Liveness + which database is in use (public)        |
-| `POST`   | `/api/auth/login`           | Sign in (public)                                    |
-| `GET`    | `/api/auth/me`              | Confirm a stored token is still valid               |
+| `GET`    | `/api/health`               | Liveness + the configured database names (public)   |
+| `POST`   | `/api/auth/login`           | Sign in — `username`, `password`, `database` (public) |
+| `GET`    | `/api/auth/me`              | Confirm a stored token is still valid, and for which database |
 | `GET`    | `/api/jobs`                 | `view`, `field`, `q`, `page`, `pageSize`             |
 | `GET`    | `/api/jobs/latest`          | Highest job number                                  |
 | `GET`    | `/api/jobs/:id`             | One job                                             |
 | `GET`    | `/api/jobs/:id/neighbours`  | Previous / next job numbers                         |
-| `POST`   | `/api/jobs`                 | New job — next number, today, disclaimer in notes   |
+| `POST`   | `/api/jobs`                 | New job — next number, today, disclaimer in notes (wheel only) |
 | `POST`   | `/api/jobs/:id/duplicate`   | Copy the customer details onto a new job            |
 | `PUT`    | `/api/jobs/:id`             | Save; totals are recomputed server-side             |
 | `DELETE` | `/api/jobs/:id`             | Delete a job                                        |
@@ -257,10 +380,9 @@ UNC roots.)
 The network share is a real single point of failure — see the mapped-drive trap
 below, plus the hosting PC and the local network both need to be up. So every
 new still photo also gets an independent, compressed copy stored directly in
-MongoDB, in its own `jobPictures` collection (**not** a field on `jobCard` — the
-desktop app's MongoDB driver throws on a document with a field it doesn't
-declare, so a new collection it never queries keeps this completely invisible
-and safe to it).
+MongoDB, in its own `jobPictures` collection (**not** fields on `jobCard` —
+base64 image data has no business bloating every job document, and a collection
+the desktop app never queries cannot affect it at all).
 
 Each document: `{ jobId: ObjectId, name: string, contentHash: string, isThumbnail: boolean, base64Image: string }`.
 `jobId` points at the job's own `jobCard._id` (not the human job number). `name`

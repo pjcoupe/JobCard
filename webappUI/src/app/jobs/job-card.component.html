@@ -535,7 +535,9 @@
 @if (pickerForKey()) {
   <app-job-type-picker
     [lineLabel]="pickerLineLabel()"
+    [currentTypes]="pickerLineTypes()"
     (picked)="applyPickedType($event)"
+    (cleared)="clearPickerLine()"
     (dismissed)="closePicker()"
   />
 }

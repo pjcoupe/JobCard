@@ -1,8 +1,42 @@
 # webappUI — front end
 
-Angular 19 single-page app for the wheel job card system. Responsive by design:
+Angular 19 single-page app for the job card system. Responsive by design:
 the same screens are meant to be usable on a phone in the workshop and on a
 desktop at the counter.
+
+## Wheel or plating
+
+The sign-in screen carries radio buttons for the two businesses, because one
+deployment serves both databases where the desktop app needs a separate
+executable per business. The choice:
+
+- is sent with the credentials and **signed into the session token** by the
+  server, which is what every later request is read against — see
+  "Wheel and plating" in `webappNode/README.md`;
+- is remembered in `localStorage` and pre-selected next time, including after
+  signing out, since a workshop signs in to the same business every day;
+- shows as a chip beside the title in the app bar on every screen. A job number
+  exists in both databases, so nothing else on the page would tell them apart;
+- cannot be changed without signing in again. There is no in-app switcher on
+  purpose.
+
+The job type picker follows the same choice, in two quite different ways —
+both ported from `doCheckChange` in `JobTypePopup.cs`:
+
+- **Wheel** — one type per line. Picking writes the group name into the line's
+  detail and the caption into its type, steps the quantity up by one and prices
+  the line. The sheet closes on the pick.
+- **Plating** — one line holds the whole sequence of processes, so picking
+  *adds* to the line's type field: `Strip, Polish, (2x)Nickle, Chrome`. Picking
+  something already there bumps its count. Detail, quantity and price are left
+  alone — they describe the items being plated, not the processes, and are
+  filled in by hand. The sheet stays open, showing what is on the line as chips,
+  with **Clear line** (the popup's CLEAR, which empties the whole line) and
+  **Done**.
+
+The parsing and formatting of that combined field lives in `webappShared`
+(`parsePlatingTypes` / `addPlatingType`) so the string is byte-identical to what
+the desktop writes, `(12x)` counts and all.
 
 ## Running the whole stack
 
@@ -13,7 +47,7 @@ the other two import it as a local file dependency):
 # 1. shared models — build once, rebuild after changing anything in webappShared
 cd webappShared && npm install && npm run build
 
-# 2. API — needs MongoDB on localhost:27017 with the "wheel" database
+# 2. API — needs MongoDB on localhost:27017 with the "wheel" and/or "plating" databases
 cd ../webappNode && npm install && npm run dev      # http://localhost:3000
 
 # 3. this app
@@ -36,6 +70,23 @@ a phone on the same network using the "Network" URL that `ng serve` prints.
 ```bash
 npm run build       # production bundle into dist/webapp-ui
 ```
+
+### Why `webapp-shared` is excluded from prebundling
+
+`angular.json` sets `serve.options.prebundle.exclude: ["webapp-shared"]`.
+
+Vite pre-bundles dependencies once and caches them under `.angular/cache`, on the
+assumption that anything in `node_modules` is a fixed release. `webapp-shared` is
+a symlink to `../webappShared`, so it breaks that assumption: adding an export to
+`webappShared/src` left the dev server serving a months-old copy of the package,
+and the first chunk to import the new name failed with
+`does not provide an export named …`. A failed lazy chunk aborts the router
+navigation silently, so clicking a job row simply did nothing.
+
+Excluding it bundles the shared code with the app itself, so it is rebuilt with
+the rest of the source. Production builds were never affected — only `ng serve`.
+If the dev server ever serves stale shared code again, delete `.angular/cache`
+and restart it.
 
 ## Screens
 

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { ObjectId } from 'mongodb';
+import type { JobDatabase } from 'webapp-shared';
 import { jobPictures } from './db.js';
 import { prepareBackupImages } from './photo-backup.js';
 import { listForJob, resolvePhotoPath } from './photo-store.js';
@@ -21,11 +22,12 @@ import { listForJob, resolvePhotoPath } from './photo-store.js';
  * repeatedly — it never creates duplicates.
  */
 export async function ensureBackupForFile(
+  database: JobDatabase,
   jobId: ObjectId,
   name: string,
   readBytes: () => Promise<Buffer>
 ): Promise<void> {
-  const existing = await jobPictures()
+  const existing = await jobPictures(database)
     .find({ jobId, name })
     .project({ isThumbnail: 1 })
     .toArray();
@@ -47,7 +49,7 @@ export async function ensureBackupForFile(
     inserts.push({ jobId, name, contentHash, isThumbnail: true, base64Image: thumbnail.base64 });
   }
   if (inserts.length > 0) {
-    await jobPictures().insertMany(inserts as never[]);
+    await jobPictures(database).insertMany(inserts as never[]);
   }
 }
 
@@ -59,6 +61,7 @@ export async function ensureBackupForFile(
  * concurrently; one file's failure doesn't stop the others.
  */
 export async function ensureBackupsForJob(
+  database: JobDatabase,
   jobId: ObjectId,
   jobNumericId: number,
   jobDate: Date | null
@@ -73,7 +76,7 @@ export async function ensureBackupsForJob(
       .filter((photo) => !photo.isVideo)
       .map(async (photo) => {
         try {
-          await ensureBackupForFile(jobId, photo.name, async () => {
+          await ensureBackupForFile(database, jobId, photo.name, async () => {
             const resolved = await resolvePhotoPath(jobNumericId, jobDate, photo.name);
             if (!resolved.ok) {
               throw new Error(resolved.reason);

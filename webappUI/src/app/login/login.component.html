@@ -2,13 +2,35 @@
   <form class="login-card" (ngSubmit)="submit()" autocomplete="on">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">◎</span>
-      <h1>Wheel Job Cards</h1>
+      <h1>Job Cards</h1>
       <p class="muted">Sign in to continue</p>
     </div>
 
     @if (error()) {
       <p class="banner error" role="alert">{{ error() }}</p>
     }
+
+    <!-- Which business to work in. The desktop app decides this from its own
+         executable name; here it is an explicit choice, and it cannot be
+         changed without signing in again. -->
+    <fieldset class="database">
+      <legend>Job cards for</legend>
+      <div class="choices">
+        @for (option of databases; track option.value) {
+          <label class="choice" [class.selected]="database() === option.value">
+            <input
+              type="radio"
+              name="database"
+              [value]="option.value"
+              [checked]="database() === option.value"
+              [disabled]="busy()"
+              (change)="database.set(option.value)"
+            />
+            <span class="choice-label">{{ option.label }}</span>
+          </label>
+        }
+      </div>
+    </fieldset>
 
     <div class="field">
       <label for="username">Username</label>

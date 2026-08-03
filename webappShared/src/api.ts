@@ -1,5 +1,6 @@
 /** Request/response contracts shared by webappNode and webappUI. */
 
+import type { JobDatabase } from './databases.js';
 import type { JobCardDoc } from './job-card.model.js';
 import type { JobTypeOption } from './pricing.js';
 import type {
@@ -12,11 +13,25 @@ import type {
 export interface LoginRequest {
   username: string;
   password: string;
+  /** Which business to work in. Chosen on the sign-in screen; see databases.ts. */
+  database: JobDatabase;
 }
 
 export interface LoginResponse {
   token: string;
   username: string;
+  /**
+   * Echoed back rather than assumed by the browser: the token is bound to this
+   * database server-side, so this is the authoritative answer to "which data am
+   * I looking at".
+   */
+  database: JobDatabase;
+}
+
+/** GET /api/auth/me — confirms a stored token is still valid, and for what. */
+export interface SessionResponse {
+  username: string | null;
+  database: JobDatabase;
 }
 
 export interface ErrorResponse {

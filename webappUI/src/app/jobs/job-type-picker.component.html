@@ -10,6 +10,27 @@
       <button type="button" class="close" (click)="dismiss()" aria-label="Close">✕</button>
     </header>
 
+    <!-- Plating builds up one line from several processes, so what has been
+         added so far has to stay visible while choosing the next one. -->
+    @if (multiSelect()) {
+      <div class="chosen" aria-live="polite">
+        @if (chosen().length === 0) {
+          <span class="muted">Nothing on this line yet — tap each process applied.</span>
+        } @else {
+          <span class="chosen-label muted">On this line:</span>
+          @for (entry of chosen(); track entry.label) {
+            <span class="chosen-chip">
+              {{ entry.label }}
+              @if (entry.count > 1) {
+                <span class="times">×{{ entry.count }}</span>
+              }
+            </span>
+          }
+          <button type="button" class="subtle clear" (click)="clearLine()">Clear line</button>
+        }
+      </div>
+    }
+
     <div class="filter">
       <input
         type="search"
@@ -48,18 +69,20 @@
                           (ngModelChange)="editLabel.set($event)"
                         />
                       </div>
-                      <div class="field price-field">
-                        <label [attr.for]="'prc-' + option.controlName">Price (excl GST)</label>
-                        <input
-                          [id]="'prc-' + option.controlName"
-                          type="number"
-                          inputmode="decimal"
-                          min="0"
-                          step="0.01"
-                          [ngModel]="editPrice()"
-                          (ngModelChange)="editPrice.set($event)"
-                        />
-                      </div>
+                      @if (!multiSelect()) {
+                        <div class="field price-field">
+                          <label [attr.for]="'prc-' + option.controlName">Price (excl GST)</label>
+                          <input
+                            [id]="'prc-' + option.controlName"
+                            type="number"
+                            inputmode="decimal"
+                            min="0"
+                            step="0.01"
+                            [ngModel]="editPrice()"
+                            (ngModelChange)="editPrice.set($event)"
+                          />
+                        </div>
+                      }
                     </div>
                     <div class="button-row">
                       <button
@@ -68,22 +91,31 @@
                         (click)="saveEdit()"
                         [disabled]="saving()"
                       >
-                        Save price
+                        {{ multiSelect() ? 'Save caption' : 'Save price' }}
                       </button>
                       <button type="button" class="small" (click)="cancelEdit()">Cancel</button>
                     </div>
                   </div>
                 } @else {
-                  <button type="button" class="option" (click)="choose(option)">
+                  <button
+                    type="button"
+                    class="option"
+                    [class.no-price]="multiSelect()"
+                    (click)="choose(option)"
+                  >
                     <span class="option-label">{{ option.label }}</span>
-                    <span class="option-price mono-money">
-                      {{ option.price | currency: 'NZD' : 'symbol-narrow' }}
-                    </span>
+                    <!-- Plating ignores the button price entirely: the line is
+                         priced by hand, so showing one here would only mislead. -->
+                    @if (!multiSelect()) {
+                      <span class="option-price mono-money">
+                        {{ option.price | currency: 'NZD' : 'symbol-narrow' }}
+                      </span>
+                    }
                     <span
                       class="option-edit"
                       role="button"
                       tabindex="0"
-                      title="Change this price"
+                      [title]="multiSelect() ? 'Change this caption' : 'Change this price'"
                       (click)="startEdit(option, $event)"
                       (keydown.enter)="startEdit(option, $event)"
                       (keydown.space)="startEdit(option, $event)"
@@ -97,5 +129,11 @@
         }
       }
     </div>
+
+    @if (multiSelect()) {
+      <footer class="sheet-footer">
+        <button type="button" class="primary" (click)="dismiss()">Done</button>
+      </footer>
+    }
   </section>
 </div>

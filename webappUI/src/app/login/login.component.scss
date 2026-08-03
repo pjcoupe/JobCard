@@ -52,6 +52,67 @@
   margin: 0;
 }
 
+/* ---------- business picker ---------- */
+
+.database {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem 0.7rem;
+  margin: 0;
+}
+
+.database legend {
+  padding: 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.database .choices {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Big tap targets rather than bare radio dots — this is picked on a phone, and
+   picking the wrong one means working in the wrong company's jobs. */
+.choice {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 46px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 1rem;
+  user-select: none;
+}
+
+.choice.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.choice input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.choice:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .password-wrap {
   display: flex;
   align-items: stretch;

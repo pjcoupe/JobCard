@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { sessionDb } from '../auth.js';
 import { fussyCustomers } from '../db.js';
 
 export const customersRouter = Router();
@@ -52,7 +53,7 @@ customersRouter.get('/fussy', async (req: Request, res: Response) => {
     res.json({ isFussy: false });
     return;
   }
-  const count = await fussyCustomers().countDocuments({ phoneOrEmail: { $in: keys } });
+  const count = await fussyCustomers(sessionDb(req)).countDocuments({ phoneOrEmail: { $in: keys } });
   res.json({ isFussy: count > 0 });
 });
 
@@ -67,8 +68,9 @@ customersRouter.post('/fussy', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Phone must contain at least a 9 digit number' });
     return;
   }
+  const database = sessionDb(req);
   for (const key of keys) {
-    await fussyCustomers().updateOne(
+    await fussyCustomers(database).updateOne(
       { phoneOrEmail: key },
       { $setOnInsert: { phoneOrEmail: key } },
       { upsert: true }
@@ -87,6 +89,6 @@ customersRouter.delete('/fussy', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Nothing to clear' });
     return;
   }
-  const result = await fussyCustomers().deleteMany({ phoneOrEmail: { $in: keys } });
+  const result = await fussyCustomers(sessionDb(req)).deleteMany({ phoneOrEmail: { $in: keys } });
   res.json({ removed: result.deletedCount });
 });

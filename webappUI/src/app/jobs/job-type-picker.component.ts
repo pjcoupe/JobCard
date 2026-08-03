@@ -1,17 +1,23 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { JobTypeOption } from 'webapp-shared';
+import { parsePlatingTypes, type JobTypeOption } from 'webapp-shared';
+import { AuthService } from '../core/auth.service';
 import { JobService } from '../core/job.service';
 
 /**
- * Replaces the desktop JobTypePopup for wheel mode: a sheet of priced job types
- * grouped exactly as the popup's group boxes were. Picking one fills the line's
- * detail (group name), type (button caption) and unit price, which is the same
- * assignment doCheckChange() performs.
+ * Replaces the desktop JobTypePopup: a sheet of job types grouped exactly as the
+ * popup's group boxes were, for whichever business the session is in. What a
+ * pick does to the line is doCheckChange's job and differs by business — see
+ * JobCardComponent.applyPickedType.
  *
- * Prices and captions come from the wheel.pricing collection and can be edited
- * here, mirroring the desktop's Ctrl-click override.
+ * The sheet follows suit. Wheel picks one type and closes. Plating builds a line
+ * out of several processes, so it stays open, lists what is on the line, and
+ * offers the popup's CLEAR. It also hides prices: plating never applies one to
+ * the line, so only the caption is editable there.
+ *
+ * Captions and prices come from the open database's pricing collection and are
+ * edited here, mirroring the desktop's Ctrl-click override.
  */
 @Component({
   selector: 'app-job-type-picker',
@@ -22,12 +28,26 @@ import { JobService } from '../core/job.service';
 })
 export class JobTypePickerComponent {
   private readonly jobs = inject(JobService);
+  private readonly auth = inject(AuthService);
 
   /** Human label for the line being filled, shown in the sheet header. */
   readonly lineLabel = input<string>('');
 
+  /** The line's type field as it stands, for the running summary. */
+  readonly currentTypes = input<string>('');
+
   readonly picked = output<JobTypeOption>();
+  readonly cleared = output<void>();
   readonly dismissed = output<void>();
+
+  /**
+   * Plating adds several processes to one line, so the sheet stays open and
+   * shows what has been added so far; wheel picks one type and closes.
+   */
+  readonly multiSelect = computed(() => this.auth.database() === 'plating');
+
+  /** What is on the line now, broken back out for the chips in the header. */
+  readonly chosen = computed(() => parsePlatingTypes(this.currentTypes()));
 
   readonly groups = signal<Array<{ detail: string; options: JobTypeOption[] }>>([]);
   readonly loading = signal(true);
@@ -76,6 +96,11 @@ export class JobTypePickerComponent {
     this.picked.emit(option);
   }
 
+  /** The desktop popup's CLEAR: empty the line and carry on choosing. */
+  clearLine(): void {
+    this.cleared.emit();
+  }
+
   startEdit(option: JobTypeOption, event: Event): void {
     event.stopPropagation();
     this.editing.set(option);
@@ -92,8 +117,10 @@ export class JobTypePickerComponent {
     const option = this.editing();
     if (!option || this.saving()) return;
 
-    const price = Number(this.editPrice());
-    if (!Number.isFinite(price) || price < 0) {
+    // Plating lines are priced by hand, so only the caption is editable there —
+    // sending a price would store a number nothing ever reads.
+    const price = this.multiSelect() ? undefined : Number(this.editPrice());
+    if (price !== undefined && (!Number.isFinite(price) || price < 0)) {
       this.error.set('Enter a price of 0 or more.');
       return;
     }

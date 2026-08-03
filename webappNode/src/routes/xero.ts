@@ -8,10 +8,11 @@ import {
   toLines,
   xeroDeleteAction,
   type JobCardDoc,
+  type JobDatabase,
   type XeroContactMatch,
   type XeroInvoiceMode,
 } from 'webapp-shared';
-import { requireAuth } from '../auth.js';
+import { requireAuth, sessionDb } from '../auth.js';
 import { jobCards } from '../db.js';
 import {
   XeroError,
@@ -116,8 +117,8 @@ function parseJobId(raw: unknown): number {
   return jobId;
 }
 
-async function loadJob(jobId: number): Promise<JobCardDoc> {
-  const doc = (await jobCards().findOne({ jobID: jobId })) as unknown as JobCardDoc | null;
+async function loadJob(database: JobDatabase, jobId: number): Promise<JobCardDoc> {
+  const doc = (await jobCards(database).findOne({ jobID: jobId })) as unknown as JobCardDoc | null;
   if (!doc) throw new XeroError(`Job ${jobId} not found`, 404);
   return doc;
 }
@@ -436,6 +437,7 @@ xeroRouter.get(
  * so the reason can be shown as text instead of a silently disabled button.
  */
 async function describeSendability(
+  database: JobDatabase,
   jobId: number
 ): Promise<{
   sentInvoice: SentInvoiceRecord | null;
@@ -445,7 +447,7 @@ async function describeSendability(
 }> {
   const config = await findXeroSettings();
   const missing = missingClientConfig(config);
-  const sentInvoice = await findSentInvoiceByJob(jobId, config?.xeroTenantId ?? null);
+  const sentInvoice = await findSentInvoiceByJob(database, jobId, config?.xeroTenantId ?? null);
   const deleteAction = sentInvoice ? xeroDeleteAction(sentInvoice.status) : null;
 
   const blocked = (reason: string) => ({ sentInvoice, canSend: false, blockedReason: reason, deleteAction });
@@ -460,7 +462,7 @@ async function describeSendability(
     return blocked('No Xero organisation chosen.');
   }
 
-  const job = (await jobCards().findOne({ jobID: jobId })) as unknown as JobCardDoc | null;
+  const job = (await jobCards(database).findOne({ jobID: jobId })) as unknown as JobCardDoc | null;
   if (!job) return blocked(`Job ${jobId} not found.`);
 
   if (!String(job.jobBusinessName ?? '').trim()) {
@@ -495,7 +497,7 @@ xeroRouter.get(
   requireAuth,
   xeroHandler(async (req, res) => {
     const jobId = parseJobId(req.params.jobID);
-    const state = await describeSendability(jobId);
+    const state = await describeSendability(sessionDb(req), jobId);
     res.json({
       sentInvoice: state.sentInvoice ? toClientView(state.sentInvoice) : null,
       canSend: state.canSend,
@@ -524,7 +526,8 @@ xeroRouter.post(
       return;
     }
 
-    const state = await describeSendability(jobId);
+    const database = sessionDb(req);
+    const state = await describeSendability(database, jobId);
     if (!state.canSend) {
       res.status(400).json({ error: state.blockedReason ?? 'This job cannot be invoiced.' });
       return;
@@ -532,7 +535,7 @@ xeroRouter.post(
 
     const config = await requireConnection();
     const tenantId = requireTenant(config);
-    const job = await loadJob(jobId);
+    const job = await loadJob(database, jobId);
 
     const lineItems = buildXeroLineItems(
       job,
@@ -571,6 +574,7 @@ xeroRouter.post(
     );
 
     const saved = await upsertSentInvoice({
+      database,
       jobId,
       jobBusinessName: String(job.jobBusinessName ?? '').trim(),
       xeroTenantId: tenantId,
@@ -605,8 +609,9 @@ xeroRouter.delete(
   requireAuth,
   xeroHandler(async (req, res) => {
     const jobId = parseJobId(req.params.jobID);
+    const database = sessionDb(req);
     const config = await requireConnection();
-    const sent = await findSentInvoiceByJob(jobId, config.xeroTenantId);
+    const sent = await findSentInvoiceByJob(database, jobId, config.xeroTenantId);
     if (!sent) {
       res.status(404).json({ error: 'There is no sent invoice for this job.' });
       return;
@@ -614,7 +619,7 @@ xeroRouter.delete(
     // Use the tenant the invoice was sent to, not whatever is selected now.
     const tenantId = sent.xeroTenantId ?? config.xeroTenantId;
     if (!sent.xeroInvoiceId || !tenantId) {
-      await deleteSentInvoice(jobId, tenantId ?? '');
+      await deleteSentInvoice(database, jobId, tenantId ?? '');
       res.json({ applied: 'NONE', message: 'Removed the incomplete local invoice record.' });
       return;
     }
@@ -631,7 +636,7 @@ xeroRouter.delete(
     }
 
     if (action === 'NONE') {
-      await deleteSentInvoice(jobId, tenantId);
+      await deleteSentInvoice(database, jobId, tenantId);
       res.json({
         applied: 'NONE',
         message: `The invoice is already ${liveStatus} in Xero. Removed the local record.`,
@@ -640,7 +645,7 @@ xeroRouter.delete(
     }
 
     await updateInvoiceStatus(config, tenantId, sent.xeroInvoiceId, action);
-    await deleteSentInvoice(jobId, tenantId);
+    await deleteSentInvoice(database, jobId, tenantId);
     console.log(`[xero] job ${jobId}: invoice ${sent.invoiceNumber} marked ${action}`);
     res.json({
       applied: action,
@@ -659,6 +664,7 @@ xeroRouter.post(
   requireAuth,
   xeroHandler(async (req, res) => {
     const jobId = parseJobId(req.params.jobID);
+    const database = sessionDb(req);
     const config = await findXeroSettings();
     if (!config || (!config.activeXeroToken && !config.xeroRefreshToken) || !config.xeroTenantId) {
       // Nothing to poll: report rather than erroring, since the browser polls this
@@ -666,7 +672,7 @@ xeroRouter.post(
       res.json({ sentInvoice: null, status: null, paidDate: null });
       return;
     }
-    const sent = await findSentInvoiceByJob(jobId, config.xeroTenantId);
+    const sent = await findSentInvoiceByJob(database, jobId, config.xeroTenantId);
     if (!sent || !sent.xeroInvoiceId || !sent.xeroTenantId) {
       res.json({ sentInvoice: null, status: null, paidDate: null });
       return;
@@ -679,7 +685,7 @@ xeroRouter.post(
       return;
     }
 
-    const applied = await applyInvoiceFromXero(sent, invoice);
+    const applied = await applyInvoiceFromXero(database, sent, invoice);
     res.json({
       sentInvoice: toClientView(applied.record),
       status: applied.status,
@@ -696,11 +702,12 @@ xeroRouter.post(
 xeroRouter.post(
   '/sync-unpaid',
   requireAuth,
-  xeroHandler(async (_req, res) => {
+  xeroHandler(async (req, res) => {
+    const database = sessionDb(req);
     const config = await requireConnection();
     const tenantId = requireTenant(config);
-    const outstanding = await countUnpaidSentInvoicesForTenant(tenantId);
-    const unpaid = await findUnpaidSentInvoicesForTenant(tenantId, SYNC_UNPAID_BATCH);
+    const outstanding = await countUnpaidSentInvoicesForTenant(database, tenantId);
+    const unpaid = await findUnpaidSentInvoicesForTenant(database, tenantId, SYNC_UNPAID_BATCH);
 
     let synced = 0;
     let paid = 0;
@@ -710,7 +717,7 @@ xeroRouter.post(
       try {
         const invoice = await getInvoice(config, sent.xeroTenantId, sent.xeroInvoiceId);
         if (!invoice) continue;
-        const applied = await applyInvoiceFromXero(sent, invoice);
+        const applied = await applyInvoiceFromXero(database, sent, invoice);
         synced += 1;
         if (applied.paidDate) paid += 1;
       } catch (err) {

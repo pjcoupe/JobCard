@@ -68,9 +68,20 @@ about which files belong to a job.
 
 ## Pricing catalogue
 
-`WHEEL_PRICING_GROUPS` records the grouping and ordering of the desktop
-`JobTypePopup` in wheel mode. Captions and prices are **not** hard-coded — they
-are read at runtime from the `wheel.pricing` collection, keyed by the original
-WinForms control name (`setUpOnLathe`, `button43`, …), and buttons still captioned
-`Unused` are dropped. Editing a price in the web app updates the same document the
-desktop app reads.
+`WHEEL_PRICING_GROUPS` and `PLATING_PRICING_GROUPS` record the grouping and
+ordering of the desktop `JobTypePopup` in each mode — which groups it shows comes
+straight from `Form_Shown`. Captions and prices are **not** hard-coded: they are
+read at runtime from the open database's `pricing` collection, keyed by the
+original WinForms control name (`setUpOnLathe`, `button43`, `checkBox7`, …) and
+filtered on the `isWheel` flag that matches the mode. Controls still captioned
+`Unused` are dropped. Editing a price in the web app updates the same document
+the desktop app reads.
+
+`buildJobTypeCatalogue(docs, database)` also reproduces the two modes'
+differences in what a pick writes onto a job line: wheel puts the group name in
+the line's detail and uses the caption as-is; plating leaves the detail alone
+(`detail: null`) and title-cases the caption, so "SILVER GALV" is stored as
+"Silver Galv" exactly as the desktop stores it.
+
+`databases.ts` holds the `wheel` / `plating` choice itself — see
+"Wheel and plating" in `webappNode/README.md`.

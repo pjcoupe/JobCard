@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
+import { isJobDatabase, type JobDatabase } from 'webapp-shared';
 import { config } from './config.js';
 import { authPasswordSha256, authSecret, authUsername } from './server-settings.js';
 
@@ -52,15 +53,28 @@ function sign(payload: string): string {
   return base64url(createHmac('sha256', authSecret()).update(payload).digest());
 }
 
-/** Issue a stateless HMAC-signed session token. */
-export function issueToken(username: string): string {
+export interface Session {
+  sub: string;
+  /** Which business this session works in — chosen at sign-in, fixed for its life. */
+  db: JobDatabase;
+}
+
+/**
+ * Issue a stateless HMAC-signed session token.
+ *
+ * The database is part of the signed payload rather than something the browser
+ * sends per request. A client cannot then ask for wheel data on one call and
+ * plating data on the next, and it cannot be talked into the wrong business by
+ * a crafted request: changing business means signing in again.
+ */
+export function issueToken(username: string, database: JobDatabase): string {
   const payload = base64url(
-    JSON.stringify({ sub: username, exp: Date.now() + config.sessionTtlMs })
+    JSON.stringify({ sub: username, db: database, exp: Date.now() + config.sessionTtlMs })
   );
   return `${payload}.${sign(payload)}`;
 }
 
-export function verifyToken(token: string | undefined): { sub: string } | null {
+export function verifyToken(token: string | undefined): Session | null {
   if (!token) return null;
   const dot = token.lastIndexOf('.');
   if (dot <= 0) return null;
@@ -70,17 +84,21 @@ export function verifyToken(token: string | undefined): { sub: string } | null {
   try {
     const decoded = JSON.parse(
       Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-    ) as { sub?: unknown; exp?: unknown };
+    ) as { sub?: unknown; db?: unknown; exp?: unknown };
     if (typeof decoded.sub !== 'string' || typeof decoded.exp !== 'number') return null;
+    // Tokens issued before the database choice existed have no db and are not
+    // honoured: guessing which business they meant is exactly the mistake this
+    // is here to prevent. They expire into a fresh sign-in instead.
+    if (!isJobDatabase(decoded.db)) return null;
     if (decoded.exp < Date.now()) return null;
-    return { sub: decoded.sub };
+    return { sub: decoded.sub, db: decoded.db };
   } catch {
     return null;
   }
 }
 
 export interface AuthedRequest extends Request {
-  user?: { sub: string };
+  user?: Session;
 }
 
 /** Reject requests without a valid session token. */
@@ -94,6 +112,19 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   }
   req.user = user;
   next();
+}
+
+/**
+ * The database this request's session is bound to. Only valid behind
+ * requireAuth, which is what puts it there; the throw is for the programming
+ * error of mounting a route without it, never for a client to trip.
+ */
+export function sessionDb(req: Request): JobDatabase {
+  const database = (req as AuthedRequest).user?.db;
+  if (!database) {
+    throw new Error('No session database — this route is missing requireAuth');
+  }
+  return database;
 }
 
 export function delay(ms: number): Promise<void> {
