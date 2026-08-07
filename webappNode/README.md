@@ -74,6 +74,31 @@ Requires a MongoDB reachable at `MONGO_URL` (default `mongodb://localhost:27017`
 The server checks the connection on startup and exits with a clear message rather
 than failing on the first request.
 
+### Serving the web app from here too
+
+If `webappUI` has been built, this server also serves it, so the whole deployment
+is one process on one port with nothing else to install:
+
+```bash
+cd ../webappUI && npm run build     # -> dist/webapp-ui/browser
+cd ../webappNode && npm start       # whole app on http://localhost:3000
+```
+
+Startup says which it is — `serving the web app from …`, or `no web app at … —
+API only` when the build is absent, which is the normal state during development
+(`ng serve` proxies to this server instead; see `webappUI/proxy.conf.json`).
+
+Paths that are not files on disk return `index.html`, so Angular routes like
+`/jobs/123` survive a reload. `/api/*` is excluded from that fallback: an unknown
+endpoint there stays a JSON 404 rather than returning a page to something
+expecting data. Set `UI_ROOT` to serve the build from somewhere else.
+
+This is plain HTTP and is enough for a LAN deployment. Two things it does not
+give you: passwords cross the network in clear text, and browsers block
+`getUserMedia` outside a secure context, so the webcam capture in "Web photo"
+will not start. Put Caddy in front when either matters — see
+[HTTPS and internet access](#https-and-internet-access).
+
 ## Configuration
 
 | Variable                 | Default                     | Purpose                                        |
@@ -516,6 +541,40 @@ your own DNS:
 
 Either is fine. DuckDNS is the more established of the two, and it survives the IP
 changing; both depend on a third-party DNS service staying up.
+
+Registering the DuckDNS name, **from the office machine** so it sees the right IP:
+
+1. Open <https://www.duckdns.org> and sign in. There is no email/password signup —
+   it uses an existing GitHub, Google, Reddit or Twitter account.
+2. The page shows a **token**, a long UUID. That is the password for changing where
+   the name points, so treat it like one.
+3. Type a name into the *domains* box — `jobcard` — and press **add domain**. The
+   names are global, so an obvious one may be taken; `willowjobcard` or similar will
+   not be. You end up with `jobcard.duckdns.org`.
+4. The *current ip* box is prefilled with the address you are browsing from. If that
+   is the office connection, press **update ip** and you are done. Registering from
+   somewhere else, open <https://icanhazip.com> on the office machine and paste what
+   it says instead.
+5. Check it took: `nslookup jobcard.duckdns.org` should answer with the office
+   public IP.
+
+Most small-business connections get a new IP whenever the router reboots, which
+would otherwise take the site down until someone noticed. Keep the name current with
+a one-line updater — save as `C:\jobcard\duckdns-update.bat`, outside the repo since
+it contains the token:
+
+```bat
+curl "https://www.duckdns.org/update?domains=jobcard&token=YOUR-TOKEN&ip="
+```
+
+Leaving `ip=` empty tells DuckDNS to use whatever address the request arrived from,
+which is why this has to run on the office machine. It answers `OK` or `KO`. Add it
+to Task Scheduler on a five-minute repeat, running whether or not anyone is logged
+on.
+
+Get the port forwards below in place *before* starting Caddy. Let's Encrypt rate
+limits failed certificate attempts per hostname, so a Caddy left retrying against a
+closed port 80 can lock you out for an hour.
 
 **2. Router ports.** Forward **80** and **443** to the machine running Node and
 Mongo. Port 80 is needed for the certificate challenge, not just redirects.
