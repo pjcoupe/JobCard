@@ -52,6 +52,9 @@ export class JobPrintComponent {
   /** Business copy omits the customer-facing payment footer. */
   readonly copyType = signal<'customer' | 'business'>('customer');
 
+  /** Set when public/business-logo.jpg can't be loaded; falls back to the name. */
+  readonly logoFailed = signal(false);
+
   /**
    * First photo of the job, embedded at the top of the workshop copy — the
    * desktop app pastes `pictureBox1.Image` there when printing its own copy.
@@ -134,6 +137,10 @@ export class JobPrintComponent {
 
   setCopyType(type: 'customer' | 'business'): void {
     this.copyType.set(type);
+  }
+
+  onLogoError(): void {
+    this.logoFailed.set(true);
   }
 
   print(): void {

@@ -1,3 +1,22 @@
 bin/
 obj/
 .vs/
+
+# --- web app deployment ---------------------------------------------------
+# The nginx configuration under nginx-1.30.4/nginx-1.30.4/conf/ IS tracked: it is
+# hand-written and is the actual deployment. Only the parts of the distribution
+# that are binary, stock, or generated are ignored, so there is exactly one copy
+# of the config and nothing to keep in sync.
+nginx-1.30.4/nginx-1.30.4/nginx.exe
+nginx-1.30.4/nginx-1.30.4/logs/
+nginx-1.30.4/nginx-1.30.4/temp/
+nginx-1.30.4/nginx-1.30.4/html/
+nginx-1.30.4/nginx-1.30.4/docs/
+nginx-1.30.4/nginx-1.30.4/contrib/
+
+# Downloaded third-party tools: nssm.exe and win-acme. Binaries, and both are one
+# download away. Exact versions and URLs are in deploy/DEPLOYMENT.md.
+deploy-tools/
+
+# Service logs written by NSSM.
+deploy/logs/

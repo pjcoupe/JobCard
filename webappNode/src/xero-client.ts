@@ -19,12 +19,9 @@ import { findXeroSettings, updateXeroSettingsFields, type XeroSettings } from '.
  *
  *  - `Accept: application/json` is sent on every call. GetInvoiceAsync and
  *    UpdateInvoiceStatusAsync omit it and rely on Xero defaulting to JSON.
- *  - `offline_access` is in the scope list. It is commented out in the C#, which
+ *  - `offline_access` is in the scope list. It was commented out in the C#, which
  *    is why the refresh token stored in Mongo is an unusable 8 characters and the
  *    desktop app has to be reconnected by hand whenever the token expires.
- *  - The scopes are `accounting.transactions` and `accounting.contacts`, per the
- *    approved design doc. The C# asks for `accounting.invoices` and
- *    `accounting.payments`, which are not Xero scope names.
  *  - Failures carry the response body. The C# token calls discard it entirely, so
  *    a failed connect reports nothing at all.
  */
@@ -34,12 +31,18 @@ const TOKEN_URL = 'https://identity.xero.com/connect/token';
 const CONNECTIONS_URL = 'https://api.xero.com/connections';
 const API_BASE = 'https://api.xero.com/api.xro/2.0';
 
+/**
+ * Granular scopes, matching what the Xero app registration grants. The app is not
+ * authorised for the legacy umbrella scope `accounting.transactions`, so requesting
+ * it fails the whole authorize call with invalid_scope.
+ */
 const SCOPES = [
   'openid',
   'profile',
   'email',
-  'accounting.transactions',
   'accounting.contacts',
+  'accounting.invoices',
+  'accounting.payments',
   'offline_access',
 ].join(' ');
 

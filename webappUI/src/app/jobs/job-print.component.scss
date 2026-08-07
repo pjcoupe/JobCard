@@ -47,9 +47,24 @@
   border-bottom: 2px solid var(--text);
 }
 
+.business {
+  /* Shrinkable so the job number stays on the same line on a narrow screen. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .sheet-head h1 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+/* Source is 1182x355 (~100mm wide at 300dpi); capped so the header stays
+   proportionate to the rest of the sheet. */
+.logo {
+  display: block;
+  width: 100%;
+  max-width: 80mm;
+  height: auto;
 }
 
 .heading {
@@ -306,6 +321,13 @@
   /* Let wide tables print in full rather than being clipped by the scroller. */
   .scroll-x {
     overflow: visible;
+  }
+
+  /* Browsers drop images in "economy" print modes unless told otherwise. */
+  .logo {
+    max-width: 80mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .block,

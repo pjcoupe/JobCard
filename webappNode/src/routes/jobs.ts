@@ -145,9 +145,11 @@ jobsRouter.get('/', async (req: Request, res: Response) => {
     } else if (field) {
       filter = { ...filter, [field]: { $regex: escapeRegex(q), $options: 'i' } };
     } else {
-      // No field chosen: search the fields an operator is most likely to know.
+      // No field chosen: search the fields an operator is most likely to know,
+      // within whatever view is selected — that is what makes "unpaid customers
+      // named Ali" work.
       const rx = { $regex: escapeRegex(q), $options: 'i' };
-      filter = {
+      const textMatch: Filter<Document> = {
         ...filter,
         $or: [
           { jobCustomer: rx },
@@ -158,6 +160,18 @@ jobsRouter.get('/', async (req: Request, res: Response) => {
           { jobDetail00: rx },
         ],
       };
+
+      // jobID is a number, so the regex above can never match it: an all-digit
+      // search needs an exact term of its own. That term sits OUTSIDE the view
+      // filter, alongside the text match rather than within it, so typing a
+      // completed job's number while browsing Incomplete still finds it — the
+      // same escape the explicit "Job Number" search makes. Without it the
+      // dropdown changed what the same digits meant, which is how job 10427
+      // could be found one way and not the other.
+      const asJobId = /^\d+$/.test(q) ? Number(q) : NaN;
+      filter = Number.isSafeInteger(asJobId)
+        ? { $or: [{ jobID: asJobId }, textMatch] }
+        : textMatch;
     }
   }
 

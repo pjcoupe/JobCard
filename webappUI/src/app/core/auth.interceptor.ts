@@ -1,5 +1,6 @@
 import { HttpErrorResponse, type HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
@@ -10,6 +11,7 @@ import { AuthService } from './auth.service';
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
+  const router = inject(Router);
   const isLoginRequest = req.url.includes('/api/auth/login');
   const token = auth.token;
 
@@ -21,7 +23,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(request).pipe(
     catchError((error: unknown) => {
       if (!isLoginRequest && error instanceof HttpErrorResponse && error.status === 401) {
-        auth.logout();
+        // Carry the current page across, as authGuard does, so signing in again
+        // lands back on the job that was open rather than the list.
+        auth.logout(router.url);
       }
       return throwError(() => error);
     })

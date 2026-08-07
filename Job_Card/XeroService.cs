@@ -80,7 +80,10 @@ namespace Job_Card
             {
                 throw new InvalidOperationException("Xero client settings are incomplete.");
             }
-            string scope = Uri.EscapeDataString("openid profile accounting.invoices accounting.payments accounting.contacts");// email accounting.transactions accounting.contacts offline_access");
+            // Granular scopes, matching what the Xero app registration grants. The app
+            // is not authorised for the legacy umbrella scope accounting.transactions,
+            // so requesting it fails the whole authorize call with invalid_scope.
+            string scope = Uri.EscapeDataString("openid profile email accounting.contacts accounting.invoices accounting.payments offline_access");
             return "https://login.xero.com/identity/connect/authorize" +
                    "?response_type=code" +
                    "&client_id=" + Uri.EscapeDataString(settings.xeroClientId) +
